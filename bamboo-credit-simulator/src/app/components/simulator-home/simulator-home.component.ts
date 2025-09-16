@@ -189,21 +189,6 @@ interface ServiceCard {
         </div>
       </section>
 
-      <!-- Stats Section -->
-      <section class="stats-section">
-        <div class="container">
-          <div class="stats-grid">
-            <div *ngFor="let stat of statisticsArray" class="stat-item">
-              <div class="stat-icon">
-                <div class="stat-svg" [innerHTML]="stat.svgIcon"></div>
-              </div>
-              <div class="stat-number">{{ stat.value }}</div>
-              <div class="stat-label">{{ stat.label }}</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- Bamboo Assur Section -->
       <section class="bamboo-assur-section">
         <div class="container">
@@ -265,29 +250,6 @@ interface ServiceCard {
         </div>
       </section>
 
-      <!-- Testimonials -->
-      <section class="testimonials-section">
-        <div class="container">
-          <h2>Ce que disent nos clients</h2>
-          <div class="testimonials-grid">
-            <div *ngFor="let testimonial of testimonials" class="testimonial-item">
-              <div class="testimonial-content">
-                <p>"{{ testimonial.content }}"</p>
-              </div>
-              <div class="testimonial-author">
-                <div class="author-avatar">{{ testimonial.initials }}</div>
-                <div class="author-info">
-                  <strong>{{ testimonial.name }}</strong>
-                  <span>{{ testimonial.title }}</span>
-                </div>
-              </div>
-              <div class="testimonial-rating">
-                <span *ngFor="let star of getStars(testimonial.rating)" class="star">⭐</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- CTA Section -->
       <section class="cta-section">
@@ -301,29 +263,6 @@ interface ServiceCard {
             <button (click)="navigateToService('/insurance-comparator')" class="btn-outline">
               Comparer les assurances
             </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Newsletter -->
-      <section class="newsletter-section">
-        <div class="container">
-          <div class="newsletter-content">
-            <h3>Restez informé des dernières actualités financières</h3>
-            <p>Recevez nos conseils, analyses de marché et nouvelles offres directement dans votre boîte mail</p>
-            <form [formGroup]="newsletterForm" (ngSubmit)="subscribeNewsletter()" class="newsletter-form">
-              <div class="form-group">
-                <input 
-                  type="email" 
-                  formControlName="email" 
-                  placeholder="Votre adresse email"
-                  class="newsletter-input"
-                />
-                <button type="submit" [disabled]="newsletterForm.invalid" class="btn-newsletter">
-                  S'abonner
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       </section>

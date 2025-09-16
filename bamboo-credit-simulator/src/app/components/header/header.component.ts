@@ -32,7 +32,6 @@ interface User {
         <div class="nav-menu">
           <a routerLink="/simulator-home" routerLinkActive="active" class="nav-link">Accueil</a>
           <a routerLink="/multi-bank-comparator" routerLinkActive="active" class="nav-link">Comparateur</a>
-          <a routerLink="/tracking" routerLinkActive="active" class="nav-link">Suivi</a>
           
           <!-- Dropdown Simulateurs -->
           <div class="nav-dropdown">

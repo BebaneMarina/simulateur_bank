@@ -518,18 +518,6 @@
 
           <!-- Navigation Steps -->
           <div class="step-navigation">
-            <!-- Debug info et bouton de test -->
-            <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px;">
-              <strong>Debug:</strong><br>
-              Étape actuelle: {{ currentStep }}<br>
-              Peut continuer: {{ canProceedToNext ? 'Oui' : 'Non' }}<br>
-              Validation étape 1: {{ stepValidation[1] ? 'Valide' : 'Invalide' }}<br>
-              Validation étape 2: {{ stepValidation[2] ? 'Valide' : 'Invalide' }}<br>
-              Validation étape 3: {{ stepValidation[3] ? 'Valide' : 'Invalide' }}<br>
-              <button type="button" (click)="testApiConnection()" style="margin-top: 5px; padding: 5px;">Test API</button>
-              <button type="button" (click)="forceValidateStep()" style="margin-top: 5px; padding: 5px; margin-left: 5px;">Force Validation</button>
-            </div>
-
             <button
               type="button"
               class="nav-btn btn-previous"

@@ -1,8 +1,8 @@
-// src/app/app.component.ts - Version finale avec header qui ne cause pas de redirection
+// src/app/app.component.ts - Version corrigée avec notifications
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { HeaderComponent } from './components/header/header.component'; // Utilisez le HeaderComponent corrigé
+import { HeaderComponent } from './components/header/header.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { NotificationComponent } from './components/notifications/notification.component';
 import { LoadingSpinnerComponent } from './components/loading-spinner/loading-spinner.component';
@@ -14,9 +14,9 @@ import { LoadingService } from './services/loading.service';
   imports: [
     CommonModule,
     RouterOutlet,
-    HeaderComponent, // Header corrigé sans appels auth automatiques
+    HeaderComponent,
     FooterComponent,
-    NotificationComponent,
+    NotificationComponent, // Assurez-vous que c'est importé
     LoadingSpinnerComponent
   ],
   template: `
@@ -32,7 +32,8 @@ import { LoadingService } from './services/loading.service';
         <router-outlet></router-outlet>
       </main>
 
-      <!-- <app-notification></app-notification> -->
+      <!-- Notifications décommentées -->
+      <app-notification></app-notification>
     </div>
   `,
   styles: [`
@@ -40,6 +41,7 @@ import { LoadingService } from './services/loading.service';
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      position: relative; /* Pour le positionnement des notifications */
     }
 
     .main-content {
@@ -64,6 +66,15 @@ import { LoadingService } from './services/loading.service';
       align-items: center;
       justify-content: center;
     }
+
+    /* Styles pour les notifications */
+    app-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000; /* Au-dessus du spinner de chargement */
+      max-width: 400px;
+    }
   `]
 })
 export class AppComponent {
@@ -71,6 +82,6 @@ export class AppComponent {
 
   constructor(private loadingService: LoadingService) {
     this.isLoading$ = this.loadingService.loading$;
-    console.log('AppComponent: Démarrage avec header corrigé');
+    console.log('AppComponent: Démarrage avec notifications actives');
   }
 }

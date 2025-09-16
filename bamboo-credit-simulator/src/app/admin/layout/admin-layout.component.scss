@@ -7,7 +7,7 @@
 
 .admin-sidebar {
   width: 280px;
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  background: linear-gradient(135deg, #055212 0%, #559559 100%);
   color: white;
   transition: width 0.3s ease;
   display: flex;
@@ -123,7 +123,7 @@
     }
 
     &.active {
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      background: linear-gradient(135deg, #c9eab3 0%, #adddad 100%);
       color: white;
       box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 

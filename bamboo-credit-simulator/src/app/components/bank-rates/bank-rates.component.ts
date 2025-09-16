@@ -257,14 +257,7 @@ interface DisplayBank extends Bank {
         <div class="container">
           <h2>Analyse du marché</h2>
           <div class="analysis-grid">
-            <div class="analysis-card">
-              <h3>Taux moyen du marché</h3>
-              <div class="stat-value">{{ formatPercent(marketStatistics.average_rate) }}</div>
-              <span class="trend" [class.positive]="marketStatistics.trend > 0" [class.negative]="marketStatistics.trend < 0">
-                {{ marketStatistics.trend > 0 ? '+' : '' }}{{ formatPercent(marketStatistics.trend) }} ce mois
-              </span>
-            </div>
-            
+
             <div class="analysis-card">
               <h3>Meilleur taux disponible</h3>
               <div class="stat-value">{{ formatPercent(marketStatistics.best_rate) }}</div>

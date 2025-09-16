@@ -22,7 +22,7 @@ export interface LoginRequest {
         <div class="login-header">
           <img src="/assets/bamboo-logo.png" alt="Bamboo" class="logo" 
                onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMzAiIGZpbGw9IiM2NjdlZWEiLz4KPHRleHQgeD0iMzAiIHk9IjM1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIyMCIgZm9udC13ZWlnaHQ9ImJvbGQiPkI8L3RleHQ+Cjwvc3ZnPg=='">
-          <h1>Bamboo Admin</h1>
+          <h1>simbot gab Admin</h1>
           <p>Connectez-vous à votre espace administrateur</p>
         </div>
 
@@ -60,7 +60,7 @@ export interface LoginRequest {
                 (click)="togglePasswordVisibility()"
                 tabindex="-1"
                 [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
-                <span class="password-icon">{{ showPassword ? '🙈' : '👁️' }}</span>
+                <span class="password-icon">{{ showPassword ? '' : '' }}</span>
               </button>
             </div>
             <div *ngIf="hasError('password')" class="error-message">

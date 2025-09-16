@@ -1,70 +1,70 @@
-// Dashboard variables
-$primary-color: #4f46e5;
-$secondary-color: #64748b;
-$success-color: #10b981;
+// Dashboard variables - Palette verte
+$primary-color: #065f46; // Vert foncé
+$primary-light: #059669; // Vert moyen
+$secondary-color: #6b7280; // Gris neutre
+$success-color: #10b981; // Vert succès
 $warning-color: #f59e0b;
-$danger-color: #ef4444;
-$info-color: #06b6d4;
-$light-color: #f8fafc;
-$dark-color: #1e293b;
+$danger-color: #dc2626;
+$info-color: #0891b2;
+$light-color: #f9fafb;
+$dark-color: #111827;
 $white: #ffffff;
 
-$banks-color: #4f46e5;
-$insurance-color: #8b5cf6;
-$products-color: #f59e0b;
+// Couleurs thématiques vertes
+$banks-color: #065f46;
+$insurance-color: #047857;
+$products-color: #059669;
 $savings-color: #10b981;
-$simulations-color: #06b6d4;
-$applications-color: #8b5cf6;
+$simulations-color: #0d9488;
+$applications-color: #0891b2;
 
 // Shadows
-$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 $shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
 // Dashboard container
 .dashboard-container {
   padding: 0;
-  background: transparent;
-  min-height: auto;
+  background: $white;
+  min-height: 100vh;
 }
 
-// Header section simplifiée (sans navigation qui est maintenant dans la sidebar)
+// Header section épuré
 .dashboard-header {
   background: $white;
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
   box-shadow: $shadow-sm;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e7eb;
 
   h1 {
-    margin: 0 0 8px 0;
-    color: $dark-color;
-    font-size: 2.5rem;
+    margin: 0 0 6px 0;
+    color: $primary-color;
+    font-size: 2rem;
     font-weight: 700;
-    background: linear-gradient(135deg, $dark-color, $primary-color);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    letter-spacing: -0.025em;
   }
 
   .subtitle {
     color: $secondary-color;
-    font-size: 1.1rem;
+    font-size: 1rem;
     margin: 0;
+    font-weight: 400;
   }
 
   .user-info {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #f3f4f6;
 
     .user-welcome {
       color: $secondary-color;
-      font-size: 1rem;
+      font-size: 0.9rem;
       
       strong {
         color: $dark-color;
@@ -73,144 +73,134 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
     }
 
     .role-badge {
-      padding: 8px 16px;
-      border-radius: 24px;
-      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 0.75rem;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.025em;
 
       &.admin {
-        background: linear-gradient(135deg, #fef3c7, #fbbf24);
-        color: #92400e;
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
       }
 
       &.manager {
-        background: linear-gradient(135deg, #dbeafe, #3b82f6);
+        background: #dbeafe;
         color: #1e40af;
+        border: 1px solid #bfdbfe;
       }
 
       &.operator {
-        background: linear-gradient(135deg, #d1fae5, #10b981);
+        background: #d1fae5;
         color: #065f46;
+        border: 1px solid #a7f3d0;
+      }
+
+      &.SUPER_ADMIN {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
       }
     }
   }
 
   @media (max-width: 768px) {
-    padding: 24px;
+    padding: 20px;
     
     h1 {
-      font-size: 2rem;
+      font-size: 1.75rem;
     }
     
     .user-info {
       flex-direction: column;
       align-items: flex-start;
-      gap: 12px;
+      gap: 8px;
     }
   }
 }
 
-// Stats grid avec graphiques intégrés
+// Stats grid compact
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
 
   .stat-card {
     background: $white;
-    border-radius: 16px;
-    padding: 28px;
+    border-radius: 12px;
+    padding: 20px;
     box-shadow: $shadow-sm;
-    border: 1px solid #e2e8f0;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
 
     &:hover {
-      transform: translateY(-4px);
+      transform: translateY(-2px);
       box-shadow: $shadow-md;
-    }
-
-    // Background pattern subtil
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 100px;
-      height: 100px;
-      background: radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, transparent 70%);
-      z-index: 0;
+      border-color: #d1d5db;
     }
 
     .stat-header {
       display: flex;
       align-items: center;
-      gap: 16px;
-      position: relative;
-      z-index: 1;
+      gap: 12px;
+      margin-bottom: 16px;
 
       .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 16px;
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 26px;
+        font-size: 20px;
         color: white;
-        position: relative;
+        flex-shrink: 0;
 
         &.banks {
-          background: linear-gradient(135deg, $banks-color, lighten($banks-color, 15%));
-          box-shadow: 0 8px 25px rgba(79, 70, 229, 0.25);
+          background: linear-gradient(135deg, $banks-color, lighten($banks-color, 10%));
         }
 
         &.insurance {
-          background: linear-gradient(135deg, $insurance-color, lighten($insurance-color, 15%));
-          box-shadow: 0 8px 25px rgba(139, 92, 246, 0.25);
+          background: linear-gradient(135deg, $insurance-color, lighten($insurance-color, 10%));
         }
 
         &.products {
-          background: linear-gradient(135deg, $products-color, lighten($products-color, 15%));
-          box-shadow: 0 8px 25px rgba(245, 158, 11, 0.25);
+          background: linear-gradient(135deg, $products-color, lighten($products-color, 10%));
         }
 
         &.simulations {
-          background: linear-gradient(135deg, $simulations-color, lighten($simulations-color, 15%));
-          box-shadow: 0 8px 25px rgba(6, 182, 212, 0.25);
+          background: linear-gradient(135deg, $simulations-color, lighten($simulations-color, 10%));
         }
 
         &.applications {
-          background: linear-gradient(135deg, $applications-color, lighten($applications-color, 15%));
-          box-shadow: 0 8px 25px rgba(139, 92, 246, 0.25);
+          background: linear-gradient(135deg, $applications-color, lighten($applications-color, 10%));
         }
       }
 
       .stat-content {
         flex: 1;
+        min-width: 0;
 
         .stat-number {
-          font-size: 2.5rem;
-          font-weight: 800;
+          font-size: 1.875rem;
+          font-weight: 700;
           color: $dark-color;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
           line-height: 1;
           display: flex;
           align-items: baseline;
-          gap: 8px;
+          gap: 6px;
 
           .stat-trend {
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 12px;
+            padding: 2px 6px;
+            border-radius: 8px;
             
             &.up {
               color: $success-color;
@@ -219,25 +209,25 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
             
             &.down {
               color: $danger-color;
-              background: rgba(239, 68, 68, 0.1);
+              background: rgba(220, 38, 38, 0.1);
             }
           }
         }
 
         .stat-label {
           color: $secondary-color;
-          font-size: 0.95rem;
+          font-size: 0.875rem;
           font-weight: 500;
+          line-height: 1.2;
         }
       }
     }
 
-    // Mini graphique intégré
+    // Mini graphique compact
     .stat-chart {
-      height: 60px;
+      height: 40px;
       width: 100%;
-      position: relative;
-      z-index: 1;
+      margin-bottom: 12px;
 
       canvas {
         width: 100% !important;
@@ -245,101 +235,121 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
       }
     }
 
-    // Informations supplémentaires
+    // Détails compacts
     .stat-details {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 16px;
-      border-top: 1px solid #f1f5f9;
-      font-size: 0.85rem;
+      padding-top: 12px;
+      border-top: 1px solid #f3f4f6;
+      font-size: 0.8rem;
       color: $secondary-color;
-      position: relative;
-      z-index: 1;
 
       .detail-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
+        gap: 2px;
 
         .detail-value {
           font-weight: 600;
           color: $dark-color;
+          font-size: 0.875rem;
         }
 
         .detail-label {
-          font-size: 0.75rem;
+          font-size: 0.7rem;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.025em;
         }
       }
     }
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
 
     .stat-card {
-      padding: 24px;
+      padding: 16px;
 
-      .stat-header .stat-content .stat-number {
-        font-size: 2rem;
+      .stat-header {
+        gap: 10px;
+        margin-bottom: 12px;
+
+        .stat-icon {
+          width: 40px;
+          height: 40px;
+          font-size: 18px;
+        }
+
+        .stat-content .stat-number {
+          font-size: 1.5rem;
+        }
       }
     }
   }
-}
 
-// Dashboard content avec graphiques
-.dashboard-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 32px;
-
-  @media (max-width: 1200px) {
+  @media (max-width: 480px) {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 10px;
   }
 }
 
-// Section graphiques principaux
+// Dashboard content responsive
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+  }
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+// Charts section
 .charts-section {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 
   .chart-container {
     background: $white;
-    border-radius: 16px;
-    padding: 32px;
+    border-radius: 12px;
+    padding: 24px;
     box-shadow: $shadow-sm;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e5e7eb;
 
     .chart-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
 
       h3 {
         margin: 0;
-        color: $dark-color;
-        font-size: 1.4rem;
+        color: $primary-color;
+        font-size: 1.25rem;
         font-weight: 600;
       }
 
       .chart-actions {
         display: flex;
-        gap: 8px;
+        gap: 6px;
 
         .chart-filter {
-          padding: 8px 16px;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
+          padding: 6px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
           background: $white;
           color: $secondary-color;
-          font-size: 0.85rem;
+          font-size: 0.8rem;
           cursor: pointer;
           transition: all 0.2s ease;
 
@@ -358,7 +368,7 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
     }
 
     .chart-content {
-      height: 400px;
+      height: 350px;
       position: relative;
 
       canvas {
@@ -367,37 +377,40 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
       }
     }
 
-    // Graphique en doughnut/pie
     &.chart-doughnut .chart-content {
-      height: 350px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      height: 300px;
     }
 
-    // Légendes personnalisées
     .chart-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      margin-top: 20px;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
 
       .legend-item {
         display: flex;
         align-items: center;
         gap: 8px;
-        font-size: 0.9rem;
+        font-size: 0.875rem;
+        padding: 8px;
+        border-radius: 6px;
+        background: #f9fafb;
 
         .legend-color {
           width: 12px;
           height: 12px;
-          border-radius: 3px;
+          border-radius: 2px;
+          flex-shrink: 0;
+
+          &.credit { background: $primary-color; }
+          &.savings { background: $success-color; }
+          &.insurance { background: $info-color; }
         }
 
         .legend-label {
           color: $secondary-color;
           font-weight: 500;
+          margin-right: auto;
         }
 
         .legend-value {
@@ -406,33 +419,143 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
         }
       }
     }
+
+    @media (max-width: 768px) {
+      padding: 20px;
+
+      .chart-content {
+        height: 280px;
+      }
+
+      &.chart-doughnut .chart-content {
+        height: 250px;
+      }
+
+      .chart-legend {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+    }
   }
 }
 
-// Panel latéral avec activité et widgets
+// Panel latéral compact
 .side-panel {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 
-  .recent-activity {
+  .quick-stats {
     background: $white;
-    border-radius: 16px;
-    padding: 28px;
+    border-radius: 12px;
+    padding: 20px;
     box-shadow: $shadow-sm;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e5e7eb;
 
     h3 {
-      margin: 0 0 24px 0;
-      color: $dark-color;
-      font-size: 1.25rem;
+      margin: 0 0 16px 0;
+      color: $primary-color;
+      font-size: 1.125rem;
       font-weight: 600;
+    }
+
+    .quick-action {
       display: flex;
       align-items: center;
       gap: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid transparent;
+
+      &:hover {
+        background: #f9fafb;
+        border-color: #e5e7eb;
+        transform: translateX(2px);
+      }
+
+      .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: white;
+        flex-shrink: 0;
+
+        &.admins { background: $primary-color; }
+        &.banks { background: $banks-color; }
+        &.products { background: $products-color; }
+        &.applications { background: $applications-color; }
+      }
+
+      .action-content {
+        flex: 1;
+        min-width: 0;
+
+        .action-label {
+          display: block;
+          font-weight: 600;
+          color: $dark-color;
+          font-size: 0.875rem;
+          line-height: 1.2;
+          margin-bottom: 2px;
+        }
+
+        .action-description {
+          display: block;
+          color: $secondary-color;
+          font-size: 0.75rem;
+          line-height: 1.2;
+        }
+      }
+
+      .fa-chevron-right {
+        color: $secondary-color;
+        font-size: 12px;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+      }
+
+      &:hover .fa-chevron-right {
+        opacity: 1;
+        transform: translateX(2px);
+      }
+    }
+
+    @media (max-width: 768px) {
+      padding: 16px;
+
+      .quick-action {
+        padding: 10px;
+      }
+    }
+  }
+
+  .recent-activity {
+    background: $white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: $shadow-sm;
+    border: 1px solid #e5e7eb;
+
+    h3 {
+      margin: 0 0 16px 0;
+      color: $primary-color;
+      font-size: 1.125rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
 
       i {
-        color: $primary-color;
+        color: $success-color;
+        font-size: 1rem;
       }
     }
 
@@ -440,40 +563,30 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
       .activity-item {
         display: flex;
         align-items: flex-start;
-        gap: 16px;
-        padding: 16px 0;
-        border-bottom: 1px solid #f1f5f9;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f3f4f6;
 
         &:last-child {
           border-bottom: none;
+          padding-bottom: 0;
         }
 
         .activity-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 16px;
+          font-size: 14px;
           color: white;
           flex-shrink: 0;
 
-          &.create {
-            background: linear-gradient(135deg, $success-color, lighten($success-color, 10%));
-          }
-
-          &.update {
-            background: linear-gradient(135deg, $info-color, lighten($info-color, 10%));
-          }
-
-          &.delete {
-            background: linear-gradient(135deg, $danger-color, lighten($danger-color, 10%));
-          }
-
-          &.login {
-            background: linear-gradient(135deg, $primary-color, lighten($primary-color, 10%));
-          }
+          &.create { background: $success-color; }
+          &.update { background: $info-color; }
+          &.delete { background: $danger-color; }
+          &.login { background: $primary-color; }
         }
 
         .activity-content {
@@ -481,18 +594,19 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
           min-width: 0;
 
           .activity-text {
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             color: $dark-color;
-            margin-bottom: 6px;
-            line-height: 1.4;
+            margin-bottom: 4px;
+            line-height: 1.3;
 
             strong {
               font-weight: 600;
+              color: $primary-color;
             }
           }
 
           .activity-time {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: $secondary-color;
             font-weight: 500;
           }
@@ -502,131 +616,97 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
 
     .no-activity {
       text-align: center;
-      padding: 40px 20px;
+      padding: 32px 16px;
       color: $secondary-color;
       font-style: italic;
-    }
-  }
-
-  // Widget de statistiques rapides
-  .quick-stats {
-    background: $white;
-    border-radius: 16px;
-    padding: 28px;
-    box-shadow: $shadow-sm;
-    border: 1px solid #e2e8f0;
-
-    h3 {
-      margin: 0 0 24px 0;
-      color: $dark-color;
-      font-size: 1.25rem;
-      font-weight: 600;
+      font-size: 0.875rem;
     }
 
-    .quick-stat-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 0;
-      border-bottom: 1px solid #f1f5f9;
-
-      &:last-child {
-        border-bottom: none;
-      }
-
-      .stat-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-
-        .stat-icon {
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 14px;
-          color: white;
-
-          &.pending {
-            background: linear-gradient(135deg, $warning-color, lighten($warning-color, 10%));
-          }
-
-          &.approved {
-            background: linear-gradient(135deg, $success-color, lighten($success-color, 10%));
-          }
-
-          &.rejected {
-            background: linear-gradient(135deg, $danger-color, lighten($danger-color, 10%));
-          }
-        }
-
-        .stat-label {
-          color: $secondary-color;
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
-      }
-
-      .stat-value {
-        font-weight: 600;
-        color: $dark-color;
-        font-size: 1.1rem;
-      }
+    @media (max-width: 768px) {
+      padding: 16px;
     }
   }
 }
 
-// Loading et empty states
-.loading-state {
+// Loading states
+.loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 48px 20px;
   color: $secondary-color;
 
-  .spinner {
-    width: 48px;
-    height: 48px;
-    border: 4px solid #f1f5f9;
-    border-top: 4px solid $primary-color;
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid $primary-color;
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 
   p {
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: 500;
   }
 }
 
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
-  color: $secondary-color;
+.error-container {
+  background: $white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: $shadow-sm;
+  border: 1px solid #fca5a5;
+  margin-bottom: 24px;
 
-  .empty-icon {
-    font-size: 4rem;
-    color: #cbd5e1;
-    margin-bottom: 24px;
-  }
+  .error-message {
+    text-align: center;
+    color: $danger-color;
 
-  h3 {
-    margin: 0 0 12px 0;
-    color: $dark-color;
-    font-size: 1.4rem;
-    font-weight: 600;
-  }
+    i {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      display: block;
+    }
 
-  p {
-    margin: 0;
-    font-size: 1rem;
-    max-width: 400px;
-    margin: 0 auto;
+    h3 {
+      margin: 0 0 8px 0;
+      color: $danger-color;
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0 0 16px 0;
+      color: $secondary-color;
+      font-size: 0.875rem;
+    }
+
+    .retry-button {
+      background: $danger-color;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: darken($danger-color, 10%);
+      }
+
+      i {
+        font-size: 0.875rem;
+        margin-right: 4px;
+        margin-bottom: 0;
+        display: inline;
+      }
+    }
   }
 }
 
@@ -639,7 +719,7 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -647,58 +727,50 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
   }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
-}
-
-// Animations d'entrée
+// Animation d'entrée échelonnée
 .stat-card {
-  animation: fadeInUp 0.6s ease-out;
-
-  &:nth-child(2) { animation-delay: 0.1s; }
-  &:nth-child(3) { animation-delay: 0.2s; }
-  &:nth-child(4) { animation-delay: 0.3s; }
-  &:nth-child(5) { animation-delay: 0.4s; }
+  animation: fadeInUp 0.5s ease-out;
+  
+  @for $i from 1 through 5 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.1}s;
+    }
+  }
 }
 
-.chart-container {
-  animation: fadeInUp 0.8s ease-out 0.2s both;
+.chart-container,
+.quick-stats,
+.recent-activity {
+  animation: fadeInUp 0.6s ease-out 0.3s both;
 }
 
-.recent-activity,
-.quick-stats {
-  animation: fadeInUp 0.8s ease-out 0.4s both;
-}
+// Responsive final
+@media (max-width: 640px) {
+  .dashboard-container {
+    padding: 0 12px;
+  }
 
-// Mode sombre
-@media (prefers-color-scheme: dark) {
-  .dashboard-header,
-  .stat-card,
-  .chart-container,
-  .recent-activity,
-  .quick-stats {
-    background: #1e293b;
-    border-color: #334155;
-
-    h1, h3, h4 {
-      color: #e2e8f0;
+  .dashboard-header {
+    margin-bottom: 16px;
+    
+    h1 {
+      font-size: 1.5rem;
     }
   }
 
-  .stat-card .stat-header .stat-content .stat-number {
-    color: #e2e8f0;
+  .stats-grid {
+    margin-bottom: 20px;
   }
 
-  .activity-content .activity-text {
-    color: #e2e8f0;
+  .dashboard-content {
+    gap: 16px;
   }
 
-  .quick-stat-item .stat-value {
-    color: #e2e8f0;
+  .charts-section {
+    gap: 16px;
+  }
+
+  .side-panel {
+    gap: 16px;
   }
 }

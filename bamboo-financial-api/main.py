@@ -292,6 +292,13 @@ except ImportError:
     insurance_available = False
     print("Warning: insurance router not available")
 
+try :
+    from routers import insurance_application
+    insurance_application_available = True
+except ImportError:
+    insurance_application_available = False
+    print("Warning: insurance_application router not available")
+
 try:
     from routers import auth_router as auth
     auth_available = True
@@ -575,8 +582,6 @@ if simulations_available:
     app.include_router(simulations.router, prefix="/api/simulations", tags=["Simulations"])
     logger.info("Simulations router included")
 
-if insurance_application_available:
-    app.include_router(insurance_application.router, tags=["Demandes d'assurance"])
 
 if simulations_save_available:
     app.include_router(simulations_save.router, prefix="/api/simulations", tags=["Simulations Save"])
@@ -610,6 +615,9 @@ if savings_available:
     app.include_router(savings.router, prefix="/api/savings", tags=["Épargne"])
     logger.info("Savings router included")
 
+if insurance_application_available:
+    app.include_router(insurance_application.router, prefix="/api", tags=["Insurance Applications"])
+    logger.info("Insurance application router included")
 if savings_admin_available:
     app.include_router(savings_admin.router, prefix="/api")
     logger.info("Savings admin router included")

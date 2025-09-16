@@ -16,7 +16,7 @@ import { filter } from 'rxjs/operators';
         <div class="sidebar-header">
           <div class="logo">
             <i class="fas fa-cog"></i>
-            <span *ngIf="!sidebarCollapsed">Admin Panel</span>
+            <span *ngIf="!sidebarCollapsed">espace admin</span>
           </div>
           <button class="collapse-btn" (click)="toggleSidebar()">
             <i class="fas" [class.fa-chevron-left]="!sidebarCollapsed" [class.fa-chevron-right]="sidebarCollapsed"></i>
@@ -93,39 +93,6 @@ import { filter } from 'rxjs/operators';
                  [title]="addBankTitle">
                 <i class="fas fa-plus"></i>
                 <span *ngIf="!sidebarCollapsed">Ajouter une banque</span>
-              </a>
-            </div>
-          </div>
-
-          <!-- Gestion des compagnies d'assurance -->
-          <div class="nav-section" *ngIf="canManageInsuranceCompanies">
-            <div class="nav-section-title" *ngIf="!sidebarCollapsed" (click)="toggleInsuranceCompaniesSection()">
-              <i class="fas fa-building"></i>
-              <span>Compagnies d'Assurance</span>
-              <i class="fas fa-chevron-down toggle-icon" [class.rotated]="insuranceCompaniesSectionExpanded"></i>
-            </div>
-            
-            <div class="nav-section-title collapsed-title" *ngIf="sidebarCollapsed">
-              <i class="fas fa-building" title="Compagnies d'Assurance"></i>
-            </div>
-            
-            <div class="nav-subsection" [class.expanded]="insuranceCompaniesSectionExpanded || sidebarCollapsed">
-              <a routerLink="/admin/insurance-companies" 
-                 routerLinkActive="active"
-                 [routerLinkActiveOptions]="{exact: true}"
-                 class="nav-item sub-item"
-                 [title]="sidebarCollapsed ? 'Liste des compagnies' : ''">
-                <i class="fas fa-list"></i>
-                <span *ngIf="!sidebarCollapsed">Liste des compagnies</span>
-              </a>
-              
-              <a routerLink="/admin/insurance-companies/create" 
-                 routerLinkActive="active"
-                 class="nav-item sub-item"
-                 *ngIf="canCreateInsuranceCompanies"
-                 [title]="sidebarCollapsed ? 'Ajouter une compagnie' : ''">
-                <i class="fas fa-plus"></i>
-                <span *ngIf="!sidebarCollapsed">Ajouter une compagnie</span>
               </a>
             </div>
           </div>
@@ -526,12 +493,12 @@ export class AdminLayoutComponent implements OnInit {
       this.breadcrumbs = ['Admin', 'Banques', 'Modifier'];
     } else if (url.includes('/banks')) {
       this.breadcrumbs = ['Admin', 'Banques'];
-    } else if (url.includes('/insurance-companies/create')) {
-      this.breadcrumbs = ['Admin', 'Compagnies', 'Créer'];
-    } else if (url.includes('/insurance-companies/edit')) {
-      this.breadcrumbs = ['Admin', 'Compagnies', 'Modifier'];
-    } else if (url.includes('/insurance-companies')) {
-      this.breadcrumbs = ['Admin', 'Compagnies d\'Assurance'];
+    } else if (url.includes('/insurance-products/create')) {
+      this.breadcrumbs = ['Admin', 'products', 'Créer'];
+    } else if (url.includes('/insurance-products/edit')) {
+      this.breadcrumbs = ['Admin', 'products', 'Modifier'];
+    } else if (url.includes('/insurance-products')) {
+      this.breadcrumbs = ['Admin', 'products d\'Assurance'];
     } else if (url.includes('/credit-products/create')) {
       this.breadcrumbs = ['Admin', 'Produits', 'Crédits', 'Créer'];
     } else if (url.includes('/credit-products/edit')) {
@@ -567,7 +534,7 @@ export class AdminLayoutComponent implements OnInit {
     // Expand sections based on current route
     this.adminSectionExpanded = url.includes('/management');
     this.bankSectionExpanded = url.includes('/banks');
-    this.insuranceCompaniesSectionExpanded = url.includes('/insurance-companies');
+    this.insuranceCompaniesSectionExpanded = url.includes('/insurance-products');
     this.creditSectionExpanded = url.includes('/credit-products');
     this.savingsSectionExpanded = url.includes('/savings-products');
     this.insuranceSectionExpanded = url.includes('/insurance-products');
