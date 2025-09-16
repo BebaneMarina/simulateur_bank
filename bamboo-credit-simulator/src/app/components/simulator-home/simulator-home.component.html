@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bamboo Credit - Simulateur de Crédit</title>
+    <style>
+        /* Variables de couleurs */
+        :root {
+            --primary-green: #1a4d3a;
+            --secondary-green: #2d5e4f;
+            --accent-green: #3a7060;
+            --light-green: #4a8471;
+            --very-light-green: #e8f5f0;
+            --success-green: #22c55e;
+            --warning-amber: #f59e0b;
+            --error-red: #ef4444;
+            --info-blue: #3b82f6;
+            --purple: #8b5cf6;
+            --orange: #f97316;
+            --teal: #14b8a6;
+            --indigo: #6366f1;
+            --gold: #eab308;
+            
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            line-height: 1.6;
+            color: var(--gray-900);
+            background-color: var(--gray-50);
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .container {
+                padding: 0 1.5rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                padding: 0 2rem;
+            }
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--white);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary-green);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary-green);
+        }
+
+        /* Hero Section avec carrousel */
+        .hero {
+            background: linear-gradient(135deg, var(--very-light-green) 0%, rgba(74, 132, 113, 0.5) 100%);
+            padding: 8rem 0 6rem;
+            position: relative;
+            overflow: hidden;
+            margin-top: 80px;
+        }
+
+        /* Carrousel d'images en arrière-plan */
+        .hero-carousel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            overflow: hidden;
+        }
+
+        .carousel-track {
+            display: flex;
+            width: 500%;
+            height: 100%;
+            animation: slide 20s infinite;
+        }
+
+        .carousel-slide {
+            width: 20%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .slide-1 { background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%23134e4a" width="400" height="300"/><circle fill="%23ffffff" opacity="0.1" cx="100" cy="100" r="50"/><circle fill="%23ffffff" opacity="0.1" cx="300" cy="200" r="60"/><rect fill="%23ffffff" opacity="0.1" x="50" y="200" width="100" height="60" rx="10"/></svg>'); }
+        .slide-2 { background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%23155e63" width="400" height="300"/><polygon fill="%23ffffff" opacity="0.1" points="200,50 300,150 200,250 100,150"/><circle fill="%23ffffff" opacity="0.1" cx="350" cy="50" r="30"/></svg>'); }
+        .slide-3 { background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%230f766e" width="400" height="300"/><rect fill="%23ffffff" opacity="0.1" x="100" y="100" width="200" height="100" rx="20"/><circle fill="%23ffffff" opacity="0.1" cx="200" cy="50" r="25"/></svg>'); }
+        .slide-4 { background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%2314b8a6" width="400" height="300"/><path fill="%23ffffff" opacity="0.1" d="M200,50 L350,150 L200,250 L50,150 Z"/></svg>'); }
+        .slide-5 { background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%232dd4bf" width="400" height="300"/><circle fill="%23ffffff" opacity="0.1" cx="150" cy="150" r="80"/><rect fill="%23ffffff" opacity="0.1" x="250" y="100" width="80" height="100" rx="15"/></svg>'); }
+
+        @keyframes slide {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-20%); }
+            40% { transform: translateX(-40%); }
+            60% { transform: translateX(-60%); }
+            80% { transform: translateX(-80%); }
+            100% { transform: translateX(0); }
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(26, 77, 58, 0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hero-content {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+        }
+
+        @media (min-width: 768px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .hero h1 {
+                font-size: 3.75rem;
+            }
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-green) 0%, var(--accent-green) 100%);
+            border-radius: 9999px;
+            opacity: 0.3;
+        }
+
+        .subtitle {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        @media (min-width: 768px) {
+            .subtitle {
+                font-size: 1.25rem;
+            }
+        }
+
+        .cta-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media (min-width: 640px) {
+            .cta-buttons {
+                flex-direction: row;
+            }
+        }
+
+        .btn-primary, .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0.75rem;
+            font-family: var(--font-family);
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--secondary-green) 0%, var(--primary-green) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(26, 77, 58, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--white);
+            color: var(--gray-700);
+            border: 2px solid var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-green);
+            color: var(--primary-green);
+            background-color: var(--very-light-green);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(26, 77, 58, 0.15);
+        }
+
+        /* Section Taux du jour */
+        .rates-section {
+            padding: 2rem 0;
+            background-color: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .rates-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .rates-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .rates-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .trending-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: var(--primary-green);
+        }
+
+        .rates-list {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .rates-list {
+                gap: 1rem;
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        .rate-item {
+            text-align: center;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, var(--very-light-green) 0%, var(--white) 100%);
+            border-radius: 0.5rem;
+            border: 1px solid rgba(26, 77, 58, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .rate-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(26, 77, 58, 0.15);
+        }
+
+        .rate-label {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .rate-value {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--primary-green);
+        }
+
+        .btn-rates-detail {
+            background: transparent;
+            color: var(--primary-green);
+            border: 2px solid var(--primary-green);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-rates-detail:hover {
+            background: var(--primary-green);
+            color: var(--white);
+        }
+
+        /* Services Section */
+        .services-section {
+            padding: 5rem 0;
+            background-color: var(--white);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .services-grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        @media (min-width: 768px) {
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .services-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .service-card {
+            background: var(--white);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            border: 2px solid transparent;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-green) 0%, var(--accent-green) 100%);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .service-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: rgba(26, 77, 58, 0.2);
+        }
+
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .icon-wrapper {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .service-icon {
+            width: 2rem;
+            height: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover .service-icon {
+            transform: scale(1.1);
+        }
+
+        /* Couleurs des icônes */
+        .blue {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.2) 100%);
+            color: #3b82f6;
+        }
+
+        .green {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.2) 100%);
+            color: #22c55e;
+        }
+
+        .purple {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.2) 100%);
+            color: #8b5cf6;
+        }
+
+        .orange {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(249, 115, 22, 0.2) 100%);
+            color: #f97316;
+        }
+
+        .red {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.2) 100%);
+            color: #ef4444;
+        }
+
+        .indigo {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.2) 100%);
+            color: #6366f1;
+        }
+
+        .arrow-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: var(--gray-400);
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover .arrow-icon {
+            transform: translateX(4px);
+            color: var(--primary-green);
+        }
+
+        .service-card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.75rem;
+        }
+
+        .card-description {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--gray-600);
+        }
+
+        .check-icon {
+            width: 0.875rem;
+            height: 0.875rem;
+            color: var(--success-green);
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 2rem !important;
+            }
+            
+            .hero {
+                padding: 6rem 0 4rem;
+            }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="#" class="logo">SimBot Gab</a>
+                <ul class="nav-menu">
+                    <li><a href="#" class="nav-link active">Accueil</a></li>
+                    <li><a href="#" class="nav-link">Comparateur</a></li>
+                    <li><a href="#" class="nav-link">Suivi</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <!-- Carrousel d'images -->
+        <div class="hero-carousel">
+            <div class="carousel-track">
+                <div class="carousel-slide slide-1"></div>
+                <div class="carousel-slide slide-2"></div>
+                <div class="carousel-slide slide-3"></div>
+                <div class="carousel-slide slide-4"></div>
+                <div class="carousel-slide slide-5"></div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="hero-content">
+                <h1>
+                    Votre <span class="highlight">simulateur préféré</span> au Gabon
+                </h1>
+                <p class="subtitle">
+                    Simulez, comparez et trouvez les meilleures solutions de crédit, d'épargne et 
+                    d'assurance. Une plateforme complète pour tous vos besoins financiers.
+                </p>
+                <div class="cta-buttons">
+                    <button onclick="scrollToServices()" class="btn-primary">
+                        Explorer nos services
+                    </button>
+                    <button onclick="showRates()" class="btn-secondary">
+                        Voir les taux du jour
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Taux du jour -->
+    <section class="rates-section">
+        <div class="container">
+            <div class="rates-content">
+                <h3 class="rates-title">
+                    <svg class="trending-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l9-9 4 4 5-7"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m14 7h7v7"></path>
+                    </svg>
+                    Taux du jour
+                </h3>
+                <div class="rates-list">
+                    <div class="rate-item">
+                        <div class="rate-label">Crédit Immo</div>
+                        <div class="rate-value">À partir de 5.2%</div>
+                    </div>
+                    <div class="rate-item">
+                        <div class="rate-label">Crédit Conso</div>
+                        <div class="rate-value">À partir de 8.5%</div>
+                    </div>
+                    <div class="rate-item">
+                        <div class="rate-label">Crédit Auto</div>
+                        <div class="rate-value">À partir de 6.9%</div>
+                    </div>
+                    <div class="rate-item">
+                        <div class="rate-label">Crédit Travaux</div>
+                        <div class="rate-value">À partir de 7.1%</div>
+                    </div>
+                </div>
+                <button onclick="showAllRates()" class="btn-rates-detail">
+                    Voir tous les taux
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Nos outils de simulation</h2>
+                <p>Choisissez l'outil adapté à vos besoins</p>
+            </div>
+
+            <div class="services-grid">
+                <!-- Simulateur Capacité -->
+                <div class="service-card" onclick="navigateToCapacitySimulator()">
+                    <div class="card-header">
+                        <div class="icon-wrapper blue">
+                            <svg class="service-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                    
+                    <h3>Capacité d'emprunt</h3>
+                    <p class="card-description">Découvrez combien vous pouvez emprunter selon vos revenus</p>
+                    
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Visualisation graphique</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Optimisation durée</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulateur Épargne -->
+                <div class="service-card" onclick="navigateToSavingsSimulator()">
+                    <div class="card-header">
+                        <div class="icon-wrapper purple">
+                            <svg class="service-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                    
+                    <h3>Simulateur d'épargne</h3>
+                    <p class="card-description">Planifiez votre épargne et découvrez son potentiel</p>
+                    
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Projections à long terme</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Stratégies diversifiées</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Objectifs personnalisés</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparateur multi-banques -->
+                <div class="service-card" onclick="navigateToComparator()">
+                    <div class="card-header">
+                        <div class="icon-wrapper orange">
+                            <svg class="service-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                            </svg>
+                        </div>
+                        <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                    
+                    <h3>Comparateur multi-banques</h3>
+                    <p class="card-description">Comparez les offres de crédit de toutes les banques</p>
+                    
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Comparaison instantanée</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Offres personnalisées</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Suivi en temps réel</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparateur d'assurances -->
+                <div class="service-card" onclick="navigateToInsuranceComparator()">
+                    <div class="card-header">
+                        <div class="icon-wrapper red">
+                            <svg class="service-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                        </div>
+                        <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                    
+                    <h3>Comparateur d'assurances</h3>
+                    <p class="card-description">Trouvez la meilleure assurance pour vos besoins</p>
+                    
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Tous types d'assurance</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Devis gratuits</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Conseils experts</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarifs bancaires -->
+                <div class="service-card" onclick="navigateToRates()">
+                    <div class="card-header">
+                        <div class="icon-wrapper indigo">
+                            <svg class="service-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                    
+                    <h3>Tarifs bancaires</h3>
+                    <p class="card-description">Consultez les taux d'intérêt de toutes les banques</p>
+                    
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Taux en temps réel</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Historique des taux</span>
+                        </div>
+                        <div class="feature-item">
+                            <svg class="check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Alertes personnalisées</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Statistiques -->
+    <section class="stats-section" style="padding: 4rem 0; background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);">
+        <div class="container">
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem;">
+                <div class="stat-item" style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.05); border-radius: 1rem; border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease;">
+                    <div class="stat-icon" style="display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%); border-radius: 50%; margin-bottom: 1rem;">
+                        <svg style="width: 2rem; height: 2rem; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-number" style="font-size: 2.25rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">2</div>
+                    <div class="stat-label" style="color: #d1d5db; font-size: 0.875rem; font-weight: 500;">utilisateurs qui consultent la plateforme</div>
+                </div>
+
+                <div class="stat-item" style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.05); border-radius: 1rem; border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease;">
+                    <div class="stat-icon" style="display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%); border-radius: 50%; margin-bottom: 1rem;">
+                        <svg style="width: 2rem; height: 2rem; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-number" style="font-size: 2.25rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">15M FCFA</div>
+                    <div class="stat-label" style="color: #d1d5db; font-size: 0.875rem; font-weight: 500;">Crédits financés</div>
+                </div>
+
+                <div class="stat-item" style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.05); border-radius: 1rem; border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease;">
+                    <div class="stat-icon" style="display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%); border-radius: 50%; margin-bottom: 1rem;">
+                        <svg style="width: 2rem; height: 2rem; color: white;" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9l-5 4.87L18.18 21 12 17.77 5.82 21 7 13.87 2 9l6.91-.74L12 2z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-number" style="font-size: 2.25rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">4.8/5</div>
+                    <div class="stat-label" style="color: #d1d5db; font-size: 0.875rem; font-weight: 500;">Note client</div>
+                </div>
+
+                <div class="stat-item" style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.05); border-radius: 1rem; border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease;">
+                    <div class="stat-icon" style="display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%); border-radius: 50%; margin-bottom: 1rem;">
+                        <svg style="width: 2rem; height: 2rem; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="stat-number" style="font-size: 2.25rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">24h</div>
+                    <div class="stat-label" style="color: #d1d5db; font-size: 0.875rem; font-weight: 500;">Réponse moyenne</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Call to Action -->
+    <section style="padding: 5rem 0; background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%); text-align: center;">
+        <div class="container">
+            <h2 style="font-size: 2.25rem; font-weight: 800; color: white; margin: 0 0 1rem;">Prêt à optimiser vos finances ?</h2>
+            <p style="font-size: 1.125rem; color: rgba(255, 255, 255, 0.9); margin: 0 0 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Commencez dès aujourd'hui avec nos outils gratuits et trouvez les meilleures solutions
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 1rem; justify-content: center; align-items: center;">
+                <button onclick="navigateToCapacitySimulator()" style="background: white; color: var(--primary-green); border: none; padding: 1rem 2rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 1.125rem;">
+                    Simuler ma capacité d'emprunt
+                </button>
+                <button onclick="navigateToInsuranceComparator()" style="background: transparent; color: white; border: 2px solid white; padding: 1rem 2rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 1.125rem;">
+                    Comparer les assurances
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Fonctions de navigation
+        function scrollToServices() {
+            document.getElementById('services').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+
+        function showRates() {
+            alert('Redirection vers la page des taux...');
+        }
+
+        function showAllRates() {
+            alert('Affichage de tous les taux...');
+        }
+
+        function navigateToCapacitySimulator() {
+            console.log('Navigation vers simulateur de capacité');
+            alert('Redirection vers le simulateur de capacité d\'emprunt...');
+        }
+
+        function navigateToPaymentSimulator() {
+            console.log('Navigation vers simulateur de mensualités');
+            alert('Redirection vers le calculateur de mensualités...');
+        }
+
+        function navigateToSavingsSimulator() {
+            console.log('Navigation vers simulateur d\'épargne');
+            alert('Redirection vers le simulateur d\'épargne...');
+        }
+
+        function navigateToComparator() {
+            console.log('Navigation vers comparateur multi-banques');
+            alert('Redirection vers le comparateur multi-banques...');
+        }
+
+        function navigateToInsuranceComparator() {
+            console.log('Navigation vers comparateur d\'assurances');
+            alert('Redirection vers le comparateur d\'assurances...');
+        }
+
+        function navigateToRates() {
+            console.log('Navigation vers tarifs bancaires');
+            alert('Redirection vers les tarifs bancaires...');
+        }
+
+        // Animation des éléments au scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const fadeElements = document.querySelectorAll('.service-card');
+            fadeElements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+                observer.observe(el);
+            });
+
+            // Animation hover pour les stats
+            document.querySelectorAll('.stat-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.background = 'rgba(255, 255, 255, 0.1)';
+                    this.style.transform = 'translateY(-4px)';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.style.background = 'rgba(255, 255, 255, 0.05)';
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+
+        // Responsive design pour les stats
+        function adjustStatsGrid() {
+            const statsGrid = document.querySelector('.stats-grid');
+            if (window.innerWidth <= 768) {
+                statsGrid.style.gridTemplateColumns = '1fr';
+            } else {
+                statsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            }
+            
+            if (window.innerWidth >= 1024) {
+                statsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            }
+        }
+
+        window.addEventListener('resize', adjustStatsGrid);
+        adjustStatsGrid(); // Appel initial
+    </script>
+</body>
+</html>

@@ -1,0 +1,754 @@
+// Variables de couleurs
+$primary-green: #2d5a27;
+$light-green: #4a7c59;
+$accent-green: #7cb342;
+$gold: #d4af37;
+$light-gold: #f4e27e;
+$white: #ffffff;
+$light-gray: #f8f9fa;
+$medium-gray: #e9ecef;
+$dark-gray: #495057;
+$error-red: #dc3545;
+$success-green: #28a745;
+
+// Mixins
+@mixin smooth-transition($duration: 0.3s) {
+  transition: all $duration cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@mixin box-shadow($level: 1) {
+  @if $level == 1 {
+    box-shadow: 0 2px 8px rgba(45, 90, 39, 0.1);
+  } @else if $level == 2 {
+    box-shadow: 0 4px 16px rgba(45, 90, 39, 0.15);
+  } @else if $level == 3 {
+    box-shadow: 0 8px 32px rgba(45, 90, 39, 0.2);
+  }
+}
+
+@mixin gradient-bg($color1, $color2) {
+  background: linear-gradient(135deg, $color1 0%, $color2 100%);
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-30px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes checkmarkAnimation {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Styles du composant
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(45, 90, 39, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  @include smooth-transition(0.3s);
+  padding: 20px;
+  overflow-y: auto;
+
+  &.show {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.modal-container {
+  background: $white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow: hidden;
+  @include box-shadow(3);
+  transform: translateY(-30px) scale(0.95);
+  @include smooth-transition(0.4s);
+  position: relative;
+
+  &.show {
+    transform: translateY(0) scale(1);
+    animation: slideIn 0.4s ease-out;
+  }
+}
+
+// Header
+.modal-header {
+  @include gradient-bg($primary-green, $light-green);
+  color: $white;
+  padding: 24px 32px;
+  position: relative;
+  border-bottom: 2px solid $gold;
+
+  h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+    text-align: center;
+    padding-right: 40px;
+  }
+
+  .close-button {
+    position: absolute;
+    top: 50%;
+    right: 24px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: $white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    @include smooth-transition();
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-50%) rotate(90deg);
+    }
+  }
+}
+
+// Body
+.modal-body {
+  padding: 0;
+  max-height: calc(90vh - 200px);
+  overflow-y: auto;
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $light-gray;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $light-green;
+    border-radius: 3px;
+
+    &:hover {
+      background: $primary-green;
+    }
+  }
+}
+
+// Quote Summary
+.form-intro {
+  background: linear-gradient(135deg, $light-gray 0%, $white 100%);
+  padding: 32px;
+  border-bottom: 1px solid $medium-gray;
+}
+
+.quote-summary {
+  h3 {
+    color: $primary-green;
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    background: $white;
+    padding: 24px;
+    border-radius: 12px;
+    @include box-shadow(1);
+    border: 2px solid $gold;
+  }
+
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid $medium-gray;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      color: $dark-gray;
+      font-weight: 500;
+    }
+
+    .value {
+      color: $primary-green;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+  }
+}
+
+// Form Styles
+.application-form {
+  padding: 32px;
+}
+
+.form-section {
+  margin-bottom: 40px;
+
+  h4 {
+    color: $primary-green;
+    font-size: 1.3rem;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    padding-bottom: 12px;
+    border-bottom: 2px solid $gold;
+
+    i {
+      color: $gold;
+      font-size: 1.2rem;
+    }
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.form-group {
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    color: $primary-green;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+}
+
+// Form Controls
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid $medium-gray;
+  border-radius: 8px;
+  font-size: 1rem;
+  @include smooth-transition();
+  background: $white;
+
+  &:focus {
+    outline: none;
+    border-color: $accent-green;
+    box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.1);
+  }
+
+  &.error {
+    border-color: $error-red;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+  }
+
+  &::placeholder {
+    color: #adb5bd;
+  }
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+// Checkbox Styles
+.consent-section {
+  background: $light-gray;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid $medium-gray;
+
+  .form-group {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: $dark-gray;
+
+  .form-checkbox {
+    display: none;
+  }
+
+  .checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid $medium-gray;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    @include smooth-transition();
+    flex-shrink: 0;
+    margin-top: 2px;
+
+    &::after {
+      content: '✓';
+      color: $white;
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0;
+      transform: scale(0);
+      @include smooth-transition();
+    }
+  }
+
+  &:hover .checkmark {
+    border-color: $accent-green;
+  }
+
+  .form-checkbox:checked + .checkmark {
+    background: $accent-green;
+    border-color: $accent-green;
+
+    &::after {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+// Error Messages
+.error-message {
+  color: $error-red;
+  font-size: 0.875rem;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &::before {
+    content: '⚠';
+  }
+}
+
+// Success Step
+.notification-step {
+  padding: 48px 32px;
+  text-align: center;
+  animation: fadeIn 0.6s ease-out;
+}
+
+.success-animation {
+  margin-bottom: 32px;
+
+  .checkmark-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: $success-green;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    animation: checkmarkAnimation 0.6s ease-out;
+
+    .checkmark {
+      color: $white;
+      font-size: 2.5rem;
+      font-weight: bold;
+
+      &::before {
+        content: '✓';
+      }
+    }
+  }
+}
+
+.notification-content {
+  h3 {
+    color: $primary-green;
+    font-size: 1.8rem;
+    margin-bottom: 32px;
+    font-weight: 600;
+  }
+}
+
+.application-details {
+  background: $light-gray;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 32px;
+  border: 1px solid $gold;
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    strong {
+      color: $primary-green;
+    }
+
+    .application-number {
+      font-family: 'Courier New', monospace;
+      background: $white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid $gold;
+      font-weight: bold;
+      color: $primary-green;
+    }
+
+    .copy-button {
+      background: $gold;
+      border: none;
+      color: $white;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      @include smooth-transition();
+
+      &:hover {
+        background: darken($gold, 10%);
+        transform: scale(1.05);
+      }
+    }
+  }
+}
+
+.next-steps {
+  text-align: left;
+  margin-bottom: 32px;
+
+  h4 {
+    color: $primary-green;
+    margin-bottom: 16px;
+    text-align: center;
+    font-size: 1.2rem;
+  }
+
+  .steps-list {
+    list-style: none;
+    padding: 0;
+    counter-reset: step-counter;
+
+    li {
+      counter-increment: step-counter;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px;
+      background: $white;
+      border-radius: 8px;
+      border-left: 4px solid $gold;
+      @include box-shadow(1);
+
+      .step-number {
+        background: $accent-green;
+        color: $white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        font-weight: bold;
+        flex-shrink: 0;
+
+        &::before {
+          content: counter(step-counter);
+        }
+      }
+
+      .step-text {
+        flex: 1;
+        line-height: 1.5;
+        color: $dark-gray;
+      }
+    }
+  }
+}
+
+.contact-info {
+  h4 {
+    color: $primary-green;
+    margin-bottom: 16px;
+    font-size: 1.2rem;
+  }
+
+  .contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px;
+    background: $light-gray;
+    border-radius: 8px;
+
+    i {
+      color: $gold;
+      width: 20px;
+    }
+
+    a {
+      color: $primary-green;
+      text-decoration: none;
+      font-weight: 500;
+
+      &:hover {
+        text-decoration: underline;
+        color: $accent-green;
+      }
+    }
+  }
+}
+
+// Footer
+.modal-footer {
+  padding: 24px 32px;
+  background: $light-gray;
+  border-top: 1px solid $medium-gray;
+
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+}
+
+// Buttons
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  @include smooth-transition();
+  border: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &.btn-primary {
+    background: $accent-green;
+    color: $white;
+
+    &:hover:not(:disabled) {
+      background: darken($accent-green, 10%);
+      transform: translateY(-2px);
+      @include box-shadow(2);
+    }
+
+    &:disabled {
+      background: $medium-gray;
+      color: $dark-gray;
+      cursor: not-allowed;
+    }
+  }
+
+  &.btn-secondary {
+    background: $medium-gray;
+    color: $dark-gray;
+
+    &:hover {
+      background: darken($medium-gray, 10%);
+    }
+  }
+
+  &.btn-outline {
+    background: transparent;
+    color: $gold;
+    border-color: $gold;
+
+    &:hover {
+      background: $gold;
+      color: $white;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-container {
+    max-height: 95vh;
+  }
+
+  .modal-header {
+    padding: 20px;
+
+    h2 {
+      font-size: 1.5rem;
+      padding-right: 40px;
+    }
+  }
+
+  .application-form,
+  .notification-step {
+    padding: 24px 20px;
+  }
+
+  .form-intro {
+    padding: 24px 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .detail-item {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .contact-details {
+    .contact-item {
+      justify-content: flex-start;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header {
+    padding: 16px;
+
+    h2 {
+      font-size: 1.25rem;
+    }
+  }
+
+  .application-form,
+  .notification-step {
+    padding: 20px 16px;
+  }
+
+  .form-intro {
+    padding: 20px 16px;
+  }
+
+  .summary-grid {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 16px;
+  }
+}
+
+// Loading state
+.form-actions {
+  .btn {
+    &.loading {
+      position: relative;
+      color: transparent;
+
+      &::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin: -8px 0 0 -8px;
+        border: 2px solid transparent;
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

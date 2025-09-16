@@ -1,0 +1,848 @@
+// Variables globales
+$primary-green: #1a4d3a;
+$primary-light: #22c55e;
+$secondary-green: #16a34a;
+$accent-gold: #f59e0b;
+$white: #ffffff;
+$gray-50: #f9fafb;
+$gray-100: #f3f4f6;
+$gray-200: #e5e7eb;
+$gray-300: #d1d5db;
+$gray-400: #9ca3af;
+$gray-500: #6b7280;
+$gray-600: #4b5563;
+$gray-700: #374151;
+$gray-800: #1f2937;
+$gray-900: #111827;
+
+$border-radius: 16px;
+$border-radius-lg: 20px;
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 8px 25px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+.bank-rates-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, $gray-50 0%, #e2e8f0 100%);
+
+  // Header avec dégradé sophistiqué
+  .page-header {
+    background: linear-gradient(135deg, $primary-green 0%, darken($primary-green, 10%) 100%);
+    color: $white;
+    padding: 4rem 0 6rem;
+    position: relative;
+    overflow: hidden;
+
+    // Pattern de fond subtil
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, $white 0%, rgba(255, 255, 255, 0.8) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+
+      @media (max-width: 768px) {
+        font-size: 2.5rem;
+      }
+    }
+
+    .subtitle {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      margin-bottom: 3rem;
+      max-width: 600px;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+
+    // Section filtres avec glassmorphism
+    .filters-section {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: $border-radius-lg;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+      .filters-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+
+        @media (max-width: 640px) {
+          grid-template-columns: 1fr;
+        }
+
+        .filter-group {
+          label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.95;
+          }
+
+          .form-select,
+          .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            color: $gray-800;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: $transition;
+
+            &:focus {
+              outline: none;
+              border-color: rgba(255, 255, 255, 0.8);
+              background: $white;
+              box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+            }
+
+            &::placeholder {
+              color: $gray-400;
+            }
+          }
+        }
+      }
+    }
+
+    // États de chargement et d'erreur
+    .loading-indicator {
+      text-align: center;
+      padding: 2rem;
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: $white;
+        animation: spin 1s ease-in-out infinite;
+        margin: 0 auto 1rem;
+      }
+
+      p {
+        opacity: 0.9;
+        font-weight: 500;
+      }
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: $border-radius;
+      padding: 1.5rem;
+      text-align: center;
+
+      p {
+        margin-bottom: 1rem;
+        color: #fecaca;
+        font-weight: 500;
+      }
+
+      .retry-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: $white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: $transition;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+
+  // Section des taux avec cards premium
+  .rates-section {
+    padding: 4rem 0;
+    margin-top: -3rem;
+    position: relative;
+    z-index: 3;
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .results-info {
+      margin-bottom: 2rem;
+
+      p {
+        color: $gray-600;
+        font-size: 1rem;
+        font-weight: 600;
+      }
+    }
+
+    .rates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 2rem;
+
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .rate-card {
+      background: $white;
+      border-radius: $border-radius-lg;
+      padding: 2rem;
+      box-shadow: $shadow-sm;
+      border: 1px solid $gray-200;
+      transition: $transition;
+      position: relative;
+      overflow: hidden;
+
+      &:hover {
+        transform: translateY(-8px);
+        box-shadow: $shadow-lg;
+        border-color: $primary-green;
+      }
+
+      // Badge offre spéciale
+      &.featured {
+        border: 2px solid $accent-gold;
+        
+        &::after {
+          content: 'Offre spéciale';
+          position: absolute;
+          top: 0;
+          right: 0;
+          background: linear-gradient(135deg, $accent-gold 0%, darken($accent-gold, 10%) 100%);
+          color: $white;
+          padding: 0.5rem 1rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          border-radius: 0 $border-radius-lg 0 12px;
+        }
+      }
+
+      // En-tête banque
+      .bank-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+
+        .bank-logo {
+          width: 56px;
+          height: 56px;
+          border-radius: 12px;
+          background: $gray-100;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 1rem;
+          overflow: hidden;
+          box-shadow: $shadow-sm;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+          }
+        }
+
+        .bank-info {
+          flex: 1;
+
+          h3 {
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: $primary-green;
+            margin-bottom: 0.25rem;
+            line-height: 1.2;
+          }
+
+          .credit-type {
+            color: $gray-500;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+      }
+
+      // Détails du taux - Section hero
+      .rate-details {
+        .main-rate {
+          background: linear-gradient(135deg, $gray-50 0%, $gray-100 100%);
+          border-radius: 16px;
+          padding: 2rem;
+          text-align: center;
+          margin-bottom: 1.5rem;
+          position: relative;
+          overflow: hidden;
+
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(26, 77, 58, 0.05) 100%);
+            pointer-events: none;
+          }
+
+          .rate-label {
+            position: relative;
+            display: block;
+            color: $gray-600;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+
+          .rate-value {
+            position: relative;
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, $primary-green 0%, $secondary-green 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+            line-height: 1;
+          }
+        }
+
+        .rate-range {
+          text-align: center;
+          color: $gray-500;
+          font-size: 0.9rem;
+          font-weight: 500;
+          margin-bottom: 1.5rem;
+        }
+
+        .amount-info {
+          .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid $gray-200;
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .label {
+              color: $gray-600;
+              font-size: 0.9rem;
+              font-weight: 600;
+            }
+
+            .value {
+              font-weight: 700;
+              color: $gray-800;
+              font-size: 0.9rem;
+            }
+          }
+        }
+      }
+
+      // Description produit
+      .product-description {
+        background: $gray-50;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+
+        p {
+          font-size: 0.9rem;
+          color: $gray-700;
+          line-height: 1.6;
+          margin: 0;
+        }
+      }
+
+      // Offres spéciales avec design premium
+      .special-offers {
+        margin-bottom: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid $gray-100;
+
+        h4 {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: $gray-800;
+          margin-bottom: 1rem;
+          display: flex;
+          align-items: center;
+
+          &::before {
+            content: '✨';
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+          }
+        }
+
+        .offer-item {
+          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+          border: 2px solid $accent-gold;
+          border-radius: 12px;
+          padding: 1.5rem;
+          margin-bottom: 1rem;
+          position: relative;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          .offer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+
+            .offer-title {
+              font-weight: 700;
+              color: #92400e;
+              font-size: 0.95rem;
+            }
+
+            .offer-rate {
+              font-size: 1.5rem;
+              font-weight: 800;
+              color: #92400e;
+              line-height: 1;
+            }
+          }
+
+          .offer-description {
+            font-size: 0.85rem;
+            color: #a16207;
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+          }
+
+          .offer-validity {
+            font-size: 0.75rem;
+            color: #a16207;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+      }
+
+      // Sections conditions, documents, frais
+      .conditions,
+      .documents,
+      .fees {
+        margin-bottom: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid $gray-200;
+
+        h4 {
+          font-size: 1rem;
+          font-weight: 700;
+          color: $gray-800;
+          margin-bottom: 1rem;
+        }
+
+        ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+
+          li {
+            padding: 0.5rem 0;
+            color: $gray-600;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            position: relative;
+            padding-left: 1.5rem;
+
+            &::before {
+              content: '→';
+              position: absolute;
+              left: 0;
+              color: $primary-green;
+              font-weight: 600;
+            }
+          }
+        }
+
+        .fees-list {
+          .fee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid $gray-200;
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .fee-label {
+              color: $gray-600;
+              font-size: 0.85rem;
+              font-weight: 500;
+            }
+
+            .fee-value {
+              font-weight: 700;
+              color: $gray-800;
+              font-size: 0.85rem;
+            }
+          }
+        }
+      }
+
+      // Actions avec boutons premium
+      .card-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+
+        @media (max-width: 480px) {
+          flex-direction: column;
+        }
+
+        .btn-primary {
+          flex: 2;
+          background: linear-gradient(135deg, $primary-green 0%, $secondary-green 100%);
+          color: $white;
+          border: none;
+          padding: 1rem 1.5rem;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: $transition;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(26, 77, 58, 0.3);
+          }
+        }
+
+        .btn-secondary,
+        .btn-outline {
+          flex: 1;
+          background: $white;
+          color: $primary-green;
+          border: 2px solid $primary-green;
+          padding: 1rem 1.5rem;
+          border-radius: 12px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: $transition;
+
+          &:hover {
+            background: $primary-green;
+            color: $white;
+            transform: translateY(-1px);
+          }
+        }
+
+        .btn-outline {
+          border-color: $gray-300;
+          color: $gray-600;
+
+          &:hover {
+            border-color: $gray-400;
+            background: $gray-50;
+            color: $gray-700;
+          }
+        }
+      }
+
+      .last-updated {
+        text-align: center;
+        color: $gray-400;
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding-top: 1rem;
+        border-top: 1px solid $gray-200;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+
+    // Aucun résultat
+    .no-results {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: $gray-500;
+
+      h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: $gray-700;
+      }
+
+      p {
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+        line-height: 1.6;
+      }
+
+      .btn-secondary {
+        background: $primary-green;
+        color: $white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: $transition;
+
+        &:hover {
+          background: darken($primary-green, 10%);
+          transform: translateY(-2px);
+        }
+      }
+    }
+  }
+
+  // Analyse de marché premium
+  .market-analysis {
+    background: $white;
+    padding: 4rem 0;
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: $primary-green;
+      margin-bottom: 3rem;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(135deg, $primary-green 0%, $secondary-green 100%);
+        border-radius: 2px;
+      }
+    }
+
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+
+      .analysis-card {
+        background: linear-gradient(135deg, $gray-50 0%, $white 100%);
+        border: 1px solid $gray-200;
+        border-radius: $border-radius-lg;
+        padding: 2rem;
+        text-align: center;
+        transition: $transition;
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(135deg, $primary-green 0%, $secondary-green 100%);
+        }
+
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: $shadow-md;
+        }
+
+        h3 {
+          font-size: 1rem;
+          font-weight: 600;
+          color: $gray-600;
+          margin-bottom: 1rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+          font-size: 2.5rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, $primary-green 0%, $secondary-green 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-bottom: 0.5rem;
+          line-height: 1.2;
+        }
+
+        .trend {
+          font-size: 0.9rem;
+          font-weight: 600;
+
+          &.positive {
+            color: $primary-light;
+          }
+
+          &.negative {
+            color: #ef4444;
+          }
+        }
+
+        .bank-name,
+        .info {
+          color: $gray-500;
+          font-size: 0.85rem;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Animation des cards
+.rate-card {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+
+  @for $i from 1 through 8 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.1}s;
+    }
+  }
+}
+
+// Responsive design amélioré
+@media (max-width: 768px) {
+  .bank-rates-container {
+    .page-header {
+      padding: 3rem 0 5rem;
+
+      .container {
+        padding: 0 1rem;
+      }
+
+      .filters-section {
+        padding: 1.5rem;
+      }
+    }
+
+    .rates-section {
+      padding: 3rem 0;
+      margin-top: -2.5rem;
+
+      .container {
+        padding: 0 1rem;
+      }
+
+      .rates-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .rate-card {
+        padding: 1.5rem;
+
+        .rate-details .main-rate {
+          padding: 1.5rem;
+
+          .rate-value {
+            font-size: 2.5rem;
+          }
+        }
+      }
+    }
+
+    .market-analysis {
+      padding: 3rem 0;
+
+      .container {
+        padding: 0 1rem;
+      }
+
+      h2 {
+        font-size: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .analysis-grid {
+        gap: 1.5rem;
+
+        .analysis-card {
+          padding: 1.5rem;
+
+          .stat-value {
+            font-size: 2rem;
+          }
+        }
+      }
+    }
+  }
+}

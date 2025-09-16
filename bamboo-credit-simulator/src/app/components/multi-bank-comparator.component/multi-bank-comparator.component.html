@@ -1,0 +1,868 @@
+<div class="comparator-page">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="container">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <i class="material-icons">compare_arrows</i>
+          Comparateur Multi-Banques Gabon
+        </h1>
+        <p class="hero-subtitle">
+          Trouvez la meilleure offre de crédit parmi nos produits bancaires en 3 étapes simples
+        </p>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number">{{ totalProductsCount }}</span>
+            <span class="stat-label">Produits</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">100%</span>
+            <span class="stat-label">Gratuit</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">< 3min</span>
+            <span class="stat-label">Comparaison</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire de Simulation avec Stepper -->
+  <div class="simulation-section">
+    <div class="container">
+      <div class="form-card">
+        <!-- Stepper Header -->
+        <div class="form-stepper">
+          <div class="stepper-header">
+            <h2>Votre Simulation de Crédit</h2>
+            <p>Suivez ces étapes pour obtenir vos offres personnalisées</p>
+          </div>
+
+          <div class="steps-container">
+            <ng-container *ngFor="let step of steps; let i = index">
+              <div 
+                class="step"
+                [ngClass]="getStepClass(step.id)"
+                (click)="goToStep(step.id)"
+                [style.cursor]="canGoToStep(step.id) || step.id <= currentStep ? 'pointer' : 'default'"
+              >
+                <div class="step-indicator">
+                  <span *ngIf="getStepClass(step.id) !== 'completed'">{{ step.id }}</span>
+                  <i *ngIf="getStepClass(step.id) === 'completed'" class="material-icons">check</i>
+                </div>
+                <span class="step-label">{{ step.label }}</span>
+              </div>
+              
+              <div 
+                *ngIf="i !== steps.length - 1"
+                class="step-connector"
+                [ngClass]="getConnectorClass(step.id)"
+              ></div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Form Steps -->
+        <form [formGroup]="simulationForm" (ngSubmit)="onSubmit()" class="form-steps">
+          
+          <!-- Étape 1: Profil -->
+          <div class="step-content" [class.active]="currentStep === 1">
+            <div class="step-header">
+              <h3>
+                <i class="material-icons">{{ currentStepConfig?.icon }}</i>
+                {{ currentStepConfig?.label }}
+              </h3>
+              <p>{{ currentStepConfig?.description }}</p>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title">
+                <i class="material-icons">account_circle</i>
+                Type de profil
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="fullName" class="form-label">
+                    <i class="material-icons">person</i>
+                    Nom complet
+                    <span class="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    formControlName="fullName"
+                    class="form-control"
+                    [class.error]="hasError('fullName')"
+                    placeholder="Jean Dupont"
+                  />
+                  <div class="error-message" *ngIf="hasError('fullName')">
+                    {{ getErrorMessage('fullName') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="phoneNumber" class="form-label">
+                    <i class="material-icons">phone</i>
+                    Téléphone
+                    <span class="required">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    formControlName="phoneNumber"
+                    class="form-control"
+                    [class.error]="hasError('phoneNumber')"
+                    placeholder="+241 XX XX XX XX"
+                  />
+                  <div class="error-message" *ngIf="hasError('phoneNumber')">
+                    {{ getErrorMessage('phoneNumber') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="email" class="form-label">
+                    <i class="material-icons">email</i>
+                    Email (optionnel)
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    formControlName="email"
+                    class="form-control"
+                    [class.error]="hasError('email')"
+                    placeholder="votre.email@exemple.com"
+                  />
+                  <div class="error-message" *ngIf="hasError('email')">
+                    {{ getErrorMessage('email') }}
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="monthlyIncome" class="form-label">
+                    <i class="material-icons">payments</i>
+                    Revenus mensuels (FCFA)
+                    <span class="required">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="monthlyIncome"
+                    formControlName="monthlyIncome"
+                    class="form-control"
+                    [class.error]="hasError('monthlyIncome')"
+                    placeholder="750 000"
+                  />
+                  <div class="form-help">
+                    Minimum: {{ simulationForm.get('clientType')?.value === 'entreprise' ? '500 000' : '200 000' }} FCFA
+                  </div>
+                  <div class="error-message" *ngIf="hasError('monthlyIncome')">
+                    {{ getErrorMessage('monthlyIncome') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row" *ngIf="simulationForm.get('clientType')?.value === 'entreprise'">
+                <div class="form-group">
+                  <label for="profession" class="form-label">
+                    <i class="material-icons">work</i>
+                    Secteur d'activité
+                    <span class="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="profession"
+                    formControlName="profession"
+                    class="form-control"
+                    [class.error]="hasError('profession')"
+                    placeholder="Ex: Commerce, BTP, Services..."
+                  />
+                  <div class="error-message" *ngIf="hasError('profession')">
+                    {{ getErrorMessage('profession') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Étape 2: Crédit -->
+          <div class="step-content" [class.active]="currentStep === 2">
+            <div class="step-header">
+              <h3>
+                <i class="material-icons">{{ currentStepConfig?.icon }}</i>
+                {{ currentStepConfig?.label }}
+              </h3>
+              <p>{{ currentStepConfig?.description }}</p>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title">
+                <i class="material-icons">category</i>
+                Type et montant du crédit
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="creditType" class="form-label">
+                    <i class="material-icons">category</i>
+                    Type de crédit
+                    <span class="required">*</span>
+                  </label>
+                  <select
+                    id="creditType"
+                    formControlName="creditType"
+                    class="form-control"
+                    [class.error]="hasError('creditType')"
+                    [disabled]="isLoadingProducts"
+                  >
+                    <option value="" disabled>
+                      {{ isLoadingProducts ? 'Chargement...' : 'Choisissez un type' }}
+                    </option>
+                    <option *ngFor="let type of availableCreditTypes" [value]="type.id">
+                      {{ type.name }} - {{ type.description }}
+                    </option>
+                  </select>
+                  <div class="form-help" *ngIf="availableCreditTypes.length > 0">
+                    {{ availableCreditTypes.length }} type(s) disponible(s) en base
+                  </div>
+                  <div class="error-message" *ngIf="hasError('creditType')">
+                    {{ getErrorMessage('creditType') }}
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="requestedAmount" class="form-label">
+                    <i class="material-icons">monetization_on</i>
+                    Montant souhaité (FCFA)
+                    <span class="required">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="requestedAmount"
+                    formControlName="requestedAmount"
+                    class="form-control"
+                    [class.error]="hasError('requestedAmount')"
+                    placeholder="2 000 000"
+                  />
+                  <div class="form-help">
+                    Entre 100 000 et 100 000 000 FCFA
+                  </div>
+                  <div class="error-message" *ngIf="hasError('requestedAmount')">
+                    {{ getErrorMessage('requestedAmount') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="duration" class="form-label">
+                    <i class="material-icons">schedule</i>
+                    Durée
+                    <span class="required">*</span>
+                  </label>
+                  <select
+                    id="duration"
+                    formControlName="duration"
+                    class="form-control"
+                    [class.error]="hasError('duration')"
+                  >
+                    <option value="" disabled>Choisissez une durée</option>
+                    <option *ngFor="let duration of durations" [value]="duration.value">
+                      {{ duration.label }}
+                    </option>
+                  </select>
+                  <div class="error-message" *ngIf="hasError('duration')">
+                    {{ getErrorMessage('duration') }}
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="purpose" class="form-label">
+                    <i class="material-icons">description</i>
+                    Objet du crédit
+                    <span class="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="purpose"
+                    formControlName="purpose"
+                    class="form-control"
+                    [class.error]="hasError('purpose')"
+                    placeholder="Ex: Achat véhicule, travaux..."
+                  />
+                  <div class="error-message" *ngIf="hasError('purpose')">
+                    {{ getErrorMessage('purpose') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title">
+                <i class="material-icons">account_balance</i>
+                Informations financières complémentaires
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="currentDebts" class="form-label">
+                    <i class="material-icons">account_balance</i>
+                    Dettes actuelles (FCFA)
+                  </label>
+                  <input
+                    type="number"
+                    id="currentDebts"
+                    formControlName="currentDebts"
+                    class="form-control"
+                    [class.error]="hasError('currentDebts')"
+                    placeholder="0"
+                  />
+                  <div class="form-help">
+                    Montant total de vos crédits en cours
+                  </div>
+                  <div class="error-message" *ngIf="hasError('currentDebts')">
+                    {{ getErrorMessage('currentDebts') }}
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="downPayment" class="form-label">
+                    <i class="material-icons">savings</i>
+                    Apport personnel (FCFA)
+                  </label>
+                  <input
+                    type="number"
+                    id="downPayment"
+                    formControlName="downPayment"
+                    class="form-control"
+                    [class.error]="hasError('downPayment')"
+                    placeholder="0"
+                  />
+                  <div class="form-help">
+                    Montant que vous pouvez investir immédiatement
+                  </div>
+                  <div class="error-message" *ngIf="hasError('downPayment')">
+                    {{ getErrorMessage('downPayment') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Étape 3: Validation -->
+          <div class="step-content" [class.active]="currentStep === 3">
+            <div class="step-header">
+              <h3>
+                <i class="material-icons">{{ currentStepConfig?.icon }}</i>
+                {{ currentStepConfig?.label }}
+              </h3>
+              <p>{{ currentStepConfig?.description }}</p>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title">
+                <i class="material-icons">summary</i>
+                Récapitulatif de votre demande
+              </div>
+              
+              <div class="summary-card">
+                <div class="summary-row">
+                  <span class="summary-label">Profil:</span>
+                  <span class="summary-value">
+                    {{ clientTypeLabel }}
+                    - {{ simulationForm.get('fullName')?.value }}
+                  </span>
+                </div>
+                
+                <div class="summary-row">
+                  <span class="summary-label">Contact:</span>
+                  <span class="summary-value">
+                    {{ simulationForm.get('phoneNumber')?.value }}
+                    <span *ngIf="simulationForm.get('email')?.value">
+                      - {{ simulationForm.get('email')?.value }}
+                    </span>
+                  </span>
+                </div>
+                
+                <div class="summary-row">
+                  <span class="summary-label">Revenus:</span>
+                  <span class="summary-value">
+                    {{ formatCurrency(simulationForm.get('monthlyIncome')?.value) }} / mois
+                  </span>
+                </div>
+                
+                <div class="summary-row">
+                  <span class="summary-label">Type de crédit:</span>
+                  <span class="summary-value">
+                    {{ selectedCreditTypeName }}
+                  </span>
+                </div>
+                
+                <div class="summary-row">
+                  <span class="summary-label">Montant:</span>
+                  <span class="summary-value">
+                    {{ formatCurrency(simulationForm.get('requestedAmount')?.value) }}
+                  </span>
+                </div>
+                
+                <div class="summary-row">
+                  <span class="summary-label">Durée:</span>
+                  <span class="summary-value">
+                    {{ selectedDurationLabel }}
+                  </span>
+                </div>
+                
+                <div class="summary-row">
+                  <span class="summary-label">Objet:</span>
+                  <span class="summary-value">
+                    {{ simulationForm.get('purpose')?.value }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section" *ngIf="!isLoadingProducts">
+              <div class="section-title">
+                <i class="material-icons">local_offer</i>
+                Produits compatibles trouvés
+              </div>
+              
+              <div class="compatibility-info">
+                <div *ngIf="compatibleProducts.length === 0 && alternativeProducts.length === 0" class="info-message">
+                  <i class="material-icons">info</i>
+                  <div>
+                    <h4>Aucun produit compatible</h4>
+                    <p>Aucun produit ne correspond à vos critères actuels. Veuillez modifier le montant ou la durée dans les étapes précédentes.</p>
+                  </div>
+                </div>
+
+                <!-- Affichage des alternatives quand pas de produits compatibles -->
+                <div *ngIf="compatibleProducts.length === 0 && alternativeProducts.length > 0" class="alternatives-section">
+                  <div class="info-message">
+                    <i class="material-icons">lightbulb_outline</i>
+                    <div>
+                      <h4>Suggestions d'ajustement</h4>
+                      <p>Nous avons trouvé des produits similaires avec des conditions légèrement différentes :</p>
+                    </div>
+                  </div>
+                  
+                  <div class="alternatives-list">
+                    <div *ngFor="let alternative of alternativeProducts" class="alternative-item">
+                      <div class="alternative-content">
+                        <div class="alternative-bank">
+                          <div class="bank-logo" [style.background]="getBankColor(alternative.product.bank)">
+                            {{ alternative.product.bank.name.charAt(0) }}
+                          </div>
+                          <div class="bank-info">
+                            <h5>{{ alternative.product.bank.name }}</h5>
+                            <p>{{ alternative.product.name }}</p>
+                          </div>
+                        </div>
+                        
+                        <div class="alternative-suggestion">
+                          <div class="suggestion-type">
+                            <i class="material-icons" *ngIf="alternative.type.includes('amount')">monetization_on</i>
+                            <i class="material-icons" *ngIf="alternative.type.includes('duration')">schedule</i>
+                            <span class="suggestion-text">{{ alternative.suggestion }}</span>
+                          </div>
+                          
+                          <button 
+                            type="button" 
+                            class="apply-suggestion-btn"
+                            (click)="applyAlternative(alternative)"
+                          >
+                            <i class="material-icons">auto_fix_high</i>
+                            Appliquer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div *ngIf="compatibleProducts.length > 0" class="success-message">
+                  <i class="material-icons">check_circle</i>
+                  <div>
+                    <h4>{{ compatibleProductsCount }} produit{{ compatibleProductsCount > 1 ? 's' : '' }} compatible{{ compatibleProductsCount > 1 ? 's' : '' }}</h4>
+                    <p>Parfait ! Nous avons trouvé des offres qui correspondent à votre profil.</p>
+                  </div>
+                </div>
+
+                <div *ngIf="compatibleProducts.length > 0" class="compatible-products-preview">
+                  <div class="preview-grid">
+                    <div *ngFor="let product of compatibleProducts" class="product-preview">
+                      <div class="bank-logo" [style.background]="getBankColor(product.bank)">
+                        {{ product.bank.name.charAt(0) }}
+                      </div>
+                      <div class="product-info">
+                        <h5>{{ product.bank.name }}</h5>
+                        <p>{{ product.name }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section" *ngIf="isLoadingProducts">
+              <div class="loading-products">
+                <div class="spinner"></div>
+                <p>Chargement des produits...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation Steps -->
+          <div class="step-navigation">
+            <!-- Debug info et bouton de test -->
+            <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px;">
+              <strong>Debug:</strong><br>
+              Étape actuelle: {{ currentStep }}<br>
+              Peut continuer: {{ canProceedToNext ? 'Oui' : 'Non' }}<br>
+              Validation étape 1: {{ stepValidation[1] ? 'Valide' : 'Invalide' }}<br>
+              Validation étape 2: {{ stepValidation[2] ? 'Valide' : 'Invalide' }}<br>
+              Validation étape 3: {{ stepValidation[3] ? 'Valide' : 'Invalide' }}<br>
+              <button type="button" (click)="testApiConnection()" style="margin-top: 5px; padding: 5px;">Test API</button>
+              <button type="button" (click)="forceValidateStep()" style="margin-top: 5px; padding: 5px; margin-left: 5px;">Force Validation</button>
+            </div>
+
+            <button
+              type="button"
+              class="nav-btn btn-previous"
+              [disabled]="!canGoBack || isLoading"
+              (click)="previousStep()"
+            >
+              <i class="material-icons">arrow_back</i>
+              Précédent
+            </button>
+
+            <div class="step-info">
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="progressPercentage"></div>
+              </div>
+              <span class="progress-text">Étape {{ currentStep }} sur {{ totalSteps }}</span>
+            </div>
+
+            <button
+              *ngIf="!isLastStep"
+              type="button"
+              class="nav-btn btn-next"
+              [disabled]="!canProceedToNext || isLoading"
+              (click)="nextStep()"
+            >
+              Suivant
+              <i class="material-icons">arrow_forward</i>
+            </button>
+
+            <button
+              *ngIf="isLastStep"
+              type="submit"
+              class="nav-btn btn-submit"
+              [disabled]="!isFormValid || isLoading"
+            >
+              <span *ngIf="!isLoading" class="btn-content">
+                <i class="material-icons">compare</i>
+                Comparer les Offres
+              </span>
+              <span *ngIf="isLoading" class="btn-loading">
+                <div class="spinner"></div>
+                Comparaison en cours...
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-section" *ngIf="isLoading">
+    <div class="container">
+      <div class="loading-card">
+        <div class="loading-animation">
+          <div class="comparison-spinner">
+            <div class="spinner-ring" *ngFor="let i of [1,2,3]; let idx = index" 
+                 [style.animation-delay]="idx * 0.2 + 's'"></div>
+          </div>
+        </div>
+        <h3>Comparaison en cours...</h3>
+        <p>Analyse des offres de {{ compatibleProductsCount }} produit{{ compatibleProductsCount > 1 ? 's' : '' }}</p>
+        <div class="progress-steps">
+          <div class="step active">
+            <i class="material-icons">send</i>
+            <span>Envoi des données</span>
+          </div>
+          <div class="step active">
+            <i class="material-icons">psychology</i>
+            <span>Calcul du scoring</span>
+          </div>
+          <div class="step active">
+            <i class="material-icons">compare_arrows</i>
+            <span>Comparaison des offres</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message d'Erreur -->
+  <div class="error-section" *ngIf="hasFormError && !isLoading">
+    <div class="container">
+      <div class="error-card">
+        <div class="error-content">
+          <i class="material-icons">error_outline</i>
+          <h3>Erreur lors de la comparaison</h3>
+          <p>{{ errorMessage }}</p>
+          <button class="retry-btn" (click)="onSubmit()">
+            <i class="material-icons">refresh</i>
+            Réessayer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Résultats de Comparaison -->
+  <div class="results-section" *ngIf="productSimulations.length > 0 && !isLoading">
+    <div class="container">
+      <!-- Résumé des Résultats -->
+      <div class="results-summary">
+        <div class="summary-header">
+          <h2>
+            <i class="material-icons">analytics</i>
+            Résultats de votre Comparaison
+          </h2>
+          <div class="summary-actions">
+            <button class="action-btn" (click)="saveComparison()" title="Sauvegarder">
+              <i class="material-icons">bookmark</i>
+            </button>
+            <button class="action-btn" (click)="exportToPDF()" title="Exporter PDF">
+              <i class="material-icons">picture_as_pdf</i>
+            </button>
+            <button class="action-btn" (click)="shareComparison()" title="Partager">
+              <i class="material-icons">share</i>
+            </button>
+          </div>
+        </div>
+
+        <div class="summary-stats">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="material-icons">local_offer</i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ productSimulations.length }}</span>
+              <span class="stat-label">Offres reçues</span>
+            </div>
+          </div>
+
+          <div class="stat-card highlight" *ngIf="eligibleSimulationsCount > 0">
+            <div class="stat-icon">
+              <i class="material-icons">check_circle</i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ eligibleSimulationsCount }}</span>
+              <span class="stat-label">Éligible{{ eligibleSimulationsCount > 1 ? 's' : '' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contrôles de tri et filtrage -->
+      <div class="controls-section">
+        <div class="controls-content">
+          <div class="sort-controls">
+            <span class="sort-label">Trier par:</span>
+            <div class="sort-buttons">
+              <button
+                class="sort-btn"
+                [class.active]="sortBy === 'rate'"
+                (click)="setSortBy('rate')"
+              >
+                <i class="material-icons">trending_down</i>
+                Taux
+              </button>
+              <button
+                class="sort-btn"
+                [class.active]="sortBy === 'payment'"
+                (click)="setSortBy('payment')"
+              >
+                <i class="material-icons">payments</i>
+                Mensualité
+              </button>
+              <button
+                class="sort-btn"
+                [class.active]="sortBy === 'time'"
+                (click)="setSortBy('time')"
+              >
+                <i class="material-icons">schedule</i>
+                Rapidité
+              </button>
+              <button
+                class="sort-btn"
+                [class.active]="sortBy === 'eligible'"
+                (click)="setSortBy('eligible')"
+              >
+                <i class="material-icons">thumb_up</i>
+                Éligibilité
+              </button>
+            </div>
+          </div>
+          
+          <div class="filter-controls">
+            <label class="filter-toggle">
+              <input 
+                type="checkbox" 
+                [checked]="showOnlyEligible"
+                (change)="toggleEligibilityFilter()"
+              >
+              <span>Afficher uniquement les offres éligibles</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grille des offres -->
+      <div class="offers-grid">
+        <div
+          *ngFor="let simulation of getSortedSimulations(); let i = index"
+          class="offer-card"
+          [class.best]="i === 0 && simulation.simulation.eligible"
+          [class.not-eligible]="!simulation.simulation.eligible"
+          [style.border-left-color]="getBankColor(simulation.product.bank)"
+        >
+          <div class="offer-header">
+            <div class="header-top">
+              <div class="bank-info">
+                <div class="bank-logo" [style.background]="getBankColor(simulation.product.bank)">
+                  <span>{{ simulation.product.bank.name.split(' ')[0] }}</span>
+                </div>
+                <div class="bank-details">
+                  <h4>{{ simulation.product.bank.name }}</h4>
+                  <p>{{ simulation.product.name }}</p>
+                </div>
+              </div>
+              
+              <div class="offer-badges">
+                <div *ngIf="i < 3 && simulation.simulation.eligible" class="rank-badge" [class]="'rank-' + (i + 1)">
+                  #{{ i + 1 }}
+                </div>
+                
+                <div class="eligibility-badge" [ngClass]="getEligibilityClass(simulation.simulation.eligible)">
+                  {{ getEligibilityText(simulation.simulation.eligible) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="offer-metrics">
+            <div class="metric primary">
+              <span class="metric-value primary">{{ formatPercent(simulation.simulation.applied_rate) }}</span>
+              <span class="metric-label">Taux annuel</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value">{{ getProcessingTimeText(simulation.product.processing_time_hours) }}</span>
+              <span class="metric-label">Délai</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value">{{ formatCurrency(simulation.simulation.total_cost) }}</span>
+              <span class="metric-label">Coût total</span>
+            </div>
+          </div>
+
+          <div 
+            class="offer-details-toggle"
+            [class.expanded]="isOfferExpanded(simulation.product.id.toString())"
+            (click)="toggleOfferDetails(simulation.product.id.toString())"
+          >
+            <span>{{ isOfferExpanded(simulation.product.id.toString()) ? 'Moins de détails' : 'Plus de détails' }}</span>
+            <i class="material-icons">{{ isOfferExpanded(simulation.product.id.toString()) ? 'expand_less' : 'expand_more' }}</i>
+          </div>
+
+          <div class="offer-details-expanded" *ngIf="isOfferExpanded(simulation.product.id.toString())">
+            <div class="expanded-content">
+              <div class="detail-section">
+                <h5>
+                  <i class="material-icons">calculate</i>
+                  Conditions Financières
+                </h5>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="detail-label">Intérêts totaux</span>
+                    <span class="detail-value">{{ formatCurrency(simulation.simulation.total_interest) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Ratio d'endettement</span>
+                    <span class="detail-value">{{ formatPercent(simulation.simulation.debt_ratio) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Montant min/max</span>
+                    <span class="detail-value">{{ formatCurrency(simulation.product.min_amount) }} - {{ formatCurrency(simulation.product.max_amount) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Durée min/max</span>
+                    <span class="detail-value">{{ simulation.product.min_duration_months }} - {{ simulation.product.max_duration_months }} mois</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="simulation-actions">
+          <button 
+            *ngIf="simulation.simulation.eligible"
+            (click)="openCreditApplicationModal(simulation)"
+            class="btn btn-primary btn-application">
+            <i class="fas fa-paper-plane"></i>
+            Faire une vraie demande
+          </button>
+          
+          <button *ngIf="!simulation.simulation.eligible" disabled class="btn btn-disabled">
+            <i class="fas fa-times-circle"></i>
+            Non éligible
+          </button>
+        </div>
+
+    <!-- Modal d'application - Position corrigée en dehors de la grille -->
+        <app-application-modal
+        [isVisible]="showApplicationModal"
+        [simulationData]="selectedSimulation"
+        [productData]="selectedApplicationProduct"
+        (closeModal)="onCloseApplicationModal()"
+        (applicationSubmitted)="onApplicationSubmitted($event)">
+    </app-application-modal>
+
+    <!-- Actions Finales -->
+    <div class="final-actions">
+      <div class="actions-content">
+        <div class="action-group">
+          <div class="action-icon">
+            <i class="material-icons">support_agent</i>
+          </div>
+          <h4>Besoin d'aide ?</h4>
+          <p>Nos conseillers sont là pour vous accompagner dans votre choix</p>
+          <button class="contact-btn">
+            <i class="material-icons">call</i>
+            Contacter un Conseiller
+          </button>
+        </div>
+        
+        <div class="action-group">
+          <div class="action-icon">
+            <i class="material-icons">refresh</i>
+          </div>
+          <h4>Nouvelle simulation ?</h4>
+          <p>Testez d'autres montants, durées ou types de crédit</p>
+          <button class="new-simulation-btn" (click)="resetForm()">
+            <i class="material-icons">add</i>
+            Nouvelle Comparaison
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,798 @@
+<!-- borrowing-capacity.component.html - Version complète corrigée -->
+<div class="borrowing-capacity">
+  <!-- Header -->
+  <div class="borrowing-capacity__header">
+    <div class="container">
+      <div class="nav">
+        <button 
+          routerLink="/home" 
+          class="back-button">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+        </button>
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+        </svg>
+        <h1 class="title">Simulateur de Capacité d'Emprunt</h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="borrowing-capacity__container">
+    <div class="borrowing-capacity__grid">
+      
+      <!-- Formulaire -->
+      <div class="borrowing-capacity__form">
+        <form [formGroup]="capacityForm" (ngSubmit)="calculateCapacity()">
+          <h2 class="form-title">Vos informations</h2>
+          
+          <!-- Debug Info -->
+          <div class="debug-panel" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; font-size: 0.875rem;">
+            <h4 style="margin: 0 0 0.5rem; color: #495057;">État du formulaire :</h4>
+            <p style="margin: 0.25rem 0;">Formulaire valide : {{ isFormValid }}</p>
+            <p style="margin: 0.25rem 0;">Calcul en cours : {{ isCalculating }}</p>
+            <p style="margin: 0.25rem 0;">Résultats présents : {{ !!results }}</p>
+            <p style="margin: 0.25rem 0;">Capacité calculée : {{ (results?.borrowingCapacity || 0) | number:'1.0-0' }} FCFA</p>
+            <p style="margin: 0.25rem 0;">Backend : {{ backendStatusMessage }}</p>
+          </div>
+          
+          <!-- Revenus -->
+          <div class="form-sections">
+            <div class="section section--income">
+              <h3 class="section-title section-title--income">
+                <span class="emoji">💰</span>
+                Revenus mensuels
+              </h3>
+              
+              <div class="form-grid form-grid--2">
+                <div class="field">
+                  <label class="label">
+                    Revenus principaux nets <span class="required">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    formControlName="monthlyIncome"
+                    class="input"
+                    [class.input--error]="hasError('monthlyIncome')"
+                    placeholder="750 000">
+                  <div *ngIf="hasError('monthlyIncome')" class="error-message">
+                    {{ getErrorMessage('monthlyIncome') }}
+                  </div>
+                </div>
+                
+                <div class="field">
+                  <label class="label">
+                    Revenus additionnels
+                  </label>
+                  <input
+                    type="number"
+                    formControlName="additionalIncome"
+                    class="input"
+                    placeholder="0">
+                </div>
+              </div>
+              
+              <div class="form-grid form-grid--2">
+                <div class="field">
+                  <label class="label">Type de revenus</label>
+                  <select formControlName="incomeType" class="select">
+                    <option value="salary">Salarié</option>
+                    <option value="business">Chef d'entreprise</option>
+                    <option value="freelance">Profession libérale</option>
+                    <option value="pension">Retraité</option>
+                  </select>
+                </div>
+                
+                <div class="field">
+                  <label class="label">Stabilité</label>
+                  <select formControlName="incomeStability" class="select">
+                    <option value="very_stable">Très stable</option>
+                    <option value="stable">Stable</option>
+                    <option value="variable">Variable</option>
+                    <option value="unstable">Instable</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Charges actuelles -->
+            <div class="section section--expenses">
+              <h3 class="section-title section-title--expenses">
+                <span class="emoji">💳</span>
+                Charges mensuelles
+              </h3>
+              
+              <div class="form-grid form-grid--3">
+                <div class="field">
+                  <label class="label">
+                    Crédits actuels
+                  </label>
+                  <input
+                    type="number"
+                    formControlName="currentDebts"
+                    class="input"
+                    placeholder="0">
+                </div>
+                
+                <div class="field">
+                  <label class="label">
+                    Loyer/Prêt immobilier
+                  </label>
+                  <input
+                    type="number"
+                    formControlName="rentOrMortgage"
+                    class="input"
+                    placeholder="0">
+                </div>
+                
+                <div class="field">
+                  <label class="label">
+                    Charges courantes
+                  </label>
+                  <input
+                    type="number"
+                    formControlName="livingExpenses"
+                    class="input"
+                    placeholder="200 000">
+                </div>
+              </div>
+            </div>
+
+            <!-- Paramètres du crédit -->
+            <div class="section section--project">
+              <h3 class="section-title section-title--project">
+                <span class="emoji">🏠</span>
+                Projet immobilier
+              </h3>
+              
+              <div class="form-grid form-grid--3">
+                <div class="field">
+                  <label class="label">
+                    Durée du prêt <span class="required">*</span>
+                  </label>
+                  <select formControlName="duration" class="select">
+                    <option *ngFor="let option of durationOptions" [value]="option.value">
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </div>
+                
+                <div class="field">
+                  <label class="label">
+                    Taux d'intérêt estimé (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    formControlName="interestRate"
+                    class="input"
+                    placeholder="6.5">
+                </div>
+                
+                <div class="field">
+                  <label class="label">
+                    Apport personnel
+                  </label>
+                  <input
+                    type="number"
+                    formControlName="downPayment"
+                    class="input"
+                    placeholder="0">
+                </div>
+              </div>
+            </div>
+
+            <!-- Assurance -->
+            <div class="section section--insurance">
+              <h3 class="section-title section-title--insurance">
+                <span class="emoji">🛡️</span>
+                Assurance emprunteur
+              </h3>
+              
+              <div class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  formControlName="hasInsurance"
+                  id="hasInsurance"
+                  class="checkbox">
+                <label for="hasInsurance" class="checkbox-label">
+                  Inclure une assurance emprunteur
+                </label>
+              </div>
+              
+              <div *ngIf="capacityForm.get('hasInsurance')?.value" class="form-grid form-grid--2">
+                <div class="field">
+                  <label class="label">
+                    Taux d'assurance (% du capital)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    formControlName="insuranceRate"
+                    class="input"
+                    placeholder="0.36">
+                </div>
+              </div>
+            </div>
+
+            <!-- Options avancées -->
+            <div class="advanced-options-section">
+              <button
+                type="button"
+                (click)="toggleAdvancedOptions()"
+                class="advanced-toggle">
+                <svg class="icon" 
+                     [class.icon--rotated]="showAdvancedOptions" 
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+                Options avancées
+              </button>
+              
+              <div *ngIf="showAdvancedOptions" class="advanced-options">
+                <div class="advanced-section">
+                  <h4 class="advanced-title">Profil emprunteur</h4>
+                  <div class="form-grid form-grid--3">
+                    <div class="field">
+                      <label class="label">Âge</label>
+                      <input
+                        type="number"
+                        formControlName="age"
+                        class="input"
+                        placeholder="35">
+                    </div>
+                    <div class="field">
+                      <label class="label">Profession</label>
+                      <select formControlName="profession" class="select">
+                        <option value="employee">Salarié</option>
+                        <option value="civil_servant">Fonctionnaire</option>
+                        <option value="entrepreneur">Entrepreneur</option>
+                        <option value="freelance">Profession libérale</option>
+                        <option value="retired">Retraité</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label class="label">Ancienneté (années)</label>
+                      <input
+                        type="number"
+                        formControlName="workExperience"
+                        class="input"
+                        placeholder="5">
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="advanced-section">
+                  <h4 class="advanced-title">Coûts additionnels</h4>
+                  <div class="advanced-costs">
+                    <div class="checkbox-row">
+                      <div class="checkbox-wrapper">
+                        <input
+                          type="checkbox"
+                          formControlName="includePropertyTax"
+                          id="includePropertyTax"
+                          class="checkbox">
+                        <label for="includePropertyTax" class="checkbox-label">
+                          Inclure la taxe foncière
+                        </label>
+                      </div>
+                      <div *ngIf="capacityForm.get('includePropertyTax')?.value" class="checkbox-input">
+                        <input
+                          type="number"
+                          step="0.1"
+                          formControlName="propertyTaxRate"
+                          class="input"
+                          placeholder="1.2">
+                      </div>
+                    </div>
+                    
+                    <div class="checkbox-row">
+                      <div class="checkbox-wrapper">
+                        <input
+                          type="checkbox"
+                          formControlName="includeMaintenanceCosts"
+                          id="includeMaintenanceCosts"
+                          class="checkbox">
+                        <label for="includeMaintenanceCosts" class="checkbox-label">
+                          Frais d'entretien/syndic
+                        </label>
+                      </div>
+                      <div *ngIf="capacityForm.get('includeMaintenanceCosts')?.value" class="checkbox-input">
+                        <input
+                          type="number"
+                          step="0.1"
+                          formControlName="maintenanceRate"
+                          class="input"
+                          placeholder="1.0">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+              <button
+                type="button"
+                (click)="calculateCapacity()"
+                [disabled]="!isFormValid || isCalculating"
+                class="button button--primary">
+                <span *ngIf="!isCalculating">Calculer ma capacité</span>
+                <span *ngIf="isCalculating" class="loading-content">
+                  <svg class="loading-icon" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Calcul en cours...
+                </span>
+              </button>
+              
+              <button
+                type="button"
+                (click)="resetForm()"
+                class="button button--secondary">
+                Réinitialiser
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Résultats -->
+      <div class="borrowing-capacity__results">
+        <!-- Debug des résultats -->
+        <div *ngIf="results" class="debug-results" style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+          <h4 style="margin: 0 0 0.5rem; color: #1976d2;">Debug Résultats :</h4>
+          <div style="font-size: 0.875rem; font-family: monospace;">
+            <p style="margin: 0.25rem 0;">results existe : {{ !!results }}</p>
+            <p style="margin: 0.25rem 0;">borrowingCapacity : {{ results.borrowingCapacity }}</p>
+            <p style="margin: 0.25rem 0;">maxMonthlyPayment : {{ results.maxMonthlyPayment }}</p>
+            <p style="margin: 0.25rem 0;">totalProjectCapacity : {{ results.totalProjectCapacity }}</p>
+            <p style="margin: 0.25rem 0;">debtRatio : {{ results.debtRatio }}%</p>
+            <p style="margin: 0.25rem 0;">riskLevel : {{ results.riskLevel }}</p>
+            <p style="margin: 0.25rem 0;">recommendations : {{ results.recommendations?.length || 0 }} éléments</p>
+          </div>
+        </div>
+
+        <div *ngIf="results" class="results-card">
+          <!-- Résultats principaux - Affichage simple pour déboguer -->
+          <div class="main-results" style="background: #f8f9fa; padding: 2rem; border-radius: 1rem; margin-bottom: 2rem;">
+            <h2 style="text-align: center; color: #1a4d3a; margin-bottom: 2rem;">Votre Capacité d'Emprunt</h2>
+            
+            <div class="result-highlight" style="text-align: center; background: #e8f5e8; padding: 2rem; border-radius: 1rem; margin-bottom: 2rem;">
+              <div style="font-size: 3rem; font-weight: bold; color: #1a4d3a; margin-bottom: 0.5rem;">
+                {{ formatCurrency(results.borrowingCapacity) }}
+              </div>
+              <div style="font-size: 1.25rem; color: #666;">
+                Capital empruntable
+              </div>
+            </div>
+
+            <div class="quick-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 0.5rem; text-align: center; border: 1px solid #e0e0e0;">
+                <div style="font-size: 1.5rem; font-weight: bold; color: #1a4d3a;">{{ formatCurrency(results.maxMonthlyPayment) }}</div>
+                <div style="color: #666; font-size: 0.875rem;">Mensualité maximale</div>
+              </div>
+              
+              <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 0.5rem; text-align: center; border: 1px solid #e0e0e0;">
+                <div style="font-size: 1.5rem; font-weight: bold;" [style.color]="results.debtRatio > 33 ? '#dc3545' : results.debtRatio > 25 ? '#ffc107' : '#28a745'">
+                  {{ formatPercent(results.debtRatio) }}
+                </div>
+                <div style="color: #666; font-size: 0.875rem;">Taux d'endettement</div>
+              </div>
+              
+              <div class="stat-card" style="background: white; padding: 1.5rem; border-radius: 0.5rem; text-align: center; border: 1px solid #e0e0e0;">
+                <div style="font-size: 1.5rem; font-weight: bold; color: #1a4d3a;">{{ formatCurrency(results.totalProjectCapacity) }}</div>
+                <div style="color: #666; font-size: 0.875rem;">Projet total</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Niveau de risque simplifié -->
+          <div class="risk-section" style="background: white; padding: 1.5rem; border-radius: 1rem; margin-bottom: 2rem; border: 1px solid #e0e0e0;">
+            <h3 style="margin: 0 0 1rem; color: #333;">Évaluation du risque</h3>
+            <div class="risk-indicator" style="display: flex; align-items: center; gap: 1rem;">
+              <span class="risk-badge" 
+                    [style.background-color]="results.riskLevel === 'low' ? '#28a745' : results.riskLevel === 'medium' ? '#ffc107' : '#dc3545'"
+                    [style.color]="results.riskLevel === 'medium' ? '#000' : '#fff'"
+                    style="padding: 0.5rem 1rem; border-radius: 2rem; font-weight: bold;">
+                {{ getRiskLabel(results.riskLevel) }}
+              </span>
+              <div style="flex: 1; background: #e9ecef; height: 8px; border-radius: 4px;">
+                <div [style.width]="getRiskWidth(results.riskLevel)"
+                     [style.background-color]="results.riskLevel === 'low' ? '#28a745' : results.riskLevel === 'medium' ? '#ffc107' : '#dc3545'"
+                     style="height: 100%; border-radius: 4px; transition: width 0.3s ease;">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommandations simplifiées -->
+          <div *ngIf="results.recommendations && results.recommendations.length > 0" class="recommendations" 
+               style="background: white; padding: 1.5rem; border-radius: 1rem; margin-bottom: 2rem; border: 1px solid #e0e0e0;">
+            <h3 style="margin: 0 0 1rem; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+              <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Nos recommandations
+            </h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              <li *ngFor="let recommendation of results.recommendations" 
+                  style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0;">
+                <svg style="width: 1rem; height: 1rem; color: #28a745; margin-top: 0.125rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                </svg>
+                <span style="color: #333; line-height: 1.4;">{{ recommendation }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Onglets (version simplifiée pour déboguer) -->
+          <div class="tabs-section" style="background: white; border-radius: 1rem; border: 1px solid #e0e0e0;">
+            <div class="tabs-nav" style="border-bottom: 1px solid #e0e0e0; padding: 0;">
+              <button
+                *ngFor="let tab of ['simulation', 'evolution', 'comparison', 'details']"
+                (click)="setActiveTab(tab)"
+                [class.active]="activeTab === tab"
+                [style.background-color]="activeTab === tab ? '#1a4d3a' : 'transparent'"
+                [style.color]="activeTab === tab ? 'white' : '#666'"
+                style="border: none; padding: 1rem 1.5rem; cursor: pointer; font-weight: 500; transition: all 0.2s;">
+                <span [ngSwitch]="tab">
+                  <span *ngSwitchCase="'simulation'">Résultats</span>
+                  <span *ngSwitchCase="'evolution'">Évolution</span>
+                  <span *ngSwitchCase="'comparison'">Comparaison</span>
+                  <span *ngSwitchCase="'details'">Détails</span>
+                </span>
+              </button>
+            </div>
+
+            <div class="tab-content" style="padding: 2rem;">
+              <!-- Onglet Simulation -->
+              <div *ngIf="activeTab === 'simulation'">
+                <h3 style="margin: 0 0 1.5rem; color: #333;">Synthèse de votre simulation</h3>
+                
+                <div class="synthesis-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                  <div class="synthesis-card" style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem;">
+                    <h4 style="margin: 0 0 1rem; color: #1a4d3a;">Financement</h4>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                      <span>Capital emprunté :</span>
+                      <strong>{{ formatCurrency(results.borrowingCapacity) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                      <span>Apport personnel :</span>
+                      <strong>{{ formatCurrency((capacityForm.get('downPayment')?.value || 0)) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; padding-top: 0.5rem; border-top: 1px solid #e0e0e0;">
+                      <span><strong>Total projet :</strong></span>
+                      <strong style="color: #1a4d3a;">{{ formatCurrency(results.totalProjectCapacity) }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="synthesis-card" style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem;">
+                    <h4 style="margin: 0 0 1rem; color: #1a4d3a;">Mensualités</h4>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                      <span>Crédit :</span>
+                      <strong>{{ formatCurrency(results.maxMonthlyPayment - results.monthlyInsurance) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                      <span>Assurance :</span>
+                      <strong>{{ formatCurrency(results.monthlyInsurance) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; padding-top: 0.5rem; border-top: 1px solid #e0e0e0;">
+                      <span><strong>Total mensuel :</strong></span>
+                      <strong style="color: #1a4d3a;">{{ formatCurrency(results.maxMonthlyPayment) }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="synthesis-card" style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem;">
+                    <h4 style="margin: 0 0 1rem; color: #1a4d3a;">Coûts totaux</h4>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                      <span>Intérêts :</span>
+                      <strong>{{ formatCurrency(results.totalInterest) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                      <span>Durée :</span>
+                      <strong>{{ getDurationText((capacityForm.get('duration')?.value || 0)) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; padding-top: 0.5rem; border-top: 1px solid #e0e0e0;">
+                      <span><strong>Taux effectif :</strong></span>
+                      <strong style="color: #1a4d3a;">{{ formatPercent(results.effectiveRate) }}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Onglet Évolution -->
+              <div *ngIf="activeTab === 'evolution'">
+                <h3 style="margin: 0 0 1.5rem; color: #333;">Évolution selon la durée</h3>
+                
+                <div *ngIf="results.evolutionData && results.evolutionData.length > 0" class="evolution-list">
+                  <div *ngFor="let point of results.evolutionData" 
+                       class="evolution-item"
+                       [style.background-color]="point.duration === ((capacityForm.get('duration')?.value || 0) / 12) ? '#e8f5e8' : 'white'"
+                       style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; margin: 0.5rem 0; border-radius: 0.5rem; border: 1px solid #e0e0e0;">
+                    <div>
+                      <div style="font-weight: bold; color: #1a4d3a;">{{ point.duration }} ans</div>
+                      <div style="font-size: 0.875rem; color: #666;">{{ formatCurrency(point.capacity) }}</div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-weight: bold;">{{ formatCurrency(point.monthlyPayment) }}/mois</div>
+                      <div style="font-size: 0.875rem; color: #666;">Coût total : {{ formatCurrency(point.totalCost) }}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div *ngIf="!results.evolutionData || results.evolutionData.length === 0" style="text-align: center; padding: 2rem; color: #666;">
+                  Aucune donnée d'évolution disponible
+                </div>
+              </div>
+
+              <!-- Onglet Comparaison -->
+              <div *ngIf="activeTab === 'comparison'">
+                <h3 style="margin: 0 0 1.5rem; color: #333;">Impact du taux d'intérêt</h3>
+                
+                <div *ngIf="results.comparisonData && results.comparisonData.length > 0" class="comparison-list">
+                  <div *ngFor="let point of results.comparisonData" 
+                       class="comparison-item"
+                       [style.background-color]="point.rate === (capacityForm.get('interestRate')?.value) ? '#e8f5e8' : 'white'"
+                       style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; margin: 0.5rem 0; border-radius: 0.5rem; border: 1px solid #e0e0e0;">
+                    <div>
+                      <div style="font-weight: bold; color: #1a4d3a;">{{ formatPercent(point.rate) }}</div>
+                      <div style="font-size: 0.875rem; color: #666;">{{ formatCurrency(point.capacity) }}</div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-weight: bold;" 
+                           [style.color]="point.difference > 0 ? '#28a745' : point.difference < 0 ? '#dc3545' : '#666'">
+                        {{ point.difference > 0 ? '+' : '' }}{{ formatCurrency(point.difference) }}
+                      </div>
+                      <div style="font-size: 0.875rem; color: #666;">vs taux actuel</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div *ngIf="!results.comparisonData || results.comparisonData.length === 0" style="text-align: center; padding: 2rem; color: #666;">
+                  Aucune donnée de comparaison disponible
+                </div>
+              </div>
+
+              <!-- Onglet Détails -->
+              <div *ngIf="activeTab === 'details'">
+                <h3 style="margin: 0 0 1.5rem; color: #333;">Détails du financement</h3>
+                
+                <!-- Répartition du budget -->
+                <div class="budget-section" style="background: #f8f9fa; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+                  <h4 style="margin: 0 0 1rem; color: #1a4d3a;">Répartition du budget mensuel</h4>
+                  <div class="budget-items">
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; padding: 0.5rem 0; border-bottom: 1px solid #e0e0e0;">
+                      <span>Revenus totaux :</span>
+                      <strong style="color: #28a745;">{{ formatCurrency(results.budgetBreakdown.totalIncome) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; padding: 0.5rem 0; border-bottom: 1px solid #e0e0e0;">
+                      <span>Charges actuelles :</span>
+                      <strong style="color: #dc3545;">{{ formatCurrency(results.budgetBreakdown.currentDebts) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; padding: 0.5rem 0; border-bottom: 1px solid #e0e0e0;">
+                      <span>Disponible pour crédit :</span>
+                      <strong style="color: #1a4d3a;">{{ formatCurrency(results.budgetBreakdown.availableForCredit) }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; padding: 0.5rem 0;">
+                      <span><strong>Reste à vivre :</strong></span>
+                      <strong style="color: #1a4d3a;">{{ formatCurrency(results.budgetBreakdown.remainingIncome) }}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Détails techniques -->
+                <div class="technical-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                  <div style="background: white; padding: 1.5rem; border-radius: 0.5rem; border: 1px solid #e0e0e0;">
+                    <h5 style="margin: 0 0 1rem; color: #1a4d3a;">Paramètres du crédit</h5>
+                    <div style="font-size: 0.875rem;">
+                      <div style="display: flex; justify-content: space-between; margin: 0.25rem 0;">
+                        <span>Taux nominal :</span>
+                        <span>{{ formatPercent((capacityForm.get('interestRate')?.value || 0)) }}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin: 0.25rem 0;">
+                        <span>Taux effectif :</span>
+                        <span>{{ formatPercent(results.effectiveRate) }}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin: 0.25rem 0;">
+                        <span>Durée :</span>
+                        <span>{{ getDurationText((capacityForm.get('duration')?.value || 0)) }}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin: 0.25rem 0;">
+                        <span>Assurance :</span>
+                        <span>{{ formatCurrency(results.monthlyInsurance) }}/mois</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="background: white; padding: 1.5rem; border-radius: 0.5rem; border: 1px solid #e0e0e0;">
+                    <h5 style="margin: 0 0 1rem; color: #1a4d3a;">Coûts totaux</h5>
+                    <div style="font-size: 0.875rem;">
+                      <div style="display: flex; justify-content: space-between; margin: 0.25rem 0;">
+                        <span>Capital emprunté :</span>
+                        <span>{{ formatCurrency(results.borrowingCapacity) }}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin: 0.25rem 0;">
+                        <span>Intérêts totaux :</span>
+                        <span>{{ formatCurrency(results.totalInterest) }}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin: 0.25rem 0;">
+                        <span>Assurance totale :</span>
+                        <span>{{ formatCurrency(results.monthlyInsurance * (capacityForm.get('duration')?.value || 0)) }}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin: 0.25rem 0; padding-top: 0.25rem; border-top: 1px solid #e0e0e0; font-weight: bold;">
+                        <span>Coût total :</span>
+                        <span>{{ formatCurrency(results.borrowingCapacity + results.totalInterest + (results.monthlyInsurance * (capacityForm.get('duration')?.value || 0))) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tableau d'amortissement simplifié -->
+                <div *ngIf="results.amortizationData && results.amortizationData.length > 0" 
+                     style="margin-top: 1.5rem; background: white; border-radius: 0.5rem; border: 1px solid #e0e0e0; overflow: hidden;">
+                  <h5 style="margin: 0; padding: 1rem; background: #f8f9fa; border-bottom: 1px solid #e0e0e0; color: #1a4d3a;">Échéancier (aperçu)</h5>
+                  <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                      <thead>
+                        <tr style="background: #f8f9fa;">
+                          <th style="padding: 0.75rem; text-align: left; font-size: 0.875rem; border-bottom: 1px solid #e0e0e0;">Mois</th>
+                          <th style="padding: 0.75rem; text-align: right; font-size: 0.875rem; border-bottom: 1px solid #e0e0e0;">Mensualité</th>
+                          <th style="padding: 0.75rem; text-align: right; font-size: 0.875rem; border-bottom: 1px solid #e0e0e0;">Capital payé</th>
+                          <th style="padding: 0.75rem; text-align: right; font-size: 0.875rem; border-bottom: 1px solid #e0e0e0;">Capital restant</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let point of results.amortizationData.slice(0, 5)" style="border-bottom: 1px solid #f0f0f0;">
+                          <td style="padding: 0.75rem; font-size: 0.875rem;">{{ point.month }}</td>
+                          <td style="padding: 0.75rem; text-align: right; font-size: 0.875rem;">{{ formatCurrency(point.monthlyPayment) }}</td>
+                          <td style="padding: 0.75rem; text-align: right; font-size: 0.875rem;">{{ formatCurrency(point.paidPrincipal) }}</td>
+                          <td style="padding: 0.75rem; text-align: right; font-size: 0.875rem;">{{ formatCurrency(point.remainingDebt) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div *ngIf="results.amortizationData.length > 5" style="padding: 1rem; text-align: center; background: #f8f9fa; font-size: 0.875rem; color: #666;">
+                    ... et {{ results.amortizationData.length - 5 }} autres échéances
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comparaisons bancaires -->
+          <div *ngIf="results.bankComparisons && results.bankComparisons.length > 0" 
+               class="bank-comparisons" 
+               style="background: white; border-radius: 1rem; border: 1px solid #e0e0e0; margin-top: 2rem;">
+            <div style="padding: 1.5rem; border-bottom: 1px solid #e0e0e0;">
+              <h3 style="margin: 0; color: #1a4d3a;">Offres bancaires disponibles</h3>
+              <p style="margin: 0.5rem 0 0; color: #666; font-size: 0.875rem;">
+                {{ results.bankComparisons.length }} offre(s) trouvée(s) pour votre profil
+              </p>
+            </div>
+            
+            <div style="padding: 1.5rem;">
+              <div *ngFor="let comparison of results.bankComparisons.slice(0, 3)" 
+                   class="bank-offer"
+                   style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; margin: 0.5rem 0; border-radius: 0.5rem; border: 1px solid #e0e0e0; background: #fafafa;">
+                <div>
+                  <div style="font-weight: bold; color: #1a4d3a;">{{ comparison.bank.name }}</div>
+                  <div style="font-size: 0.875rem; color: #666;">{{ comparison.product.name }}</div>
+                  <div style="font-size: 0.75rem; margin-top: 0.25rem;">
+                    <span [style.color]="comparison.eligible ? '#28a745' : '#dc3545'">
+                      {{ comparison.eligible ? 'Éligible' : 'Non éligible' }}
+                    </span>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-weight: bold; font-size: 1.1rem; color: #1a4d3a;">
+                    {{ formatCurrency(comparison.monthlyPayment) }}/mois
+                  </div>
+                  <div style="font-size: 0.875rem; color: #666;">
+                    Coût total : {{ formatCurrency(comparison.totalCost) }}
+                  </div>
+                  <div style="font-size: 0.75rem; color: #666;">
+                    Taux d'endettement : {{ formatPercent(comparison.debtRatio) }}
+                  </div>
+                </div>
+              </div>
+              
+              <div *ngIf="results.bankComparisons.length > 3" style="text-align: center; margin-top: 1rem;">
+                <button 
+                  (click)="goToComparator()"
+                  style="background: #1a4d3a; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500;">
+                  Voir toutes les offres ({{ results.bankComparisons.length }})
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions finales -->
+          <div class="result-actions" style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; justify-content: center;">
+            <button
+              (click)="goToComparator()"
+              [disabled]="!canShare"
+              style="background: #1a4d3a; color: white; border: none; padding: 1rem 2rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;"
+              [style.opacity]="canShare ? '1' : '0.5'">
+              <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+              Comparer les banques
+            </button>
+            
+            <button
+              (click)="exportResults()"
+              [disabled]="!canExport"
+              style="background: #28a745; color: white; border: none; padding: 1rem 2rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;"
+              [style.opacity]="canExport ? '1' : '0.5'">
+              <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Exporter PDF
+            </button>
+            
+            <button
+              (click)="shareResults()"
+              [disabled]="!canShare"
+              style="background: #17a2b8; color: white; border: none; padding: 1rem 2rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;"
+              [style.opacity]="canShare ? '1' : '0.5'">
+              <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+              </svg>
+              Partager
+            </button>
+          </div>
+        </div>
+
+        <!-- Message si pas de résultats -->
+        <div *ngIf="!results && !isCalculating" class="no-results" 
+             style="background: #f8f9fa; padding: 2rem; border-radius: 1rem; text-align: center; border: 1px solid #e0e0e0;">
+          <svg style="width: 3rem; height: 3rem; color: #6c757d; margin-bottom: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+          <h3 style="color: #6c757d; margin: 0 0 0.5rem;">Calculez votre capacité d'emprunt</h3>
+          <p style="color: #6c757d; margin: 0;">Remplissez le formulaire ci-contre pour obtenir une estimation personnalisée</p>
+        </div>
+
+        <!-- Aide contextuelle -->
+        <div class="borrowing-capacity__help" style="background: white; border-radius: 1rem; padding: 1.5rem; margin-top: 2rem; border: 1px solid #e0e0e0;">
+          <h3 style="margin: 0 0 1rem; color: #1a4d3a; display: flex; align-items: center; gap: 0.5rem;">
+            <svg style="width: 1.25rem; height: 1.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Bon à savoir
+          </h3>
+          <ul style="list-style: none; padding: 0; margin: 0;">
+            <li style="padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; display: flex; align-items: flex-start; gap: 0.75rem;">
+              <svg style="width: 1rem; height: 1rem; color: #28a745; margin-top: 0.125rem; flex-shrink: 0;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+              </svg>
+              <span>Le taux d'endettement ne doit généralement pas dépasser 33% des revenus</span>
+            </li>
+            <li style="padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; display: flex; align-items: flex-start; gap: 0.75rem;">
+              <svg style="width: 1rem; height: 1rem; color: #28a745; margin-top: 0.125rem; flex-shrink: 0;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+              </svg>
+              <span>Un apport personnel de 10-20% est recommandé pour obtenir de meilleures conditions</span>
+            </li>
+            <li style="padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; display: flex; align-items: flex-start; gap: 0.75rem;">
+              <svg style="width: 1rem; height: 1rem; color: #28a745; margin-top: 0.125rem; flex-shrink: 0;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+              </svg>
+              <span>L'assurance emprunteur est obligatoire pour la plupart des crédits immobiliers</span>
+            </li>
+            <li style="padding: 0.75rem 0; display: flex; align-items: flex-start; gap: 0.75rem;">
+              <svg style="width: 1rem; height: 1rem; color: #28a745; margin-top: 0.125rem; flex-shrink: 0;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+              </svg>
+              <span>Les taux peuvent varier selon votre profil et la banque choisie</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

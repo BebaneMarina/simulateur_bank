@@ -1,0 +1,410 @@
+<!-- admin-management.component.html -->
+<div class="admin-management-container">
+  <!-- Header avec statistiques -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des Administrateurs</h1>
+      <p class="subtitle">Gérer les administrateurs par banque et compagnie d'assurance</p>
+    </div>
+    
+    <div class="stats-cards">
+      <mat-card class="stat-card">
+        <mat-card-header>
+          <mat-icon class="stat-icon total">people</mat-icon>
+          <mat-card-title>{{ stats.total_admins }}</mat-card-title>
+          <mat-card-subtitle>Total Admins</mat-card-subtitle>
+        </mat-card-header>
+      </mat-card>
+      
+      <mat-card class="stat-card">
+        <mat-card-header>
+          <mat-icon class="stat-icon active">check_circle</mat-icon>
+          <mat-card-title>{{ stats.active_admins }}</mat-card-title>
+          <mat-card-subtitle>Actifs</mat-card-subtitle>
+        </mat-card-header>
+      </mat-card>
+      
+      <mat-card class="stat-card">
+        <mat-card-header>
+          <mat-icon class="stat-icon bank">account_balance</mat-icon>
+          <mat-card-title>{{ stats.by_role.bank_admins }}</mat-card-title>
+          <mat-card-subtitle>Admins Banques</mat-card-subtitle>
+        </mat-card-header>
+      </mat-card>
+      
+      <mat-card class="stat-card">
+        <mat-card-header>
+          <mat-icon class="stat-icon insurance">security</mat-icon>
+          <mat-card-title>{{ stats.by_role.insurance_admins }}</mat-card-title>
+          <mat-card-subtitle>Admins Assurances</mat-card-subtitle>
+        </mat-card-header>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Filtres et actions -->
+  <div class="filters-section">
+    <mat-card>
+      <mat-card-content>
+        <div class="filters-row">
+          <!-- Recherche -->
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Rechercher</mat-label>
+            <input matInput 
+                   [(ngModel)]="searchQuery"
+                   (keyup.enter)="onSearch()"
+                   placeholder="Nom, email, username...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <!-- Filtre par rôle -->
+          <mat-form-field appearance="outline">
+            <mat-label>Rôle</mat-label>
+            <mat-select [(value)]="selectedRole" (selectionChange)="onFilterChange()">
+              <mat-option value="">Tous les rôles</mat-option>
+              <mat-option *ngFor="let role of roles" [value]="role.value">
+                {{ role.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Filtre par type d'institution -->
+          <mat-form-field appearance="outline">
+            <mat-label>Type d'institution</mat-label>
+            <mat-select [(value)]="selectedInstitutionType" (selectionChange)="onFilterChange()">
+              <mat-option value="">Toutes</mat-option>
+              <mat-option value="bank">Banques</mat-option>
+              <mat-option value="insurance">Assurances</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Filtre par statut -->
+          <mat-form-field appearance="outline">
+            <mat-label>Statut</mat-label>
+            <mat-select [(value)]="selectedStatus" (selectionChange)="onFilterChange()">
+              <mat-option [value]="null">Tous</mat-option>
+              <mat-option [value]="true">Actifs</mat-option>
+              <mat-option [value]="false">Inactifs</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="action-buttons">
+            <button mat-raised-button color="primary" (click)="openCreateDialog()">
+              <mat-icon>add</mat-icon>
+              Nouvel Admin
+            </button>
+            
+            <button mat-button (click)="exportAdmins()">
+              <mat-icon>download</mat-icon>
+              Exporter
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Tableau des administrateurs -->
+  <div class="table-section">
+    <mat-card>
+      <div class="table-header">
+        <h3>Administrateurs ({{ totalAdmins }})</h3>
+        <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+      </div>
+
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="admins-table">
+          
+          <!-- Colonne Username -->
+          <ng-container matColumnDef="username">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Utilisateur</th>
+            <td mat-cell *matCellDef="let admin">
+              <div class="user-info">
+                <div class="user-avatar">
+                  <mat-icon>person</mat-icon>
+                </div>
+                <div class="user-details">
+                  <div class="username">{{ admin.username }}</div>
+                  <div class="user-id">{{ admin.id }}</div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Nom -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nom</th>
+            <td mat-cell *matCellDef="let admin">
+              <div class="name-info">
+                <div class="full-name">{{ admin.first_name }} {{ admin.last_name }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Email -->
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>Email</th>
+            <td mat-cell *matCellDef="let admin">{{ admin.email }}</td>
+          </ng-container>
+
+          <!-- Colonne Rôle -->
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef>Rôle</th>
+            <td mat-cell *matCellDef="let admin">
+              <mat-chip class="role-chip" [class]="admin.role">
+                {{ getRoleLabel(admin.role) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Institution -->
+          <ng-container matColumnDef="institution">
+            <th mat-header-cell *matHeaderCellDef>Institution</th>
+            <td mat-cell *matCellDef="let admin">
+              <div class="institution-info">
+                <div class="institution-name">{{ getInstitutionName(admin) }}</div>
+                <div class="institution-type" *ngIf="admin.assigned_bank">
+                  <mat-icon class="type-icon">account_balance</mat-icon>
+                  Banque
+                </div>
+                <div class="institution-type" *ngIf="admin.assigned_insurance_company">
+                  <mat-icon class="type-icon">security</mat-icon>
+                  Assurance
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Permissions -->
+          <ng-container matColumnDef="permissions">
+            <th mat-header-cell *matHeaderCellDef>Permissions</th>
+            <td mat-cell *matCellDef="let admin">
+              <div class="permissions-summary">
+                {{ getPermissionsSummary(admin.permissions) }}
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Statut -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Statut</th>
+            <td mat-cell *matCellDef="let admin">
+              <mat-slide-toggle 
+                [checked]="admin.is_active"
+                (toggleChange)="toggleAdminStatus(admin)"
+                [disabled]="loading">
+              </mat-slide-toggle>
+              <span class="status-text" [class.active]="admin.is_active" [class.inactive]="!admin.is_active">
+                {{ admin.is_active ? 'Actif' : 'Inactif' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Dernière connexion -->
+          <ng-container matColumnDef="last_login">
+            <th mat-header-cell *matHeaderCellDef>Dernière connexion</th>
+            <td mat-cell *matCellDef="let admin">
+              <div class="last-login">
+                {{ admin.last_login | date:'short' || 'Jamais' }}
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Colonne Actions -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let admin">
+              <div class="action-buttons">
+                <button mat-icon-button 
+                        (click)="openEditDialog(admin)"
+                        matTooltip="Modifier">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                
+                <button mat-icon-button 
+                        color="warn"
+                        (click)="openDeleteDialog(admin)"
+                        matTooltip="Supprimer">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <!-- Message si aucun résultat -->
+        <div *ngIf="!loading && dataSource.data.length === 0" class="no-data">
+          <mat-icon>person_off</mat-icon>
+          <h3>Aucun administrateur trouvé</h3>
+          <p>Essayez de modifier vos critères de recherche</p>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <mat-paginator 
+        [length]="totalAdmins"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Dialog de création/modification -->
+<ng-template #adminFormDialog>
+  <div mat-dialog-title>
+    <h2>{{ isEditing ? 'Modifier' : 'Créer' }} un administrateur</h2>
+  </div>
+
+  <mat-dialog-content>
+    <form [formGroup]="adminForm" class="admin-form">
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Nom d'utilisateur</mat-label>
+          <input matInput formControlName="username" [readonly]="isEditing">
+          <mat-error>{{ usernameError }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email">
+          <mat-error>{{ emailError }}</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Prénom</mat-label>
+          <input matInput formControlName="first_name">
+          <mat-error>Le prénom est requis</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Nom</mat-label>
+          <input matInput formControlName="last_name">
+          <mat-error>Le nom est requis</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row" *ngIf="!isEditing">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Mot de passe</mat-label>
+          <input matInput formControlName="password" type="password">
+          <mat-error>{{ passwordError }}</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Rôle</mat-label>
+          <mat-select formControlName="role" (selectionChange)="onRoleChange()">
+            <mat-option *ngFor="let role of roles" [value]="role.value">
+              {{ role.label }}
+            </mat-option>
+          </mat-select>
+          <mat-error>Le rôle est requis</mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Assignation de banque -->
+      <div class="form-row" *ngIf="adminForm.get('role')?.value === 'bank_admin'">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Banque assignée</mat-label>
+          <mat-select formControlName="assigned_bank_id">
+            <mat-option *ngFor="let bank of banks" [value]="bank.id">
+              {{ bank.full_name || bank.name }}
+            </mat-option>
+          </mat-select>
+          <mat-error>{{ assignmentError }}</mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Assignation de compagnie d'assurance -->
+      <div class="form-row" *ngIf="adminForm.get('role')?.value === 'insurance_admin'">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Compagnie d'assurance assignée</mat-label>
+          <mat-select formControlName="assigned_insurance_company_id">
+            <mat-option *ngFor="let company of insuranceCompanies" [value]="company.id">
+              {{ company.full_name || company.name }}
+            </mat-option>
+          </mat-select>
+          <mat-error>{{ assignmentError }}</mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Permissions -->
+      <div class="permissions-section">
+        <h4>Permissions</h4>
+        <div class="permissions-grid">
+          <mat-checkbox formControlName="can_create_products">
+            Créer des produits
+          </mat-checkbox>
+          <mat-checkbox formControlName="can_edit_products">
+            Modifier des produits
+          </mat-checkbox>
+          <mat-checkbox formControlName="can_delete_products">
+            Supprimer des produits
+          </mat-checkbox>
+          <mat-checkbox formControlName="can_view_simulations">
+            Voir les simulations
+          </mat-checkbox>
+          <mat-checkbox formControlName="can_manage_applications">
+            Gérer les demandes
+          </mat-checkbox>
+        </div>
+      </div>
+
+      <!-- Statut -->
+      <div class="form-row">
+        <mat-checkbox formControlName="is_active">
+          Compte actif
+        </mat-checkbox>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="closeDialog()">Annuler</button>
+    <button mat-raised-button 
+            color="primary" 
+            (click)="saveAdmin()"
+            [disabled]="!adminForm.valid || loading">
+      {{ isEditing ? 'Modifier' : 'Créer' }}
+    </button>
+  </mat-dialog-actions>
+</ng-template>
+
+<!-- Dialog de confirmation de suppression -->
+<ng-template #deleteConfirmDialog>
+  <div mat-dialog-title>
+    <h2>Confirmer la suppression</h2>
+  </div>
+
+  <mat-dialog-content>
+    <div class="delete-confirmation">
+      <mat-icon class="warning-icon">warning</mat-icon>
+      <p>
+        Êtes-vous sûr de vouloir supprimer l'administrateur 
+        <strong>{{ selectedAdmin?.username }}</strong> ?
+      </p>
+      <p class="warning-text">
+        Cette action est irréversible et supprimera définitivement le compte.
+      </p>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="closeDialog()">Annuler</button>
+    <button mat-raised-button 
+            color="warn" 
+            (click)="deleteAdmin()"
+            [disabled]="loading">
+      Supprimer
+    </button>
+  </mat-dialog-actions>
+</ng-template>

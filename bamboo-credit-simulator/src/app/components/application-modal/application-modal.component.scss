@@ -1,0 +1,511 @@
+// application-modal.component.scss
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  
+  &.show {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.modal-container {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.3s ease;
+  
+  &.show {
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.modal-body {
+  padding: 0;
+  max-height: calc(90vh - 140px);
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 24px 32px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+// Étape 1: Formulaire
+.application-form {
+  padding: 32px;
+}
+
+.form-intro {
+  margin-bottom: 32px;
+}
+
+.simulation-summary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-radius: 12px;
+  padding: 24px;
+  color: white;
+  margin-bottom: 24px;
+
+  h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .value {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+  }
+}
+
+.form-section {
+  margin-bottom: 32px;
+
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 20px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+
+    i {
+      color: #667eea;
+    }
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.9rem;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background-color: white;
+
+    &:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    &.error {
+      border-color: #ef4444;
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  .error-message {
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+}
+
+.consent-section {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 20px;
+  border-left: 4px solid #667eea;
+
+  .checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+
+    .form-checkbox {
+      margin: 0;
+      transform: scale(1.2);
+    }
+
+    .checkmark {
+      position: relative;
+      flex-shrink: 0;
+    }
+  }
+}
+
+// Étape 2: Notification
+.notification-step {
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.success-animation {
+  margin-bottom: 32px;
+
+  .checkmark-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: scaleIn 0.5s ease-out;
+
+    .checkmark {
+      color: white;
+      font-size: 2rem;
+
+      &::before {
+        content: "✓";
+      }
+    }
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.notification-content {
+  h3 {
+    color: #10b981;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 32px;
+  }
+}
+
+.application-details {
+  background: #f0f9ff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 32px;
+  text-align: left;
+
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .application-number {
+      font-family: 'Courier New', monospace;
+      background: #dbeafe;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      color: #1e40af;
+    }
+
+    .copy-button {
+      background: none;
+      border: none;
+      color: #667eea;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+
+      &:hover {
+        background: #e2e8f0;
+      }
+    }
+  }
+}
+
+.next-steps {
+  margin-bottom: 32px;
+  text-align: left;
+
+  h4 {
+    color: #374151;
+    margin-bottom: 16px;
+    font-size: 1.1rem;
+  }
+
+  .steps-list {
+    list-style: none;
+    padding: 0;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+
+      .step-number {
+        background: #667eea;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+
+      .step-text {
+        line-height: 1.5;
+      }
+    }
+  }
+}
+
+.contact-info {
+  background: #fef3c7;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: left;
+
+  h4 {
+    color: #92400e;
+    margin-bottom: 16px;
+  }
+
+  .contact-details {
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+
+      i {
+        color: #d97706;
+        width: 20px;
+      }
+
+      a {
+        color: #92400e;
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}
+
+// Actions
+.form-actions,
+.notification-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+  }
+
+  &.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+
+    &:hover {
+      background: #e5e7eb;
+    }
+  }
+
+  &.btn-outline {
+    background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+
+    &:hover {
+      background: #667eea;
+      color: white;
+    }
+  }
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .modal-container {
+    width: 95%;
+    margin: 10px;
+  }
+
+  .modal-header,
+  .application-form,
+  .notification-step,
+  .modal-footer {
+    padding: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .application-details .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .form-actions,
+  .notification-actions {
+    flex-direction: column-reverse;
+    
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

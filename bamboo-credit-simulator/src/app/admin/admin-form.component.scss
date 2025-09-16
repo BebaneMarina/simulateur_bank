@@ -1,0 +1,118 @@
+.admin-form-container {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+
+  mat-card {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+
+    mat-card-header {
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.5rem;
+        font-weight: 500;
+
+        mat-icon {
+          color: #1976d2;
+        }
+      }
+
+      mat-card-subtitle {
+        color: #666;
+        margin-top: 8px;
+      }
+    }
+
+    mat-card-content {
+      padding-top: 24px;
+    }
+  }
+}
+
+.admin-form {
+  .form-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    h3 {
+      margin: 0 0 16px 0;
+      color: #333;
+      font-size: 1.2rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      &::before {
+        content: '';
+        width: 4px;
+        height: 20px;
+        background: #1976d2;
+        border-radius: 2px;
+      }
+    }
+  }
+
+  .form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    mat-form-field {
+      flex: 1;
+
+      &.full-width {
+        width: 100%;
+      }
+    }
+  }
+
+  .permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+
+    mat-checkbox {
+      .mat-checkbox-label {
+        font-weight: 400;
+        color: #555;
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .admin-form-container {
+    padding: 16px;
+
+    .admin-form {
+      .form-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .permissions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+}
