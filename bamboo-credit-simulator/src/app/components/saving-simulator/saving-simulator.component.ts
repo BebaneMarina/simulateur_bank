@@ -79,6 +79,22 @@ interface InvestmentSuggestion {
   minAmount: number;
 }
 
+interface AssetPaths {
+  hero: string;
+  heroBackground: string;
+  icons: {
+    [key: string]: string;
+  };
+  decorative: {
+    shield: string;
+    checkCircle: string;
+    stars: string;
+  };
+  logos: {
+    [key: string]: string;
+  };
+}
+
 interface SavingsGoalOption {
   id: string;
   name: string;
@@ -803,6 +819,18 @@ export class SavingsSimulatorComponent implements OnInit, OnDestroy {
   selectedProduct: SavingsProduct | null = null;
   selectedGoal: string | null = null;
   sessionId!: string;
+
+  readonly assetPaths: AssetPaths= {
+    hero: '/assets/images/savings-hero.png',
+    heroBackground: '',
+    icons: {},
+    decorative: {
+      shield: '',
+      checkCircle: '',
+      stars: ''
+    },
+    logos: {}
+  };
 
   // Produits de démonstration pour éviter l'erreur
   mockProducts: SavingsProduct[] = [

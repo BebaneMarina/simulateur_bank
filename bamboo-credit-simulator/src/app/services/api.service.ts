@@ -145,6 +145,39 @@ export interface MonthlyBreakdown {
   cumulative_amount: number;
 }
 
+export interface InsuranceQuoteRequest {
+  insurance_product_id?: string;  // Optionnel maintenant
+  insurance_type: string;
+  age: number;
+  risk_factors: any;
+  coverage_amount?: number;
+  selected_insurers?: string[];   // NOUVEAU: Liste des assureurs sélectionnés
+  guarantees?: string[];          // NOUVEAU: Liste des garanties sélectionnées
+  session_id?: string;
+  user_id?: string;
+}
+
+export interface InsuranceCompany {
+  id: string;
+  name: string;
+  full_name?: string;
+  description?: string;
+  logo_url?: string;
+  website?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  address?: string;
+  license_number?: string;
+  established_year?: number;
+  solvency_ratio?: number;
+  rating?: number;
+  specialties?: string[];
+  coverage_areas?: string[];
+  is_active: boolean;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
 export interface InsuranceProduct {
   id: string;
   name: string;
@@ -154,36 +187,66 @@ export interface InsuranceProduct {
   coverage_details: any;
   features: string[];
   exclusions: string[];
-  bank: Bank;
+  company: InsuranceCompany;  // IMPORTANT: Cette propriété était manquante
+  // Ajout des champs manquants depuis votre backend
+  insurance_company_id?: string;
+  deductible_options?: any;
+  age_limits?: any;
+  advantages?: string[];
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface InsuranceQuoteRequest {
-  insurance_type: string;
-  age: number;
-  coverage_amount?: number;
-  vehicle_value?: number;
-  property_value?: number;
-  risk_factors?: any;
-  user_id?: string;
-}
-
-export interface InsuranceQuote {
-  product_id: string;
-  bank_name: string;
-  product_name: string;
-  monthly_premium: number;
-  annual_premium: number;
-  coverage_details: any;
-  features: string[];
-  exclusions: string[];
+export interface InsuranceProductsParams {
+  insurance_type?: string;
+  type?: string;
+  company_id?: string;
+  selected_insurers?: string;     // NOUVEAU: IDs séparés par virgules
+  min_premium?: number;
+  max_premium?: number;
+  limit?: number;
+  offset?: number;
 }
 
 export interface InsuranceQuoteResponse {
-  quotes: InsuranceQuote[];
-  cheapest: InsuranceQuote | null;
+  quote_id: string;
+  product_name: string;
+  company_name: string;
+  insurance_type: string;
+  coverage_amount?: number;
+  monthly_premium: number;
+  annual_premium: number;
+  deductible: number;
+  coverage_details: any;
+  exclusions: string[];
+  valid_until: string;
   recommendations: string[];
+  quotes: QuoteOption[];
+  
+  // NOUVEAUX champs pour le parcours par étapes
+  selected_guarantees?: string[];
+  selected_insurers_count?: number;
+  coverage_summary?: {
+    total_guarantees: number;
+    mandatory_included: boolean;
+    optional_selected: number;
+    coverage_level: string; // 'basique' | 'standard' | 'premium'
+  };
 }
 
+export interface QuoteOption {
+  company_name: string;
+  product_name: string;
+  monthly_premium: number;
+  annual_premium: number;
+  deductible: number;
+  rating?: number;
+  advantages: string[];
+  company_id?: string;           // NOUVEAU: ID de la compagnie
+  contact_phone?: string;        // NOUVEAU: Contact direct
+  contact_email?: string;        // NOUVEAU: Email direct
+}
 export interface MarketStatistics {
   average_rate: number;
   trend: number;
@@ -781,29 +844,249 @@ export class ApiService {
   // === MÉTHODES EXISTANTES CONSERVÉES ===
 
   // Assurances
-  getInsuranceProducts(params?: {
-    insurance_type?: string;
-  }): Observable<InsuranceProduct[]> {
-    let httpParams = new HttpParams();
-    if (params?.insurance_type) httpParams = httpParams.set('insurance_type', params.insurance_type);
-
-    return this.http.get<InsuranceProduct[]>(`${this.baseUrl}/insurance/products`, {
-      ...this.getHttpOptions(),
-      params: httpParams
-    }).pipe(
-      catchError(this.handleError('Get Insurance Products'))
-    );
+ getInsuranceProducts(params?: InsuranceProductsParams): Observable<InsuranceProduct[]> {
+  let httpParams = new HttpParams();
+  
+  if (params?.insurance_type) {
+    httpParams = httpParams.set('insurance_type', params.insurance_type);
   }
+  if (params?.type) {
+    httpParams = httpParams.set('type', params.type);
+  }
+  if (params?.company_id) {
+    httpParams = httpParams.set('company_id', params.company_id);
+  }
+  // NOUVEAU: Support des assureurs sélectionnés
+  if (params?.selected_insurers) {
+    httpParams = httpParams.set('selected_insurers', params.selected_insurers);
+  }
+  if (params?.min_premium) {
+    httpParams = httpParams.set('min_premium', params.min_premium.toString());
+  }
+  if (params?.max_premium) {
+    httpParams = httpParams.set('max_premium', params.max_premium.toString());
+  }
+  if (params?.limit) {
+    httpParams = httpParams.set('limit', params.limit.toString());
+  }
+  if (params?.offset) {
+    httpParams = httpParams.set('offset', params.offset.toString());
+  }
+
+  return this.http.get<InsuranceProduct[]>(`${this.baseUrl}/insurance/products`, {
+    ...this.getHttpOptions(),
+    params: httpParams
+  }).pipe(
+    catchError(this.handleError('Get Insurance Products'))
+  );
+}
 
   getInsuranceQuote(request: InsuranceQuoteRequest): Observable<InsuranceQuoteResponse> {
-    return this.http.post<InsuranceQuoteResponse>(
-      `${this.baseUrl}/insurance/quote`, 
-      request, 
-      this.getHttpOptions()
-    ).pipe(
-      catchError(this.handleError('Get Insurance Quote'))
-    );
+  console.log('Insurance quote request:', request);
+  
+  // Validation côté client renforcée
+  if (!request.insurance_type) {
+    return throwError(() => 'Type d\'assurance requis');
   }
+  
+  if (!request.age || request.age < 18 || request.age > 80) {
+    return throwError(() => 'Âge invalide. Doit être entre 18 et 80 ans');
+  }
+
+  // Construction de la requête avec les nouveaux champs
+  const requestBody = {
+    insurance_type: request.insurance_type,
+    age: request.age,
+    risk_factors: request.risk_factors || {},
+    coverage_amount: request.coverage_amount,
+    session_id: request.session_id || this.generateSessionId(),
+    user_id: request.user_id,
+    // NOUVEAUX champs
+    selected_insurers: request.selected_insurers || [],
+    guarantees: request.guarantees || [],
+    // Inclusion du product_id si disponible
+    insurance_product_id: request.insurance_product_id
+  };
+
+  return this.http.post<InsuranceQuoteResponse>(
+    `${this.baseUrl}/insurance/quote`, 
+    requestBody, 
+    this.getHttpOptions()
+  ).pipe(
+    tap(response => console.log('Insurance quote response:', response)),
+    catchError(this.handleError('Get Insurance Quote'))
+  );
+}
+
+getInsuranceCompanies(params?: {
+  specialties?: string[];
+  insurance_type?: string;
+  is_active?: boolean;
+}): Observable<InsuranceCompany[]> {
+  let httpParams = new HttpParams();
+  
+  if (params?.specialties?.length) {
+    httpParams = httpParams.set('specialties', params.specialties.join(','));
+  }
+  if (params?.insurance_type) {
+    httpParams = httpParams.set('insurance_type', params.insurance_type);
+  }
+  if (params?.is_active !== undefined) {
+    httpParams = httpParams.set('is_active', params.is_active.toString());
+  }
+
+  return this.http.get<InsuranceCompany[]>(`${this.baseUrl}/insurance/companies`, {
+    ...this.getHttpOptions(),
+    params: httpParams
+  }).pipe(
+    catchError(this.handleError('Get Insurance Companies'))
+  );
+}
+
+// Méthode pour obtenir les garanties disponibles par type d'assurance
+getAvailableGuarantees(insurance_type: string): Observable<any[]> {
+  return this.http.get<any[]>(`${this.baseUrl}/insurance/guarantees/${insurance_type}`, 
+    this.getHttpOptions()
+  ).pipe(
+    catchError(error => {
+      console.warn('Garanties API non disponible, utilisation des données locales');
+      // Fallback vers les données locales
+      return of(this.getLocalGuarantees(insurance_type));
+    })
+  );
+}
+
+// Données locales des garanties en cas d'indisponibilité de l'API
+private getLocalGuarantees(insurance_type: string): any[] {
+  const guarantees: { [key: string]: any[] } = {
+    'auto': [
+      { id: 'responsabilite_civile', name: 'Responsabilité civile', description: 'Obligatoire - Dommages causés aux tiers', required: true },
+      { id: 'dommages_collision', name: 'Dommages collision', description: 'Réparation de votre véhicule en cas d\'accident', required: false },
+      { id: 'vol', name: 'Vol', description: 'Protection contre le vol du véhicule', required: false },
+      { id: 'incendie', name: 'Incendie', description: 'Dommages causés par le feu', required: false },
+      { id: 'bris_glace', name: 'Bris de glace', description: 'Réparation/remplacement des vitres', required: false },
+      { id: 'assistance', name: 'Assistance', description: 'Dépannage et remorquage 24h/24', required: false }
+    ],
+    'habitation': [
+      { id: 'incendie', name: 'Incendie/Explosion', description: 'Protection contre les dégâts d\'incendie', required: true },
+      { id: 'degats_eaux', name: 'Dégâts des eaux', description: 'Fuites, ruptures de canalisations', required: false },
+      { id: 'vol', name: 'Vol/Cambriolage', description: 'Protection des biens mobiliers', required: false },
+      { id: 'responsabilite_civile', name: 'Responsabilité civile', description: 'Dommages causés aux tiers', required: false },
+      { id: 'catastrophes_naturelles', name: 'Catastrophes naturelles', description: 'Événements climatiques exceptionnels', required: false },
+      { id: 'bris_glace', name: 'Bris de glace', description: 'Vitres, miroirs, sanitaires', required: false }
+    ],
+    'vie': [
+      { id: 'deces', name: 'Décès', description: 'Capital versé en cas de décès', required: true },
+      { id: 'invalidite', name: 'Invalidité', description: 'Protection en cas d\'invalidité', required: false },
+      { id: 'maladie_grave', name: 'Maladie grave', description: 'Capital versé pour certaines maladies', required: false }
+    ],
+    'sante': [
+      { id: 'hospitalisation', name: 'Hospitalisation', description: 'Frais d\'hospitalisation', required: true },
+      { id: 'consultations', name: 'Consultations', description: 'Consultations médicales', required: false },
+      { id: 'pharmacie', name: 'Pharmacie', description: 'Médicaments prescrits', required: false },
+      { id: 'dentaire', name: 'Soins dentaires', description: 'Soins et prothèses dentaires', required: false },
+      { id: 'optique', name: 'Optique', description: 'Lunettes et lentilles', required: false }
+    ],
+    'voyage': [
+      { id: 'assistance_medicale', name: 'Assistance médicale', description: 'Soins médicaux à l\'étranger', required: true },
+      { id: 'rapatriement', name: 'Rapatriement', description: 'Rapatriement sanitaire', required: true },
+      { id: 'bagages', name: 'Bagages', description: 'Protection des bagages', required: false },
+      { id: 'annulation', name: 'Annulation', description: 'Annulation de voyage', required: false }
+    ]
+  };
+  
+  return guarantees[insurance_type] || [];
+}
+
+// Méthode pour sauvegarder un devis (optionnelle)
+saveInsuranceQuote(quote: InsuranceQuoteResponse): Observable<any> {
+  return this.http.post(`${this.baseUrl}/insurance/quotes/save`, quote, this.getHttpOptions()).pipe(
+    catchError(this.handleError('Save Insurance Quote'))
+  );
+}
+
+// Méthode pour récupérer un devis sauvegardé
+getSavedInsuranceQuote(quote_id: string): Observable<InsuranceQuoteResponse> {
+  return this.http.get<InsuranceQuoteResponse>(`${this.baseUrl}/insurance/quotes/${quote_id}`, 
+    this.getHttpOptions()
+  ).pipe(
+    catchError(this.handleError('Get Saved Insurance Quote'))
+  );
+}
+
+// 5. Méthodes utilitaires pour le formatage
+
+formatInsurancePremium(amount: number): string {
+  return this.formatAmount(amount);
+}
+
+generateInsuranceApplicationNumber(): string {
+  const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const random = Math.random().toString(36).substr(2, 6).toUpperCase();
+  return `ASS-${timestamp}-${random}`;
+}
+
+// 6. Méthode de test spécifique aux assurances
+testInsuranceEndpoints(): Observable<any> {
+  console.log('Test des endpoints d\'assurance...');
+  
+  return new Observable(observer => {
+    const results: any = {
+      timestamp: new Date().toISOString(),
+      tests: {}
+    };
+
+    // Test 1: Récupération des produits
+    this.getInsuranceProducts({ insurance_type: 'auto', limit: 5 }).subscribe({
+      next: (products) => {
+        results.tests.products = { 
+          status: 'success', 
+          count: products?.length || 0,
+          sample: products?.[0]?.name || 'N/A'
+        };
+        console.log(`Produits d'assurance: ${products?.length || 0}`);
+        
+        // Test 2: Devis de test
+        const testQuote: InsuranceQuoteRequest = {
+          insurance_type: 'auto',
+          age: 35,
+          risk_factors: {
+            vehicle_value: 15000000,
+            experience: 5
+          },
+          guarantees: ['responsabilite_civile', 'vol'],
+          selected_insurers: ['ogar', 'nsia']
+        };
+        
+        this.getInsuranceQuote(testQuote).subscribe({
+          next: (quote) => {
+            results.tests.quote = { 
+              status: 'success', 
+              quote_id: quote.quote_id,
+              premium: quote.monthly_premium,
+              guarantees_count: quote.selected_guarantees?.length || 0
+            };
+            console.log('Test devis réussi');
+            observer.next(results);
+            observer.complete();
+          },
+          error: (quoteError) => {
+            results.tests.quote = { status: 'error', error: quoteError };
+            console.log('Test devis échoué:', quoteError);
+            observer.next(results);
+            observer.complete();
+          }
+        });
+      },
+      error: (productsError) => {
+        results.tests.products = { status: 'error', error: productsError };
+        console.log('Test produits échoué:', productsError);
+        observer.next(results);
+        observer.complete();
+      }
+    });
+  });
+}
 
   // Analytics
   getPopularProducts(days: number = 30): Observable<any> {
