@@ -4,6 +4,10 @@ import { HttpClient, HttpParams, HttpHeaders, HttpErrorResponse } from '@angular
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, timeout, tap, switchMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
+import { 
+  InsuranceProductInfo, 
+  InsuranceCompanyInfo 
+} from '../models/insurance.interface';
 
 export interface CreditSimulationRequest {
   credit_product_id: string;
@@ -844,42 +848,81 @@ export class ApiService {
   // === MÉTHODES EXISTANTES CONSERVÉES ===
 
   // Assurances
- getInsuranceProducts(params?: InsuranceProductsParams): Observable<InsuranceProduct[]> {
-  let httpParams = new HttpParams();
-  
-  if (params?.insurance_type) {
-    httpParams = httpParams.set('insurance_type', params.insurance_type);
-  }
-  if (params?.type) {
-    httpParams = httpParams.set('type', params.type);
-  }
-  if (params?.company_id) {
-    httpParams = httpParams.set('company_id', params.company_id);
-  }
-  // NOUVEAU: Support des assureurs sélectionnés
-  if (params?.selected_insurers) {
-    httpParams = httpParams.set('selected_insurers', params.selected_insurers);
-  }
-  if (params?.min_premium) {
-    httpParams = httpParams.set('min_premium', params.min_premium.toString());
-  }
-  if (params?.max_premium) {
-    httpParams = httpParams.set('max_premium', params.max_premium.toString());
-  }
-  if (params?.limit) {
-    httpParams = httpParams.set('limit', params.limit.toString());
-  }
-  if (params?.offset) {
-    httpParams = httpParams.set('offset', params.offset.toString());
+getInsuranceProducts(params?: InsuranceProductsParams): Observable<InsuranceProductInfo[]> {
+    let httpParams = new HttpParams();
+    
+    if (params?.insurance_type) {
+      httpParams = httpParams.set('insurance_type', params.insurance_type);
+    }
+    if (params?.type) {
+      httpParams = httpParams.set('type', params.type);
+    }
+    if (params?.company_id) {
+      httpParams = httpParams.set('company_id', params.company_id);
+    }
+    if (params?.selected_insurers) {
+      httpParams = httpParams.set('selected_insurers', params.selected_insurers);
+    }
+    if (params?.min_premium) {
+      httpParams = httpParams.set('min_premium', params.min_premium.toString());
+    }
+    if (params?.max_premium) {
+      httpParams = httpParams.set('max_premium', params.max_premium.toString());
+    }
+    if (params?.limit) {
+      httpParams = httpParams.set('limit', params.limit.toString());
+    }
+    if (params?.offset) {
+      httpParams = httpParams.set('offset', params.offset.toString());
+    }
+
+    return this.http.get<InsuranceProduct[]>(`${this.baseUrl}/insurance/products`, {
+      ...this.getHttpOptions(),
+      params: httpParams
+    }).pipe(
+      map(apiProducts => apiProducts.map(product => this.mapToInsuranceProductInfo(product))),
+      catchError(this.handleError('Get Insurance Products'))
+    );
   }
 
-  return this.http.get<InsuranceProduct[]>(`${this.baseUrl}/insurance/products`, {
-    ...this.getHttpOptions(),
-    params: httpParams
-  }).pipe(
-    catchError(this.handleError('Get Insurance Products'))
-  );
-}
+    private mapToInsuranceProductInfo(apiProduct: InsuranceProduct): InsuranceProductInfo {
+    return {
+      id: apiProduct.id,
+      name: apiProduct.name,
+      type: apiProduct.type,
+      description: apiProduct.description,
+      base_premium: apiProduct.base_premium,
+      coverage_details: apiProduct.coverage_details,
+      deductible_options: apiProduct.deductible_options,
+      age_limits: apiProduct.age_limits,
+      exclusions: apiProduct.exclusions || [],
+      features: apiProduct.features || [],
+      advantages: apiProduct.advantages || [],
+      is_active: apiProduct.is_active !== false,
+      company: this.mapToInsuranceCompanyInfo(apiProduct.company),
+      created_at: apiProduct.created_at,
+      updated_at: apiProduct.updated_at
+    };
+  }
+
+  private mapToInsuranceCompanyInfo(apiCompany: InsuranceCompany): InsuranceCompanyInfo {
+    return {
+      id: apiCompany.id,
+      name: apiCompany.name,
+      full_name: apiCompany.full_name || apiCompany.name,
+      logo_url: apiCompany.logo_url,
+      rating: apiCompany.rating,
+      solvency_ratio: apiCompany.solvency_ratio,
+      contact_phone: apiCompany.contact_phone,
+      contact_email: apiCompany.contact_email,
+      specialties: apiCompany.specialties || [],
+      coverage_areas: apiCompany.coverage_areas,
+      is_active: apiCompany.is_active !== false,
+      created_at: apiCompany.created_at ? (typeof apiCompany.created_at === 'string' ? apiCompany.created_at : apiCompany.created_at.toISOString()) : undefined,
+      updated_at: apiCompany.updated_at ? (typeof apiCompany.updated_at === 'string' ? apiCompany.updated_at : apiCompany.updated_at.toISOString()) : undefined
+    };
+  }
+
 
   getInsuranceQuote(request: InsuranceQuoteRequest): Observable<InsuranceQuoteResponse> {
   console.log('Insurance quote request:', request);

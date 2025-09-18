@@ -45,7 +45,7 @@ interface InsuranceProduct {
   description: string;
   base_premium: number;
   coverage_details: any;
-  deductible_options: any;
+  deductible_options?: any; // Made optional to match API type
   age_limits: any;
   exclusions: string[];
   features: string[];
@@ -102,7 +102,8 @@ interface AssetPaths {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, InsuranceApplicationModalComponent],
   template: `
-    <div class="insurance-comparator-container">
+    <!-- Voici le template corrigé avec les erreurs résolues -->
+<div class="insurance-comparator-container">
       <!-- Hero Section avec image -->
       <div class="hero-section">
         <div class="container">
@@ -572,16 +573,533 @@ interface AssetPaths {
                   </div>
                 </div>
 
-                <!-- Autres types d'assurance similaires... -->
-                <div *ngSwitchDefault>
-                  <div class="generic-step">
-                    <p>Configuration pour {{ selectedInsuranceType }} en cours de développement...</p>
+                <!-- Assurance Vie -->
+                <div *ngSwitchCase="'vie'">
+                  <div [ngSwitch]="currentStep">
+                    <!-- Step 1: Profil assuré -->
+                    <div *ngSwitchCase="0" class="step-form">
+                      <h3>Votre profil d'assuré</h3>
+                      <form [formGroup]="insuranceForm" class="form-grid">
+                        <div class="form-group">
+                          <label for="coverageAmount">Capital souhaité (FCFA) *</label>
+                          <input 
+                            type="number"
+                            formControlName="coverageAmount"
+                            id="coverageAmount"
+                            class="form-input"
+                            placeholder="Ex: 50000000"
+                            min="1000000">
+                        </div>
+
+                        <div class="form-group">
+                          <label for="healthStatus">État de santé *</label>
+                          <select 
+                            formControlName="healthStatus" 
+                            id="healthStatus"
+                            class="form-select">
+                            <option value="">Votre état de santé</option>
+                            <option value="excellent">Excellent</option>
+                            <option value="bon">Bon</option>
+                            <option value="moyen">Moyen</option>
+                            <option value="fragile">Fragile avec suivi médical</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="smokingStatus">Statut fumeur *</label>
+                          <select 
+                            formControlName="smokingStatus" 
+                            id="smokingStatus"
+                            class="form-select">
+                            <option value="">Vous fumez ?</option>
+                            <option value="non">Non-fumeur</option>
+                            <option value="occasionnel">Fumeur occasionnel</option>
+                            <option value="regulier">Fumeur régulier</option>
+                            <option value="ancien">Ancien fumeur (arrêt > 2 ans)</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="profession">Profession *</label>
+                          <input 
+                            type="text"
+                            formControlName="profession"
+                            id="profession"
+                            class="form-input"
+                            placeholder="Ex: Ingénieur">
+                        </div>
+
+                        <div class="form-group">
+                          <label for="beneficiaries">Bénéficiaires principaux</label>
+                          <textarea
+                            formControlName="beneficiaries"
+                            id="beneficiaries"
+                            class="form-input"
+                            rows="3"
+                            placeholder="Conjoint, enfants, parents..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="age">Votre âge *</label>
+                          <input 
+                            type="number"
+                            formControlName="age"
+                            id="age"
+                            class="form-input"
+                            placeholder="Ex: 35"
+                            min="18" max="75">
+                        </div>
+                      </form>
+                    </div>
+
+                    <!-- Step 2: Type de contrat -->
+                    <div *ngSwitchCase="1" class="step-form">
+                      <h3>Type de contrat souhaité</h3>
+                      <div class="contract-types-grid">
+                        <div 
+                          *ngFor="let contractType of getVieContractTypes()" 
+                          class="contract-type-card"
+                          [class.selected]="isContractTypeSelected(contractType.id)"
+                          (click)="selectContractType(contractType.id)">
+                          
+                          <div class="contract-icon">{{ contractType.icon }}</div>
+                          <h4>{{ contractType.name }}</h4>
+                          <p>{{ contractType.description }}</p>
+                          <div class="contract-price">{{ contractType.priceRange }}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Step 3: Garanties -->
+                    <div *ngSwitchCase="2" class="step-form">
+                      <h3>Choisissez vos garanties</h3>
+                      <div class="guarantees-list">
+                        <div 
+                          *ngFor="let guarantee of getVieGuarantees()" 
+                          class="guarantee-item"
+                          [class.required]="guarantee.required">
+                          <div class="guarantee-checkbox">
+                            <input
+                              type="checkbox"
+                              [id]="guarantee.id"
+                              [checked]="isGuaranteeSelected(guarantee.id) || guarantee.required"
+                              [disabled]="guarantee.required"
+                              (change)="toggleGuarantee(guarantee.id, $event)">
+                          </div>
+                          <div class="guarantee-content">
+                            <label [for]="guarantee.id" class="guarantee-name">
+                              {{ guarantee.name }}
+                              <span *ngIf="guarantee.required" class="required-mark">*</span>
+                            </label>
+                            <p class="guarantee-desc">{{ guarantee.description }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Step 4: Assureurs -->
+                    <div *ngSwitchCase="3" class="step-form">
+                      <h3>Sélectionnez les assureurs à comparer</h3>
+                      <div *ngIf="isLoadingCompanies" class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Chargement des assureurs...</p>
+                      </div>
+                      
+                      <div *ngIf="!isLoadingCompanies" class="insurers-grid">
+                        <div 
+                          *ngFor="let company of availableCompanies" 
+                          class="insurer-card"
+                          [class.selected]="isInsurerSelected(company.id)"
+                          (click)="toggleInsurer(company.id)">
+                          
+                          <div class="insurer-header">
+                            <img 
+                              *ngIf="company.logo_url || getCompanyLogo(company.id)" 
+                              [src]="company.logo_url || getCompanyLogo(company.id)" 
+                              [alt]="company.name"
+                              class="insurer-logo"
+                              (error)="onImageError($event)"
+                              loading="lazy">
+                            <div class="insurer-info">
+                              <h4>{{ company.name }}</h4>
+                              <p>{{ company.full_name }}</p>
+                            </div>
+                          </div>
+
+                          <div class="insurer-specialty" *ngIf="company.specialties">
+                            <span class="specialty-badge">Spécialiste Vie</span>
+                          </div>
+
+                          <div class="selection-indicator">
+                            <span *ngIf="isInsurerSelected(company.id)" class="selected-text">✓ Sélectionné</span>
+                            <span *ngIf="!isInsurerSelected(company.id)" class="select-text">Cliquer pour sélectionner</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Assurance Santé -->
+                <div *ngSwitchCase="'sante'">
+                  <div [ngSwitch]="currentStep">
+                    <!-- Step 1: Composition familiale -->
+                    <div *ngSwitchCase="0" class="step-form">
+                      <h3>Composition de votre famille</h3>
+                      <form [formGroup]="insuranceForm" class="form-grid">
+                        <div class="form-group">
+                          <label for="familySize">Nombre de personnes à assurer *</label>
+                          <select 
+                            formControlName="familySize" 
+                            id="familySize"
+                            class="form-select"
+                            (change)="onFamilySizeChange($event)">
+                            <option value="">Sélectionnez</option>
+                            <option value="1">Moi seul(e)</option>
+                            <option value="2">Couple</option>
+                            <option value="3">Couple + 1 enfant</option>
+                            <option value="4">Couple + 2 enfants</option>
+                            <option value="5">Couple + 3 enfants</option>
+                            <option value="6">Famille nombreuse (6+)</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="medicalHistory">Antécédents médicaux significatifs</label>
+                          <select 
+                            formControlName="medicalHistory" 
+                            id="medicalHistory"
+                            class="form-select">
+                            <option value="">État de santé général</option>
+                            <option value="aucun">Aucun antécédent</option>
+                            <option value="leger">Antécédents légers</option>
+                            <option value="moyen">Suivi médical régulier</option>
+                            <option value="lourd">Maladie chronique</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="coverageLevel">Niveau de couverture souhaité *</label>
+                          <select 
+                            formControlName="coverageLevel" 
+                            id="coverageLevel"
+                            class="form-select">
+                            <option value="">Choisissez votre niveau</option>
+                            <option value="essentiel">Essentiel (hospitalisation)</option>
+                            <option value="confort">Confort (+ consultations)</option>
+                            <option value="premium">Premium (couverture complète)</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="hospitalization">Privilégiez-vous certains établissements ?</label>
+                          <select 
+                            formControlName="hospitalization" 
+                            id="hospitalization"
+                            class="form-select">
+                            <option value="">Préférence d'établissement</option>
+                            <option value="public">Hôpitaux publics</option>
+                            <option value="prive">Cliniques privées</option>
+                            <option value="mixte">Pas de préférence</option>
+                            <option value="international">Couverture internationale</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="age">Âge du souscripteur *</label>
+                          <input 
+                            type="number"
+                            formControlName="age"
+                            id="age"
+                            class="form-input"
+                            placeholder="Ex: 35"
+                            min="18" max="70">
+                        </div>
+                      </form>
+
+                      <!-- Résumé familial dynamique -->
+                      <div *ngIf="getFamilyComposition()" class="family-summary">
+                        <h4>Résumé de votre famille</h4>
+                        <div class="family-composition">
+                          <span class="family-member" *ngFor="let member of getFamilyComposition()">
+                            {{ member }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Step 2: Besoins médicaux -->
+                    <div *ngSwitchCase="1" class="step-form">
+                      <h3>Vos besoins médicaux prioritaires</h3>
+                      <div class="medical-needs-grid">
+                        <div 
+                          *ngFor="let need of getMedicalNeeds()" 
+                          class="medical-need-card"
+                          [class.selected]="isMedicalNeedSelected(need.id)"
+                          [class.priority]="need.priority"
+                          (click)="toggleMedicalNeed(need.id)">
+                          <div class="need-icon">{{ need.icon }}</div>
+                          <h4>{{ need.name }}</h4>
+                          <p>{{ need.description }}</p>
+                          <div class="need-frequency" *ngIf="need.frequency">{{ need.frequency }}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Step 3: Garanties -->
+                    <div *ngSwitchCase="2" class="step-form">
+                      <h3>Garanties recommandées</h3>
+                      <div class="guarantees-list">
+                        <div 
+                          *ngFor="let guarantee of getSanteGuarantees()" 
+                          class="guarantee-item"
+                          [class.required]="guarantee.required"
+                          [class.recommended]="guarantee.recommended">
+                          <div class="guarantee-checkbox">
+                            <input
+                              type="checkbox"
+                              [id]="guarantee.id"
+                              [checked]="isGuaranteeSelected(guarantee.id) || guarantee.required"
+                              [disabled]="guarantee.required"
+                              (change)="toggleGuarantee(guarantee.id, $event)">
+                          </div>
+                          <div class="guarantee-content">
+                            <label [for]="guarantee.id" class="guarantee-name">
+                              {{ guarantee.name }}
+                              <span *ngIf="guarantee.required" class="required-mark">*</span>
+                              <span *ngIf="guarantee.recommended" class="recommended-mark">Recommandé</span>
+                            </label>
+                            <p class="guarantee-desc">{{ guarantee.description }}</p>
+                            <div class="guarantee-coverage" *ngIf="guarantee.coverage">
+                              Prise en charge : {{ guarantee.coverage }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Step 4: Assureurs -->
+                    <div *ngSwitchCase="3" class="step-form">
+                      <h3>Assureurs santé spécialisés</h3>
+                      <div *ngIf="!isLoadingCompanies" class="insurers-grid">
+                        <div 
+                          *ngFor="let company of availableCompanies" 
+                          class="insurer-card"
+                          [class.selected]="isInsurerSelected(company.id)"
+                          (click)="toggleInsurer(company.id)">
+                          
+                          <div class="insurer-header">
+                            <img 
+                              *ngIf="company.logo_url || getCompanyLogo(company.id)" 
+                              [src]="company.logo_url || getCompanyLogo(company.id)" 
+                              [alt]="company.name"
+                              class="insurer-logo">
+                            <div class="insurer-info">
+                              <h4>{{ company.name }}</h4>
+                              <p>{{ company.full_name }}</p>
+                            </div>
+                          </div>
+
+                          <div class="insurer-network">
+                            <span class="network-badge">Réseau étendu</span>
+                            <p class="network-desc">{{ getNetworkDescription(company.id) }}</p>
+                          </div>
+
+                          <div class="selection-indicator">
+                            <span *ngIf="isInsurerSelected(company.id)" class="selected-text">✓ Sélectionné</span>
+                            <span *ngIf="!isInsurerSelected(company.id)" class="select-text">Cliquer pour sélectionner</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Assurance Voyage -->
+                <div *ngSwitchCase="'voyage'">
+                  <div [ngSwitch]="currentStep">
+                    <!-- Step 1: Votre voyage -->
+                    <div *ngSwitchCase="0" class="step-form">
+                      <h3>Informations sur votre voyage</h3>
+                      <form [formGroup]="insuranceForm" class="form-grid">
+                        <div class="form-group">
+                          <label for="destination">Destination *</label>
+                          <select 
+                            formControlName="destination" 
+                            id="destination"
+                            class="form-select"
+                            (change)="onDestinationChange($event)">
+                            <option value="">Choisissez votre destination</option>
+                            <option value="afrique">Afrique</option>
+                            <option value="europe">Europe</option>
+                            <option value="amerique_nord">Amérique du Nord</option>
+                            <option value="amerique_sud">Amérique du Sud</option>
+                            <option value="asie">Asie</option>
+                            <option value="oceanie">Océanie</option>
+                            <option value="mondial">Monde entier</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="duration">Durée du voyage (jours) *</label>
+                          <input 
+                            type="number"
+                            formControlName="duration"
+                            id="duration"
+                            class="form-input"
+                            placeholder="Ex: 14"
+                            min="1" max="365">
+                        </div>
+
+                        <div class="form-group">
+                          <label for="travelFrequency">Fréquence de voyage *</label>
+                          <select 
+                            formControlName="travelFrequency" 
+                            id="travelFrequency"
+                            class="form-select">
+                            <option value="">Vous voyagez</option>
+                            <option value="unique">Voyage unique</option>
+                            <option value="occasionnel">Occasionnellement (1-2/an)</option>
+                            <option value="regulier">Régulièrement (3-6/an)</option>
+                            <option value="frequent">Très fréquemment (7+/an)</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="activities">Type d'activités prévues</label>
+                          <select 
+                            formControlName="activities" 
+                            id="activities"
+                            class="form-select">
+                            <option value="">Activités principales</option>
+                            <option value="detente">Détente/Tourisme</option>
+                            <option value="affaires">Voyage d'affaires</option>
+                            <option value="sport">Sports/Aventure</option>
+                            <option value="extreme">Sports extrêmes</option>
+                            <option value="medical">Voyage médical</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="travelers">Nombre de voyageurs</label>
+                          <select 
+                            formControlName="travelers" 
+                            id="travelers"
+                            class="form-select">
+                            <option value="1">1 personne</option>
+                            <option value="2">2 personnes</option>
+                            <option value="3">3 personnes</option>
+                            <option value="4">4 personnes</option>
+                            <option value="5+">5 personnes ou plus</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="age">Âge du voyageur principal *</label>
+                          <input 
+                            type="number"
+                            formControlName="age"
+                            id="age"
+                            class="form-input"
+                            placeholder="Ex: 35"
+                            min="18" max="80">
+                        </div>
+                      </form>
+                    </div>
+
+                    <!-- Step 2: Risques et besoins -->
+                    <div *ngSwitchCase="1" class="step-form">
+                      <h3>Évaluez vos risques voyage</h3>
+                      <div class="travel-risks-grid">
+                        <div 
+                          *ngFor="let risk of getTravelRisks()" 
+                          class="risk-assessment-card"
+                          [class.high-risk]="risk.level === 'high'"
+                          [class.medium-risk]="risk.level === 'medium'"
+                          [class.low-risk]="risk.level === 'low'">
+                          <div class="risk-icon">{{ risk.icon }}</div>
+                          <h4>{{ risk.name }}</h4>
+                          <p>{{ risk.description }}</p>
+                          <div class="risk-level">Risque : {{ risk.levelText }}</div>
+                          <label class="risk-checkbox">
+                            <input type="checkbox" [value]="risk.id" (change)="toggleTravelRisk(risk.id, $event)">
+                            Me couvrir pour ce risque
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Step 3: Garanties -->
+                    <div *ngSwitchCase="2" class="step-form">
+                      <h3>Garanties voyage essentielles</h3>
+                      <div class="guarantees-list">
+                        <div 
+                          *ngFor="let guarantee of getVoyageGuarantees()" 
+                          class="guarantee-item"
+                          [class.required]="guarantee.required"
+                          [class.essential]="guarantee.essential">
+                          <div class="guarantee-checkbox">
+                            <input
+                              type="checkbox"
+                              [id]="guarantee.id"
+                              [checked]="isGuaranteeSelected(guarantee.id) || guarantee.required"
+                              [disabled]="guarantee.required"
+                              (change)="toggleGuarantee(guarantee.id, $event)">
+                          </div>
+                          <div class="guarantee-content">
+                            <label [for]="guarantee.id" class="guarantee-name">
+                              {{ guarantee.name }}
+                              <span *ngIf="guarantee.required" class="required-mark">*</span>
+                              <span *ngIf="guarantee.essential" class="essential-mark">Essentiel</span>
+                            </label>
+                            <p class="guarantee-desc">{{ guarantee.description }}</p>
+                            <div class="guarantee-amount" *ngIf="guarantee.amount">
+                              Jusqu'à {{ formatCurrency(guarantee.amount) }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Step 4: Assureurs -->
+                    <div *ngSwitchCase="3" class="step-form">
+                      <h3>Assureurs voyage internationaux</h3>
+                      <div *ngIf="!isLoadingCompanies" class="insurers-grid">
+                        <div 
+                          *ngFor="let company of availableCompanies" 
+                          class="insurer-card"
+                          [class.selected]="isInsurerSelected(company.id)"
+                          (click)="toggleInsurer(company.id)">
+                          
+                          <div class="insurer-header">
+                            <img 
+                              *ngIf="company.logo_url || getCompanyLogo(company.id)" 
+                              [src]="company.logo_url || getCompanyLogo(company.id)" 
+                              [alt]="company.name"
+                              class="insurer-logo">
+                            <div class="insurer-info">
+                              <h4>{{ company.name }}</h4>
+                              <p>{{ company.full_name }}</p>
+                            </div>
+                          </div>
+
+                          <div class="insurer-coverage">
+                            <div class="coverage-zone">{{ getCoverageZone(company.id) }}</div>
+                            <div class="assistance-24h">Assistance 24h/24</div>
+                          </div>
+
+                          <div class="selection-indicator">
+                            <span *ngIf="isInsurerSelected(company.id)" class="selected-text">✓ Sélectionné</span>
+                            <span *ngIf="!isInsurerSelected(company.id)" class="select-text">Cliquer pour sélectionner</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </ng-container>
             </div>
 
-            <!-- Results -->
             <!-- Results -->
             <div *ngIf="simulationResults && !isLoading" class="results-section">
               <h3>Résultats de votre comparaison</h3>
@@ -667,6 +1185,7 @@ interface AssetPaths {
                 </div>
               </div>
             </div>
+          </div>
 
           <!-- Navigation -->
           <div class="step-navigation">
@@ -713,6 +1232,10 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
   showApplicationModal = false;
   selectedQuoteForApplication: any = null;
   selectedProductForApplication: any = null;
+  selectedContractType: string = '';
+  selectedMedicalNeeds: string[] = [];
+  selectedTravelRisks: string[] = [];
+  selectedTransportRisks: string[] = [];
   availableProducts: InsuranceProductInfo[] = [];
   availableCompanies: InsuranceCompanyInfo[] = [];
 
@@ -726,7 +1249,7 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
     hero: '/assets/images/insurance-hero.png',
     heroBackground: '/assets/images/hero-background.png',
     icons: {
-      auto: '/assets/images/icons/car-icon.png',
+      auto: '/assets/images/icons/card-icon.png',
       habitation: '/assets/images/icons/home.png',
       vie: '/assets/images/icons/life-icon.png',
       sante: '/assets/images/icons/health-icon.png',
@@ -905,6 +1428,89 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
     });
   }
 
+// Méthodes pour Assurance Vie
+getVieContractTypes() {
+  return [
+    {
+      id: 'temporaire',
+      name: 'Assurance Temporaire',
+      description: 'Protection pour une durée déterminée',
+      priceRange: 'À partir de 15 000 FCFA/mois',
+      icon: '⏳'
+    },
+    {
+      id: 'vie_entiere',
+      name: 'Assurance Vie Entière',
+      description: 'Protection à vie avec épargne',
+      priceRange: 'À partir de 45 000 FCFA/mois',
+      icon: '♾️'
+    },
+    {
+      id: 'mixte',
+      name: 'Assurance Mixte',
+      description: 'Décès + épargne + rente',
+      priceRange: 'À partir de 65 000 FCFA/mois',
+      icon: '🔄'
+    },
+    {
+      id: 'groupe',
+      name: 'Assurance Groupe',
+      description: 'Pour les entreprises et familles',
+      priceRange: 'À partir de 25 000 FCFA/mois',
+      icon: '👥'
+    }
+  ];
+}
+
+getVieGuarantees() {
+  return [
+    { 
+      id: 'deces', 
+      name: 'Décès toutes causes', 
+      description: 'Capital versé aux bénéficiaires en cas de décès', 
+      required: true 
+    },
+    { 
+      id: 'invalidite', 
+      name: 'Invalidité permanente totale', 
+      description: 'Protection en cas d\'invalidité totale et définitive', 
+      required: false 
+    },
+    { 
+      id: 'maladie_grave', 
+      name: 'Maladies graves', 
+      description: 'Capital versé pour cancer, AVC, infarctus...', 
+      required: false 
+    },
+    { 
+      id: 'rente_education', 
+      name: 'Rente éducation', 
+      description: 'Financement des études des enfants', 
+      required: false 
+    },
+    { 
+      id: 'exoneration_primes', 
+      name: 'Exonération des primes', 
+      description: 'Maintien du contrat sans paiement en cas d\'incapacité', 
+      required: false 
+    },
+    { 
+      id: 'double_effet', 
+      name: 'Double effet accidentel', 
+      description: 'Capital doublé en cas de décès accidentel', 
+      required: false 
+    }
+  ];
+}
+
+selectContractType(contractId: string): void {
+  this.selectedContractType = contractId;
+}
+
+isContractTypeSelected(contractId: string): boolean {
+  return this.selectedContractType === contractId;
+}
+
   // Méthodes de navigation et sélection
   selectInsuranceType(type: string): void {
     this.selectedInsuranceType = type;
@@ -955,6 +1561,282 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
     ];
   }
 
+  // Méthodes pour Assurance Santé
+onFamilySizeChange(event: any): void {
+  const familySize = parseInt(event.target.value);
+  // Ajuster dynamiquement les tarifs selon la taille de famille
+  console.log('Famille de', familySize, 'personnes');
+}
+
+getFamilyComposition(): string[] | null {
+  const familySize = this.insuranceForm.get('familySize')?.value;
+  if (!familySize) return null;
+
+  const compositions = {
+    '1': ['Vous'],
+    '2': ['Vous', 'Conjoint'],
+    '3': ['Vous', 'Conjoint', '1 enfant'],
+    '4': ['Vous', 'Conjoint', '2 enfants'],
+    '5': ['Vous', 'Conjoint', '3 enfants'],
+    '6': ['Vous', 'Conjoint', '4+ enfants']
+  };
+
+  return compositions[familySize as keyof typeof compositions] || null;
+}
+
+getMedicalNeeds() {
+  return [
+    {
+      id: 'consultations',
+      name: 'Consultations fréquentes',
+      description: 'Médecin généraliste et spécialistes',
+      frequency: 'Mensuel',
+      priority: 'high',
+      icon: '👩‍⚕️'
+    },
+    {
+      id: 'pharmacie',
+      name: 'Médicaments réguliers',
+      description: 'Traitements chroniques et ponctuels',
+      frequency: 'Hebdomadaire',
+      priority: 'high',
+      icon: '💊'
+    },
+    {
+      id: 'dentaire',
+      name: 'Soins dentaires',
+      description: 'Prévention et soins dentaires',
+      frequency: 'Semestriel',
+      priority: 'medium',
+      icon: '🦷'
+    },
+    {
+      id: 'optique',
+      name: 'Optique',
+      description: 'Lunettes et lentilles',
+      frequency: 'Annuel',
+      priority: 'medium',
+      icon: '👓'
+    },
+    {
+      id: 'maternite',
+      name: 'Maternité',
+      description: 'Suivi grossesse et accouchement',
+      frequency: 'Occasionnel',
+      priority: 'high',
+      icon: '🤱'
+    },
+    {
+      id: 'hospitalisation',
+      name: 'Hospitalisation',
+      description: 'Chambres privées et interventions',
+      frequency: 'Rare mais coûteux',
+      priority: 'high',
+      icon: '🏥'
+    }
+  ];
+}
+
+getSanteGuarantees() {
+  return [
+    { 
+      id: 'hospitalisation', 
+      name: 'Hospitalisation', 
+      description: 'Frais d\'hospitalisation et chirurgie', 
+      required: true,
+      coverage: '100%'
+    },
+    { 
+      id: 'consultations', 
+      name: 'Consultations médicales', 
+      description: 'Généralistes et spécialistes', 
+      required: false,
+      recommended: true,
+      coverage: '70-80%'
+    },
+    { 
+      id: 'pharmacie', 
+      name: 'Médicaments', 
+      description: 'Médicaments prescrits', 
+      required: false,
+      recommended: true,
+      coverage: '60-80%'
+    },
+    { 
+      id: 'dentaire', 
+      name: 'Soins dentaires', 
+      description: 'Soins et prothèses dentaires', 
+      required: false,
+      coverage: '50-70%'
+    },
+    { 
+      id: 'optique', 
+      name: 'Optique', 
+      description: 'Lunettes et lentilles de contact', 
+      required: false,
+      coverage: '100-300 FCFA'
+    },
+    { 
+      id: 'maternite', 
+      name: 'Maternité', 
+      description: 'Suivi grossesse et accouchement', 
+      required: false,
+      coverage: '100%'
+    }
+  ];
+}
+
+toggleMedicalNeed(needId: string): void {
+  if (this.isMedicalNeedSelected(needId)) {
+    this.selectedMedicalNeeds = this.selectedMedicalNeeds.filter(id => id !== needId);
+  } else {
+    this.selectedMedicalNeeds.push(needId);
+  }
+}
+
+isMedicalNeedSelected(needId: string): boolean {
+  return this.selectedMedicalNeeds.includes(needId);
+}
+
+getNetworkDescription(companyId: string): string {
+  const networks = {
+    'nsia': '150+ centres de soins partenaires',
+    'axa': '200+ professionnels de santé agréés',
+    'ogar': '100+ établissements conventionnés',
+    'default': 'Large réseau de professionnels'
+  };
+  return networks[companyId as keyof typeof networks] || networks['default'];
+}
+
+
+// Méthodes pour Assurance Voyage
+onDestinationChange(event: any): void {
+  const destination = event.target.value;
+  // Adapter les risques et tarifs selon la destination
+  console.log('Destination sélectionnée:', destination);
+}
+
+getTravelRisks() {
+  return [
+    {
+      id: 'medical_emergency',
+      name: 'Urgence médicale',
+      description: 'Frais médicaux d\'urgence à l\'étranger',
+      level: 'high',
+      levelText: 'Élevé',
+      icon: '🚨'
+    },
+    {
+      id: 'repatriation',
+      name: 'Rapatriement sanitaire',
+      description: 'Rapatriement médical vers le Gabon',
+      level: 'high',
+      levelText: 'Élevé',
+      icon: '✈️'
+    },
+    {
+      id: 'baggage_loss',
+      name: 'Perte de bagages',
+      description: 'Vol ou perte de vos affaires personnelles',
+      level: 'medium',
+      levelText: 'Moyen',
+      icon: '🧳'
+    },
+    {
+      id: 'trip_cancellation',
+      name: 'Annulation voyage',
+      description: 'Remboursement en cas d\'annulation',
+      level: 'medium',
+      levelText: 'Moyen',
+      icon: '❌'
+    },
+    {
+      id: 'delay',
+      name: 'Retard de vol',
+      description: 'Compensation pour retards importants',
+      level: 'low',
+      levelText: 'Faible',
+      icon: '⏰'
+    },
+    {
+      id: 'legal_assistance',
+      name: 'Assistance juridique',
+      description: 'Aide juridique à l\'étranger',
+      level: 'low',
+      levelText: 'Faible',
+      icon: '⚖️'
+    }
+  ];
+}
+
+getVoyageGuarantees() {
+  return [
+    { 
+      id: 'assistance_medicale', 
+      name: 'Assistance médicale', 
+      description: 'Soins médicaux d\'urgence 24h/24', 
+      required: true,
+      amount: 50000000
+    },
+    { 
+      id: 'rapatriement', 
+      name: 'Rapatriement sanitaire', 
+      description: 'Rapatriement médical vers le Gabon', 
+      required: true,
+      amount: null // Illimité
+    },
+    { 
+      id: 'bagages', 
+      name: 'Bagages et effets personnels', 
+      description: 'Vol, perte ou détérioration', 
+      required: false,
+      essential: true,
+      amount: 2000000
+    },
+    { 
+      id: 'annulation', 
+      name: 'Annulation voyage', 
+      description: 'Remboursement des frais d\'annulation', 
+      required: false,
+      amount: 10000000
+    },
+    { 
+      id: 'retard', 
+      name: 'Retard de transport', 
+      description: 'Compensation pour retards importants', 
+      required: false,
+      amount: 500000
+    },
+    { 
+      id: 'responsabilite_civile', 
+      name: 'Responsabilité civile voyage', 
+      description: 'Dommages causés aux tiers', 
+      required: false,
+      amount: 5000000
+    }
+  ];
+}
+
+toggleTravelRisk(riskId: string, event: any): void {
+  if (event.target.checked) {
+    if (!this.selectedTravelRisks.includes(riskId)) {
+      this.selectedTravelRisks.push(riskId);
+    }
+  } else {
+    this.selectedTravelRisks = this.selectedTravelRisks.filter(id => id !== riskId);
+  }
+}
+
+getCoverageZone(companyId: string): string {
+  const zones = {
+    'saham': 'Couverture mondiale',
+    'axa': 'Europe + Amérique + Asie',
+    'nsia': 'Afrique + Europe',
+    'default': 'Couverture internationale'
+  };
+  return zones[companyId as keyof typeof zones] || zones['default'];
+}
+
   getHabitationGuarantees() {
     return [
       { id: 'incendie', name: 'Incendie/Explosion', description: 'Protection contre les dégâts d\'incendie', required: true },
@@ -993,18 +1875,21 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
     return this.selectedInsurers.includes(insurerId);
   }
 
-  // Chargement des données depuis l'API
   private loadInsuranceData(): void {
     this.isLoadingCompanies = true;
     
+    // L'appel reste EXACTEMENT le même
     this.apiService.getInsuranceProducts({ 
       insurance_type: this.selectedInsuranceType 
     })
     .pipe(takeUntil(this.destroy$))
     .subscribe({
-      next: (products: InsuranceProductInfo[]) => {
-        this.availableProducts = products;
-        this.extractUniqueCompanies(products);
+      next: (products) => { // TypeScript inférera automatiquement InsuranceProductInfo[]
+        console.log('Produits reçus:', products);
+        console.log('Premier produit:', products[0]);
+        
+        this.availableProducts = products; // Assignation directe
+        this.extractUniqueCompanies(products); // Passe automatiquement le bon type
         this.isLoadingCompanies = false;
       },
       error: (error) => {
@@ -1014,6 +1899,7 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
       }
     });
   }
+
 
   private extractUniqueCompanies(products: InsuranceProductInfo[]): void {
     const companiesMap = new Map<string, InsuranceCompanyInfo>();
@@ -1029,7 +1915,8 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
           solvency_ratio: product.company.solvency_ratio,
           contact_phone: product.company.contact_phone || '+241 01 00 00 00',
           contact_email: product.company.contact_email || 'contact@assurance.ga',
-          specialties: [this.selectedInsuranceType]
+          specialties: [this.selectedInsuranceType],
+          is_active: false
         });
       }
     });
