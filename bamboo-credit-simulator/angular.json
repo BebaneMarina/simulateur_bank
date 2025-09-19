@@ -18,6 +18,12 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "scripts": [
+              "node_modules/chart.js/dist/chart.umd.js",
+              "node_modules/jspdf/dist/jspdf.umd.min.js",
+              "node_modules/jspdf-autotable/dist/jspdf.plugin.autotable.min.js",
+               "node_modules/jspdf/dist/jspdf.umd.min.js"
+            ],
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",

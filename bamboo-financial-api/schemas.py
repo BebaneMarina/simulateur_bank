@@ -157,47 +157,87 @@ class BankWithProducts(Bank):
 
 # ==================== SCHÉMAS COMPAGNIES D'ASSURANCE ====================
 
-class InsuranceCompanyBase(BaseSchema):
-    name: str = Field(..., min_length=2, max_length=100)
+class InsuranceCompanyCreate(BaseModel):
+    id: Optional[str] = None
+    name: str
     full_name: Optional[str] = None
     description: Optional[str] = None
     logo_url: Optional[str] = None
+    logo_data: Optional[str] = None
+    logo_content_type: Optional[str] = None
     website: Optional[str] = None
     contact_phone: Optional[str] = None
     contact_email: Optional[str] = None
     address: Optional[str] = None
     license_number: Optional[str] = None
     established_year: Optional[int] = None
-    solvency_ratio: Optional[float] = None
+    solvency_ratio: Optional[Decimal] = None
     rating: Optional[str] = None
     specialties: Optional[List[str]] = []
     coverage_areas: Optional[List[str]] = []
     is_active: bool = True
 
-class InsuranceCompanyCreate(InsuranceCompanyBase):
-    id: Optional[str] = None  # Sera généré automatiquement si non fourni
+    @validator('specialties', pre=True, always=True)
+    def validate_specialties(cls, v):
+        if isinstance(v, str):
+            import json
+            return json.loads(v) if v else []
+        return v or []
 
-class InsuranceCompanyUpdate(BaseSchema):
+    @validator('coverage_areas', pre=True, always=True)
+    def validate_coverage_areas(cls, v):
+        if isinstance(v, str):
+            import json
+            return json.loads(v) if v else []
+        return v or []
+
+class InsuranceCompanyUpdate(BaseModel):
     name: Optional[str] = None
     full_name: Optional[str] = None
     description: Optional[str] = None
     logo_url: Optional[str] = None
+    logo_data: Optional[str] = None
+    logo_content_type: Optional[str] = None
     website: Optional[str] = None
     contact_phone: Optional[str] = None
     contact_email: Optional[str] = None
     address: Optional[str] = None
     license_number: Optional[str] = None
     established_year: Optional[int] = None
-    solvency_ratio: Optional[float] = None
+    solvency_ratio: Optional[Decimal] = None
     rating: Optional[str] = None
     specialties: Optional[List[str]] = None
     coverage_areas: Optional[List[str]] = None
     is_active: Optional[bool] = None
 
-class InsuranceCompany(InsuranceCompanyBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
+class InsuranceProductCreate(BaseModel):
+    id: Optional[str] = None
+    insurance_company_id: str
+    name: str
+    type: str
+    description: Optional[str] = None
+    base_premium: Optional[Decimal] = None
+    min_coverage: Optional[Decimal] = None
+    max_coverage: Optional[Decimal] = None
+    features: Optional[List[str]] = []
+    advantages: Optional[List[str]] = []
+    exclusions: Optional[List[str]] = []
+    is_active: bool = True
+    is_featured: bool = False
+
+class InsuranceProductUpdate(BaseModel):
+    insurance_company_id: Optional[str] = None
+    name: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
+    base_premium: Optional[Decimal] = None
+    min_coverage: Optional[Decimal] = None
+    max_coverage: Optional[Decimal] = None
+    features: Optional[List[str]] = None
+    advantages: Optional[List[str]] = None
+    exclusions: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+    is_featured: Optional[bool] = None
 
 # ==================== SCHÉMAS PRODUITS DE CRÉDIT ====================
 

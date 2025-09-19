@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { AdminAuthService } from '../../services/admin-auth.services';
 import { filter } from 'rxjs/operators';
+import e from 'express';
 
 @Component({
   selector: 'admin-layout',
@@ -96,6 +97,38 @@ import { filter } from 'rxjs/operators';
               </a>
             </div>
           </div>
+
+          <!-- Gestion des compagnies d'assurance -->
+          <div class="nav-section" *ngIf="canManageInsuranceCompanies">
+            <div class="nav-section-title" *ngIf="!sidebarCollapsed" (click)="toggleInsuranceCompaniesSection()">
+              <i class="fas fa-building"></i>
+              <span>Compagnies d'Assurance</span>
+              <i class="fas fa-chevron-down toggle-icon" [class.rotated]="insuranceCompaniesSectionExpanded"></i>
+            </div>
+            <div class="nav-section-title collapsed-title" *ngIf="sidebarCollapsed">
+              <i class="fas fa-building" title="Compagnies d'Assurance"></i>
+            </div>
+            <div class="nav-subsection" [class.expanded]="insuranceCompaniesSectionExpanded || sidebarCollapsed">
+              <a routerLink="/admin/insurance-companies" 
+                 routerLinkActive="active"
+                  [routerLinkActiveOptions]="{exact: true}"
+                  class="nav-item sub-item"
+                  [title]="sidebarCollapsed ? 'Liste des compagnies' : ''">
+                <i class="fas fa-list"></i>
+                <span *ngIf="!sidebarCollapsed">Liste des compagnies</span>
+              </a>
+              <a routerLink="/admin/insurance-companies/create" 
+                 routerLinkActive="active"
+                 class="nav-item sub-item"
+                  *ngIf="canCreateInsuranceCompanies"
+                  [title]="sidebarCollapsed ? 'Créer une compagnie' : ''">
+                <i class="fas fa-plus"></i>
+                <span *ngIf="!sidebarCollapsed">Créer une compagnie</span>
+              </a>
+            </div>
+          </div>
+
+
 
           <!-- Gestion des produits de crédit -->
           <div class="nav-section" *ngIf="canManageCreditProducts">
@@ -335,6 +368,12 @@ export class AdminLayoutComponent implements OnInit {
   get addBankTitle(): string {
     return this.sidebarCollapsed ? 'Ajouter une banque' : '';
   }
+  get listInsuranceCompaniesTitle(): string {
+    return this.sidebarCollapsed ? 'Liste des compagnies' : '';
+  }
+  get addInsuranceCompanyTitle(): string {
+    return this.sidebarCollapsed ? 'Créer une compagnie' : '';
+  }
 
   constructor(
     public adminAuth: AdminAuthService,
@@ -361,6 +400,9 @@ export class AdminLayoutComponent implements OnInit {
     console.log('User permissions:', this.adminAuth.currentUser?.permissions);
     console.log('Can manage admins:', this.canManageAdmins);
     console.log('Can manage banks:', this.canManageBanks);
+    console.log('Can create banks:', this.canCreateBanks);
+    console.log('Can manage insurance companies:', this.canManageInsuranceCompanies);
+    console.log('Can create insurance companies:', this.canCreateInsuranceCompanies);
     console.log('Can manage credit products:', this.canManageCreditProducts);
     console.log('Can manage savings products:', this.canManageSavingsProducts);
     console.log('Can manage insurance products:', this.canManageInsuranceProducts);
@@ -493,6 +535,12 @@ export class AdminLayoutComponent implements OnInit {
       this.breadcrumbs = ['Admin', 'Banques', 'Modifier'];
     } else if (url.includes('/banks')) {
       this.breadcrumbs = ['Admin', 'Banques'];
+    }else if (url.includes('/insurance-companies/create')) {
+      this.breadcrumbs = ['Admin', 'Compagnies d\'Assurance', 'Créer'];
+    } else if (url.includes('/insurance-companies/edit')) {
+      this.breadcrumbs = ['Admin', 'Compagnies d\'Assurance', 'Modifier'];
+    } else if (url.includes('/insurance-companies')) {
+      this.breadcrumbs = ['Admin', 'Compagnies d\'Assurance'];
     } else if (url.includes('/insurance-products/create')) {
       this.breadcrumbs = ['Admin', 'products', 'Créer'];
     } else if (url.includes('/insurance-products/edit')) {

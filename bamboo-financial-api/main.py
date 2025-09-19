@@ -243,6 +243,13 @@ except ImportError:
     admin_insurance_application_available = False
     print("Warning: admin_insurance_application router not available")
 
+try: 
+    from routers import insurance_router
+    insurance_router_available = True
+except ImportError:
+    insurance_router_available = False
+    print("Warning: insurance_router not available")
+
 try:
     from routers import credits
     credits_available = True
@@ -582,6 +589,9 @@ if simulations_available:
     app.include_router(simulations.router, prefix="/api/simulations", tags=["Simulations"])
     logger.info("Simulations router included")
 
+if insurance_router_available:
+    app.include_router(insurance_router.router,tags=["Assurances"])
+    logger.info("Insurance router included")
 
 if simulations_save_available:
     app.include_router(simulations_save.router, prefix="/api/simulations", tags=["Simulations Save"])
@@ -648,6 +658,8 @@ async def root():
         available_routes.append("credits")
     if analytics_available:
         available_routes.append("analytics")
+    if insurance_router_available:
+        available_routes.append("insurance")
     if insurance_application_available:
         available_routes.append("insurance_application")
     if simulations_save_available:

@@ -628,8 +628,14 @@
             <button class="action-btn" (click)="saveComparison()" title="Sauvegarder">
               <i class="material-icons">bookmark</i>
             </button>
-            <button class="action-btn" (click)="exportToPDF()" title="Exporter PDF">
-              <i class="material-icons">picture_as_pdf</i>
+            <!-- NOUVEAU BOUTON COMPARAISON PREMIUM -->
+            <button 
+              class="action-btn btn-export-premium" 
+              (click)="exportComparisonToPDF()" 
+              title="Export Comparaison Premium PDF"
+            >
+              <i class="material-icons">compare</i>
+              PDF Premium
             </button>
             <button class="action-btn" (click)="shareComparison()" title="Partager">
               <i class="material-icons">share</i>
@@ -714,65 +720,73 @@
         </div>
       </div>
 
-      <!-- Grille des offres -->
       <div class="offers-grid">
         <div
-          *ngFor="let simulation of getSortedSimulations(); let i = index"
+          *ngFor="let sim of getSortedSimulations(); let i = index"
           class="offer-card"
-          [class.best]="i === 0 && simulation.simulation.eligible"
-          [class.not-eligible]="!simulation.simulation.eligible"
-          [style.border-left-color]="getBankColor(simulation.product.bank)"
+          [class.best]="i === 0 && sim.simulation.eligible"
+          [class.not-eligible]="!sim.simulation.eligible"
+          [style.border-left-color]="getBankColor(sim.product.bank)"
+          [attr.data-product-id]="sim.product.id"
         >
+          <!-- En-tête de l'offre -->
           <div class="offer-header">
             <div class="header-top">
               <div class="bank-info">
-                <div class="bank-logo" [style.background]="getBankColor(simulation.product.bank)">
-                  <span>{{ simulation.product.bank.name.split(' ')[0] }}</span>
+                <div class="bank-logo" [style.background]="getBankColor(sim.product.bank)">
+                  <span>{{ sim.product.bank.name.split(' ')[0] }}</span>
                 </div>
                 <div class="bank-details">
-                  <h4>{{ simulation.product.bank.name }}</h4>
-                  <p>{{ simulation.product.name }}</p>
+                  <h4>{{ sim.product.bank.name }}</h4>
+                  <p>{{ sim.product.name }}</p>
                 </div>
               </div>
               
               <div class="offer-badges">
-                <div *ngIf="i < 3 && simulation.simulation.eligible" class="rank-badge" [class]="'rank-' + (i + 1)">
+                <div *ngIf="i < 3 && sim.simulation.eligible" class="rank-badge" [class]="'rank-' + (i + 1)">
                   #{{ i + 1 }}
                 </div>
                 
-                <div class="eligibility-badge" [ngClass]="getEligibilityClass(simulation.simulation.eligible)">
-                  {{ getEligibilityText(simulation.simulation.eligible) }}
+                <div class="eligibility-badge" [ngClass]="getEligibilityClass(sim.simulation.eligible)">
+                  {{ getEligibilityText(sim.simulation.eligible) }}
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- Métriques de l'offre -->
           <div class="offer-metrics">
             <div class="metric primary">
-              <span class="metric-value primary">{{ formatPercent(simulation.simulation.applied_rate) }}</span>
+              <span class="metric-value primary">{{ formatCurrency(sim.simulation.monthly_payment) }}</span>
+              <span class="metric-label">Mensualité</span>
+            </div>
+            <div class="metric">
+              <span class="metric-value">{{ formatPercent(sim.simulation.applied_rate) }}</span>
               <span class="metric-label">Taux annuel</span>
             </div>
             <div class="metric">
-              <span class="metric-value">{{ getProcessingTimeText(simulation.product.processing_time_hours) }}</span>
+              <span class="metric-value">{{ getProcessingTimeText(sim.product.processing_time_hours) }}</span>
               <span class="metric-label">Délai</span>
             </div>
             <div class="metric">
-              <span class="metric-value">{{ formatCurrency(simulation.simulation.total_cost) }}</span>
+              <span class="metric-value">{{ formatCurrency(sim.simulation.total_cost) }}</span>
               <span class="metric-label">Coût total</span>
             </div>
           </div>
 
+          <!-- Section détails étendus -->
           <div 
             class="offer-details-toggle"
-            [class.expanded]="isOfferExpanded(simulation.product.id.toString())"
-            (click)="toggleOfferDetails(simulation.product.id.toString())"
+            [class.expanded]="isOfferExpanded(sim.product.id.toString())"
+            (click)="toggleOfferDetails(sim.product.id.toString())"
           >
-            <span>{{ isOfferExpanded(simulation.product.id.toString()) ? 'Moins de détails' : 'Plus de détails' }}</span>
-            <i class="material-icons">{{ isOfferExpanded(simulation.product.id.toString()) ? 'expand_less' : 'expand_more' }}</i>
+            <span>{{ isOfferExpanded(sim.product.id.toString()) ? 'Moins de détails' : 'Plus de détails' }}</span>
+            <i class="material-icons">{{ isOfferExpanded(sim.product.id.toString()) ? 'expand_less' : 'expand_more' }}</i>
           </div>
 
-          <div class="offer-details-expanded" *ngIf="isOfferExpanded(simulation.product.id.toString())">
+          <div class="offer-details-expanded" *ngIf="isOfferExpanded(sim.product.id.toString())">
             <div class="expanded-content">
+              <!-- Section financière existante -->
               <div class="detail-section">
                 <h5>
                   <i class="material-icons">calculate</i>
@@ -781,76 +795,568 @@
                 <div class="detail-grid">
                   <div class="detail-item">
                     <span class="detail-label">Intérêts totaux</span>
-                    <span class="detail-value">{{ formatCurrency(simulation.simulation.total_interest) }}</span>
+                    <span class="detail-value">{{ formatCurrency(sim.simulation.total_interest) }}</span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">Ratio d'endettement</span>
-                    <span class="detail-value">{{ formatPercent(simulation.simulation.debt_ratio) }}</span>
+                    <span class="detail-value">{{ formatPercent(sim.simulation.debt_ratio) }}</span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">Montant min/max</span>
-                    <span class="detail-value">{{ formatCurrency(simulation.product.min_amount) }} - {{ formatCurrency(simulation.product.max_amount) }}</span>
+                    <span class="detail-value">{{ formatCurrency(sim.product.min_amount) }} - {{ formatCurrency(sim.product.max_amount) }}</span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">Durée min/max</span>
-                    <span class="detail-value">{{ simulation.product.min_duration_months }} - {{ simulation.product.max_duration_months }} mois</span>
+                    <span class="detail-value">{{ sim.product.min_duration_months }} - {{ sim.product.max_duration_months }} mois</span>
+                  </div>
+                </div>
+              </div>
+                
+              <!-- SECTION: Tableau d'amortissement -->
+              <div class="detail-section amortization-section">
+                <div class="section-header">
+                  <h5>
+                    <i class="material-icons">table_chart</i>
+                    Tableau d'Amortissement
+                  </h5>
+                  <div class="amortization-actions">
+                    <button 
+                      class="btn-small btn-primary"
+                      (click)="toggleAmortizationTable(sim.product.id)"
+                      type="button"
+                    >
+                      <i class="material-icons">
+                        {{ isAmortizationExpanded(sim.product.id) ? 'visibility_off' : 'visibility' }}
+                      </i>
+                      {{ isAmortizationExpanded(sim.product.id) ? 'Masquer' : 'Afficher' }}
+                    </button>
+                    
+                    <!-- NOUVEAUX BOUTONS PDF PREMIUM -->
+                    <div class="export-buttons" *ngIf="isAmortizationExpanded(sim.product.id)">
+                      <button 
+                        class="btn-export btn-premium"
+                        (click)="exportAmortizationToPDF(sim)"
+                        type="button"
+                        title="Export PDF Premium avec analyse complète"
+                      >
+                        <i class="material-icons">picture_as_pdf</i>
+                        PDF Premium
+                      </button>
+                      
+                      <button 
+                        class="btn-export btn-quick"
+                        (click)="exportQuickSummaryPDF(sim)"
+                        type="button"
+                        title="Synthèse express 1 page"
+                      >
+                        <i class="material-icons">summarize</i>
+                        Synthèse Express
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tableau d'amortissement détaillé -->
+                <div class="amortization-table-container" *ngIf="isAmortizationExpanded(sim.product.id)">
+                  
+                  <!-- Contrôles du tableau -->
+                  <div class="amortization-controls">
+                    <div class="view-toggle">
+                      <button 
+                        class="toggle-btn"
+                        [class.active]="isMonthlyView(sim)"
+                        (click)="changeAmortizationView(sim.product.id, 'monthly')"
+                        type="button"
+                      >
+                        Vue mensuelle
+                      </button>
+                      <button 
+                        class="toggle-btn"
+                        [class.active]="isYearlyView(sim)"
+                        (click)="changeAmortizationView(sim.product.id, 'yearly')"
+                        type="button"
+                      >
+                        Vue annuelle
+                      </button>
+                    </div>
+                    
+                    <select 
+                      class="year-selector"
+                      [value]="getSimulationSelectedYear(sim)"
+                      (change)="onYearFilterChange($event, sim)"
+                    >
+                      <option value="all">Toutes les années</option>
+                      <option 
+                        *ngFor="let year of getAvailableYears(sim)" 
+                        [value]="year"
+                      >
+                        Année {{ year }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Message si pas de données -->
+                  <div 
+                    *ngIf="getFilteredAmortizationData(sim.product.id).length === 0"
+                    class="no-data-message"
+                  >
+                    <i class="material-icons">table_rows</i>
+                    <p>Aucune donnée d'amortissement disponible</p>
+                    <button 
+                      class="btn-small btn-primary" 
+                      (click)="initExtendedSimulation(sim)"
+                      type="button"
+                    >
+                      Générer les données
+                    </button>
+                  </div>
+
+                  <!-- Tableau d'amortissement -->
+                  <div 
+                    class="amortization-table" 
+                    *ngIf="getFilteredAmortizationData(sim.product.id).length > 0"
+                  >
+                    <div class="table-container">
+                      <table class="amortization-data">
+                        <thead>
+                          <tr>
+                            <th>Période</th>
+                            <th>Mensualité</th>
+                            <th>Capital</th>
+                            <th>Intérêts</th>
+                            <th>Capital restant</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <!-- Vue mensuelle -->
+                          <ng-container *ngIf="!isYearlyView(sim)">
+                            <tr *ngFor="let entry of getFilteredAmortizationData(sim.product.id); let isOdd = odd"
+                                [class.odd-row]="isOdd">
+                              <td class="period-cell">Mois {{ entry.month }}</td>
+                              <td class="currency-cell">{{ formatCurrency(entry.payment) }}</td>
+                              <td class="currency-cell">{{ formatCurrency(entry.principal) }}</td>
+                              <td class="currency-cell">{{ formatCurrency(entry.interest) }}</td>
+                              <td class="currency-cell balance-cell">{{ formatCurrency(entry.remaining_balance) }}</td>
+                            </tr>
+                          </ng-container>
+
+                          <!-- Vue annuelle -->
+                          <ng-container *ngIf="isYearlyView(sim)">
+                            <tr *ngFor="let yearData of getYearlyAmortizationData(sim.product.id); let isOdd = odd"
+                                [class.odd-row]="isOdd"
+                                class="year-row">
+                              <td class="period-cell">Année {{ yearData.year }}</td>
+                              <td class="currency-cell">{{ formatCurrency(yearData.payment) }}</td>
+                              <td class="currency-cell">{{ formatCurrency(yearData.principal) }}</td>
+                              <td class="currency-cell">{{ formatCurrency(yearData.interest) }}</td>
+                              <td class="currency-cell balance-cell">{{ formatCurrency(yearData.remaining_balance) }}</td>
+                            </tr>
+                          </ng-container>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- Analyse de la répartition capital/intérêts -->
+                  <div 
+                    class="capital-interest-breakdown"
+                    *ngIf="getFilteredAmortizationData(sim.product.id).length > 0"
+                  >
+                    <h6>Répartition Capital/Intérêts</h6>
+                    <div class="breakdown-chart">
+                      <div class="breakdown-bar">
+                        <div 
+                          class="capital-portion"
+                          [style.width.%]="getCapitalInterestBreakdown(sim)['capitalPercentage']"
+                        ></div>
+                        <div 
+                          class="interest-portion"
+                          [style.width.%]="getCapitalInterestBreakdown(sim)['interestPercentage']"
+                        ></div>
+                      </div>
+                      <div class="breakdown-legend">
+                        <div class="legend-item">
+                          <div class="legend-color capital-color"></div>
+                          <span>Capital: {{ getCapitalInterestBreakdown(sim)['capitalPercentage'].toFixed(1) }}%</span>
+                        </div>
+                        <div class="legend-item">
+                          <div class="legend-color interest-color"></div>
+                          <span>Intérêts: {{ getCapitalInterestBreakdown(sim)['interestPercentage'].toFixed(1) }}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Simulateur d'apport -->
+                  <div class="down-payment-simulator">
+                    <h6>Impact d'un apport personnel</h6>
+                    <div class="simulator-controls">
+                      <input 
+                        type="range" 
+                        min="0" 
+                        [max]="simulationForm.get('requestedAmount')?.value * 0.3"
+                        [value]="0"
+                        class="down-payment-slider"
+                        #downPaymentSlider
+                        (input)="updateDownPaymentSimulation(sim, downPaymentSlider.value)"
+                      >
+                      <div class="slider-labels">
+                        <span>0 FCFA</span>
+                        <span>{{ formatCurrency(simulationForm.get('requestedAmount')?.value * 0.3) }}</span>
+                      </div>
+                    </div>
+                    <div class="savings-display" *ngIf="+downPaymentSlider.value > 0">
+                      <div class="savings-item">
+                        <span class="savings-label">Apport:</span>
+                        <span class="savings-value">{{ formatCurrency(+downPaymentSlider.value) }}</span>
+                      </div>
+                      <div class="savings-item">
+                        <span class="savings-label">Nouvelle mensualité:</span>
+                        <span class="savings-value">{{ formatCurrency(calculateDownPaymentSavings(sim, +downPaymentSlider.value).monthlyPayment) }}</span>
+                      </div>
+                      <div class="savings-item highlight">
+                        <span class="savings-label">Économie totale:</span>
+                        <span class="savings-value">{{ formatCurrency(calculateDownPaymentSavings(sim, +downPaymentSlider.value).totalSavings) }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- Actions de simulation -->
           <div class="simulation-actions">
-          <button 
-            *ngIf="simulation.simulation.eligible"
-            (click)="openCreditApplicationModal(simulation)"
-            class="btn btn-primary btn-application">
-            <i class="fas fa-paper-plane"></i>
-            Faire une vraie demande
-          </button>
-          
-          <button *ngIf="!simulation.simulation.eligible" disabled class="btn btn-disabled">
-            <i class="fas fa-times-circle"></i>
-            Non éligible
-          </button>
+            <button 
+              *ngIf="sim.simulation.eligible"
+              (click)="openCreditApplicationModal(sim)"
+              class="btn btn-primary btn-application">
+              <i class="material-icons">send</i>
+              Faire une vraie demande
+            </button>
+            
+            <button 
+              *ngIf="!sim.simulation.eligible" 
+              disabled 
+              class="btn btn-disabled">
+              <i class="material-icons">block</i>
+              Non éligible
+            </button>
+            
+            <!-- Actions supplémentaires -->
+            <div class="secondary-actions">
+              <button 
+                class="btn-icon"
+                (click)="saveSimulationDetails(sim)"
+                title="Sauvegarder cette simulation"
+              >
+                <i class="material-icons">bookmark</i>
+              </button>
+              
+              <button 
+                class="btn-icon"
+                (click)="shareSimulation(sim)"
+                title="Partager cette simulation"
+              >
+                <i class="material-icons">share</i>
+              </button>
+              
+              <button 
+                class="btn-icon"
+                (click)="compareWithOthers(sim)"
+                title="Comparer avec d'autres offres"
+              >
+                <i class="material-icons">compare_arrows</i>
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
 
-    <!-- Modal d'application - Position corrigée en dehors de la grille -->
-        <app-application-modal
+      <!-- Modal d'application -->
+      <app-application-modal
         [isVisible]="showApplicationModal"
         [simulationData]="selectedSimulation"
         [productData]="selectedApplicationProduct"
         (closeModal)="onCloseApplicationModal()"
         (applicationSubmitted)="onApplicationSubmitted($event)">
-    </app-application-modal>
+      </app-application-modal>
 
-    <!-- Actions Finales -->
-    <div class="final-actions">
-      <div class="actions-content">
-        <div class="action-group">
-          <div class="action-icon">
-            <i class="material-icons">support_agent</i>
+      <!-- Actions Finales avec Export Global Premium -->
+      <div class="final-actions">
+        <div class="actions-content">
+          <div class="action-group">
+            <div class="action-icon">
+              <i class="material-icons">download</i>
+            </div>
+            <h4>Export Premium</h4>
+            <p>Téléchargez un rapport complet de votre comparaison</p>
+            <!-- NOUVEAU BOUTON EXPORT GLOBAL PREMIUM -->
+            <button 
+              class="btn-export-large btn-comparison"
+              (click)="exportComparisonToPDF()"
+              title="Export comparaison multi-banques premium"
+            >
+              <i class="material-icons">file_download</i>
+              Rapport de Comparaison Premium
+            </button>
           </div>
-          <h4>Besoin d'aide ?</h4>
-          <p>Nos conseillers sont là pour vous accompagner dans votre choix</p>
-          <button class="contact-btn">
-            <i class="material-icons">call</i>
-            Contacter un Conseiller
-          </button>
-        </div>
-        
-        <div class="action-group">
-          <div class="action-icon">
-            <i class="material-icons">refresh</i>
+          
+          <div class="action-group">
+            <div class="action-icon">
+              <i class="material-icons">support_agent</i>
+            </div>
+            <h4>Besoin d'aide ?</h4>
+            <p>Nos conseillers sont là pour vous accompagner dans votre choix</p>
+            <button class="contact-btn">
+              <i class="material-icons">call</i>
+              Contacter un Conseiller
+            </button>
           </div>
-          <h4>Nouvelle simulation ?</h4>
-          <p>Testez d'autres montants, durées ou types de crédit</p>
-          <button class="new-simulation-btn" (click)="resetForm()">
-            <i class="material-icons">add</i>
-            Nouvelle Comparaison
-          </button>
+          
+          <div class="action-group">
+            <div class="action-icon">
+              <i class="material-icons">refresh</i>
+            </div>
+            <h4>Nouvelle simulation ?</h4>
+            <p>Testez d'autres montants, durées ou types de crédit</p>
+            <button class="new-simulation-btn" (click)="resetForm()">
+              <i class="material-icons">add</i>
+              Nouvelle Comparaison
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<style>
+/* Styles pour les nouveaux boutons PDF Premium */
+
+/* Boutons d'export dans la section amortissement */
+.export-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-export {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-export::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-export:hover::before {
+  left: 100%;
+}
+
+.btn-export.btn-premium {
+  background: linear-gradient(135deg, #1e40af, #3b82f6, #60a5fa);
+  color: white;
+  box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
+}
+
+.btn-export.btn-quick {
+  background: linear-gradient(135deg, #059669, #10b981, #34d399);
+  color: white;
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
+}
+
+.btn-export:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Bouton export premium dans le header */
+.action-btn.btn-export-premium {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa);
+  color: white;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.action-btn.btn-export-premium:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+}
+
+/* Bouton export global premium */
+.btn-export-large {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-export-large::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.6s;
+}
+
+.btn-export-large:hover::before {
+  left: 100%;
+}
+
+.btn-export-large:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 35px rgba(124, 58, 237, 0.4);
+}
+
+.btn-export-large:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* Amélioration de la section amortization-actions */
+.amortization-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Animation de chargement pour les boutons */
+.btn-export.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.btn-export.loading::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 0.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive design pour les boutons */
+@media (max-width: 768px) {
+  .export-buttons {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .btn-export {
+    font-size: 0.7rem;
+    padding: 0.375rem 0.75rem;
+  }
+  
+  .btn-export-large {
+    font-size: 1rem;
+    padding: 0.875rem 1.5rem;
+  }
+  
+  .amortization-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Effets visuels avancés */
+.btn-export-premium {
+  position: relative;
+}
+
+.btn-export-premium::after {
+  content: '✨';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 0.8rem;
+  animation: sparkle 2s infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { 
+    opacity: 0;
+    transform: scale(0.8) rotate(0deg);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.2) rotate(180deg);
+  }
+}
+
+/* Style pour les tooltips des boutons */
+.btn-export[title]:hover::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 5px;
+}
+
+/* Animation d'entrée pour les boutons */
+.export-buttons {
+  animation: slideInFromRight 0.5s ease-out;
+}
+
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+</style>

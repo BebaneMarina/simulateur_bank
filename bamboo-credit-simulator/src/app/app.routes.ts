@@ -179,6 +179,23 @@ export const routes: Routes = [
         ]
       },
 
+      //gestion des compagnies d'assurance
+      {
+        path: 'insurance-companies',
+        canActivate: [PermissionGuard],
+        data: { 
+          requiredPermission: { entity: 'insurance_companies', action: 'read' },
+          title: 'Compagnies d\'Assurance',
+          breadcrumb: ['Admin', 'Compagnies d\'Assurance']
+        },
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./admin/admin-insurance-management.component').then(c => c.InsuranceManagementComponent)
+          }
+        ]
+      },
+
       // Produits de crédit
       {
         path: 'credit-products',
