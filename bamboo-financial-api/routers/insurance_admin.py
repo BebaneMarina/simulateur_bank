@@ -266,6 +266,8 @@ def get_insurance_company_admin(
         print(f"Erreur get_insurance_company_admin: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la récupération de la compagnie: {str(e)}")
 
+# Dans votre fichier insurance_admin.py, remplacez la fonction create_insurance_company par celle-ci :
+
 @router.post("/companies")
 def create_insurance_company(
     company_data: InsuranceCompanyCreate,
@@ -286,9 +288,28 @@ def create_insurance_company(
         if existing:
             raise HTTPException(status_code=400, detail="Une compagnie avec ce nom existe déjà")
         
-        # Préparer les données JSON
+        # CORRECTION : Préparer les données JSON avec validation
         specialties = company_data.specialties if company_data.specialties else []
         coverage_areas = company_data.coverage_areas if company_data.coverage_areas else []
+        
+        # S'assurer que specialties et coverage_areas sont des listes
+        if isinstance(specialties, str):
+            try:
+                specialties = json.loads(specialties)
+            except (json.JSONDecodeError, TypeError):
+                specialties = []
+        
+        if isinstance(coverage_areas, str):
+            try:
+                coverage_areas = json.loads(coverage_areas)
+            except (json.JSONDecodeError, TypeError):
+                coverage_areas = []
+        
+        # S'assurer que ce sont bien des listes
+        if not isinstance(specialties, list):
+            specialties = []
+        if not isinstance(coverage_areas, list):
+            coverage_areas = []
         
         # Créer la compagnie
         company = InsuranceCompany(
@@ -305,8 +326,8 @@ def create_insurance_company(
             established_year=company_data.established_year,
             solvency_ratio=company_data.solvency_ratio,
             rating=company_data.rating.strip() if company_data.rating else None,
-            specialties=specialties,
-            coverage_areas=coverage_areas,
+            specialties=specialties,  # Maintenant garantit d'être une liste
+            coverage_areas=coverage_areas,  # Maintenant garantit d'être une liste
             is_active=True,
             created_at=datetime.now(),
             updated_at=datetime.now()
@@ -333,6 +354,9 @@ def create_insurance_company(
         db.rollback()
         print(f"Erreur create_insurance_company: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la compagnie: {str(e)}")
+
+# BONUS : Vous pouvez aussi ajouter cette correction dans la fonction update_insurance_company
+# pour éviter le même problème lors de la mise à jour :
 
 @router.put("/companies/{company_id}")
 def update_insurance_company(
@@ -362,11 +386,20 @@ def update_insurance_company(
             if existing:
                 raise HTTPException(status_code=400, detail="Une compagnie avec ce nom existe déjà")
         
-        # Mettre à jour les champs
+        # CORRECTION : Mettre à jour les champs avec validation des types JSON
         update_data = company_data.dict(exclude_unset=True)
+        
         for field, value in update_data.items():
             if field in ['specialties', 'coverage_areas'] and value is not None:
-                value = value if isinstance(value, list) else []
+                # Conversion des chaînes JSON en listes si nécessaire
+                if isinstance(value, str):
+                    try:
+                        value = json.loads(value)
+                    except (json.JSONDecodeError, TypeError):
+                        value = []
+                # S'assurer que c'est une liste
+                if not isinstance(value, list):
+                    value = []
             elif field in ['name', 'full_name', 'description', 'logo_url', 'website', 'contact_phone', 'contact_email', 'address', 'license_number', 'rating'] and value is not None:
                 value = value.strip() if isinstance(value, str) else value
             
@@ -394,6 +427,7 @@ def update_insurance_company(
         db.rollback()
         print(f"Erreur update_insurance_company: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour: {str(e)}")
+
 
 @router.delete("/companies/{company_id}")
 def delete_insurance_company(

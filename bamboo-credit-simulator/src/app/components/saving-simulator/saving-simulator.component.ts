@@ -7,6 +7,8 @@ import { takeUntil, debounceTime, distinctUntilChanged, catchError } from 'rxjs/
 import { NotificationService } from '../../services/notification.service';
 import { AnalyticsService } from '../../services/analytics.service';
 import { ApiService, SavingsProduct, SavingsSimulationRequest, SavingsSimulationResponse } from '../../services/api.service';
+import { SavingsApplicationService } from '../../services/savings-application.service';
+import { SavingsApplicationModalComponent } from '../application-modal/savings-application-modal.component';
 
 // Interfaces locales pour les résultats
 interface SavingsResult {
@@ -107,7 +109,7 @@ interface SavingsGoalOption {
 @Component({
   selector: 'savings-simulator',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, SavingsApplicationModalComponent],
   template: `
 <div class="savings-simulator-container">
   <!-- Hero Section -->
@@ -668,24 +670,25 @@ interface SavingsGoalOption {
             </div>
           </div>
 
-          <!-- Action Cards -->
           <div class="action-cards">
-            <div class="action-card primary">
-              <h4>Souscrire à ce produit</h4>
-              <p>Commencez votre épargne dès maintenant avec {{ selectedProduct?.bank?.name }}</p>
-              <button (click)="goToProducts()" class="btn-action primary">
-                Voir les conditions
-              </button>
-            </div>
-            
-            <div class="action-card secondary">
-              <h4>Comparer d'autres produits</h4>
-              <p>Explorez d'autres options d'épargne disponibles</p>
-              <button (click)="changeStep(2)" class="btn-action secondary">
-                Voir tous les produits
-              </button>
-            </div>
-          </div>
+  <div class="action-card primary">
+    <h4>Souscrire à ce produit</h4>
+    <p>Ouvrez votre compte d'épargne dès maintenant avec {{ selectedProduct?.bank?.name }}</p>
+    <button (click)="openApplicationModal()" class="btn-action primary">
+      Faire une demande
+    </button>
+  </div>
+  
+  <div class="action-card secondary">
+    <h4>Comparer d'autres produits</h4>
+    <p>Explorez d'autres options d'épargne disponibles</p>
+    <button (click)="changeStep(2)" class="btn-action secondary">
+      Voir tous les produits
+    </button>
+  </div>
+</div>
+
+
 
           <!-- Risk Warning -->
           <div class="risk-warning" *ngIf="selectedProduct && selectedProduct.risk_level > 2">
@@ -802,6 +805,14 @@ interface SavingsGoalOption {
     </div>
   </div>
 </div>
+<!-- Modal de demande d'épargne -->
+<app-savings-application-modal
+  [isVisible]="showApplicationModal"
+  [simulationData]="getSimulationDataForModal()"
+  [productData]="selectedProduct"
+  (closeModal)="closeApplicationModal()"
+  (applicationSubmitted)="onApplicationSubmitted($event)">
+</app-savings-application-modal>
   `,
   styleUrls: ['./saving-simulator.component.scss']
 })
@@ -812,6 +823,7 @@ export class SavingsSimulatorComponent implements OnInit, OnDestroy {
   isLoadingProducts = false;
   loadingError: string | null = null;
   currentStep = 1;
+  showApplicationModal = false;
 
   // Propriétés pour le backend
   savingsProducts: SavingsProduct[] = [];
@@ -990,7 +1002,8 @@ export class SavingsSimulatorComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private notificationService: NotificationService,
     private analyticsService: AnalyticsService,
-    private apiService: ApiService
+    private apiService: ApiService,
+     private savingsApplicationService: SavingsApplicationService
   ) {}
 
   ngOnInit(): void {
@@ -1065,6 +1078,65 @@ export class SavingsSimulatorComponent implements OnInit, OnDestroy {
   private scrollToTop(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  openApplicationModal(): void {
+  if (!this.selectedProduct) {
+    this.notificationService.showError('Veuillez sélectionner un produit d\'épargne');
+    return;
+  }
+
+  if (!this.results) {
+    this.notificationService.showError('Veuillez d\'abord calculer votre simulation');
+    return;
+  }
+
+  this.showApplicationModal = true;
+  
+  this.analyticsService.trackEvent('savings_application_modal_opened', {
+    product_id: this.selectedProduct.id,
+    simulation_id: this.results.simulation_id,
+    final_amount: this.results.finalAmount
+  });
+}
+
+// Méthode pour fermer la modal
+closeApplicationModal(): void {
+  this.showApplicationModal = false;
+}
+
+// Méthode appelée quand la demande est soumise avec succès
+onApplicationSubmitted(notification: any): void {
+  this.analyticsService.trackEvent('savings_application_submitted', {
+    application_id: notification.application_id,
+    application_number: notification.application_number,
+    product_id: this.selectedProduct?.id,
+    bank_name: notification.contact_info?.bank_name,
+    expected_processing_time: notification.expected_processing_time
+  });
+  
+  // Optionnel: rediriger vers une page de confirmation
+  // this.router.navigate(['/confirmation'], { 
+  //   queryParams: { applicationId: notification.application_id } 
+  // });
+}
+
+// Méthode pour préparer les données de simulation pour la modal
+getSimulationDataForModal(): any {
+  if (!this.results || !this.selectedProduct) return null;
+
+  return {
+    id: this.results.simulation_id,
+    productName: this.selectedProduct.name,
+    bankName: this.selectedProduct.bank?.name,
+    initialAmount: this.savingsForm.get('initialAmount')?.value,
+    monthlyContribution: this.savingsForm.get('monthlyContribution')?.value || 0,
+    timeHorizon: this.savingsForm.get('timeHorizon')?.value,
+    finalAmount: this.results.finalAmount,
+    totalInterest: this.results.totalInterest,
+    savingsGoal: this.selectedGoal ? this.getSavingsGoalLabel(this.selectedGoal) : undefined
+  };
+}
+
 
   // Product Methods
   loadSavingsProducts(): void {

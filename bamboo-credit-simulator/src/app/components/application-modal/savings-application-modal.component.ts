@@ -2,50 +2,8 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '../../services/notification.service';
+import { SavingsApplicationService, SavingsApplicationRequest, SavingsApplicationNotification } from '../../services/savings-application.service';
 
-interface SavingsApplicationRequest {
-  savings_product_id: string;
-  simulation_id?: string;
-  
-  // Informations personnelles
-  applicant_name: string;
-  applicant_email?: string;
-  applicant_phone?: string;
-  applicant_address?: string;
-  birth_date?: string;
-  nationality?: string;
-  marital_status?: string;
-  
-  // Informations professionnelles
-  profession?: string;
-  employer?: string;
-  monthly_income?: number;
-  
-  // Informations épargne
-  initial_deposit: number;
-  monthly_contribution?: number;
-  savings_goal?: string;
-  target_amount?: number;
-  target_date?: string;
-  
-  // Documents et données
-  application_data?: any;
-}
-
-interface SavingsApplicationNotification {
-  success: boolean;
-  application_id: string;
-  application_number: string;
-  message: string;
-  next_steps: string[];
-  expected_processing_time: string;
-  contact_info: {
-    bank_name: string;
-    phone: string;
-    email: string;
-    application_number: string;
-  };
-}
 
 @Component({
   selector: 'app-savings-application-modal',
@@ -461,7 +419,7 @@ interface SavingsApplicationNotification {
       </div>
     </div>
   `,
-  //styleUrls: ['./savings-application-modal.component.scss']
+  styleUrls: ['./savings-application-modal.component.scss']
 })
 export class SavingsApplicationModalComponent implements OnInit {
   @Input() isVisible = false;
@@ -477,7 +435,8 @@ export class SavingsApplicationModalComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private savingsApplicationService: SavingsApplicationService
   ) {}
 
   ngOnInit(): void {
@@ -515,86 +474,195 @@ export class SavingsApplicationModalComponent implements OnInit {
     this.prefillFormData();
   }
 
-  private prefillFormData(): void {
-    if (!this.simulationData) return;
-
-    const prefillData: any = {};
-
-    if (this.simulationData.initialAmount) {
-      prefillData.initial_deposit = this.simulationData.initialAmount;
-    }
-
-    if (this.simulationData.monthlyContribution) {
-      prefillData.monthly_contribution = this.simulationData.monthlyContribution;
-    }
-
-    this.applicationForm.patchValue(prefillData);
-  }
-
   async onSubmit(): Promise<void> {
-    if (this.applicationForm.invalid || this.isSubmitting) return;
+  if (this.applicationForm.invalid || this.isSubmitting) return;
 
-    this.isSubmitting = true;
+  this.isSubmitting = true;
 
-    try {
-      const formData = this.applicationForm.value;
-      
-      // Préparer les données de l'application
-      const applicationData: SavingsApplicationRequest = {
-        savings_product_id: this.productData?.id || '',
-        simulation_id: this.simulationData?.id,
-        applicant_name: formData.applicant_name,
-        applicant_email: formData.applicant_email,
-        applicant_phone: formData.applicant_phone,
-        applicant_address: formData.applicant_address,
-        birth_date: formData.birth_date,
-        marital_status: formData.marital_status,
-        profession: formData.profession,
-        employer: formData.employer,
-        monthly_income: formData.monthly_income,
-        initial_deposit: formData.initial_deposit,
-        monthly_contribution: formData.monthly_contribution,
-        savings_goal: formData.savings_goal,
-        target_amount: formData.target_amount,
-        target_date: formData.target_date,
-        application_data: {
-          ...formData,
-          simulation_reference: this.simulationData?.id,
-          product_type: this.productData?.type,
-          interest_rate: this.productData?.interest_rate,
-          expected_final_amount: this.simulationData?.finalAmount
+  try {
+    const formData = this.applicationForm.value;
+    
+    // Préparer les données de l'application
+    const applicationData: SavingsApplicationRequest = {
+      savings_product_id: this.productData?.id || '',
+      simulation_id: this.simulationData?.id,
+      applicant_name: formData.applicant_name,
+      applicant_email: formData.applicant_email,
+      applicant_phone: this.savingsApplicationService.formatPhoneNumber(formData.applicant_phone),
+      applicant_address: formData.applicant_address,
+      birth_date: formData.birth_date,
+      nationality: formData.nationality || 'Gabonaise',
+      marital_status: formData.marital_status,
+      profession: formData.profession,
+      employer: formData.employer,
+      monthly_income: formData.monthly_income,
+      initial_deposit: formData.initial_deposit,
+      monthly_contribution: formData.monthly_contribution,
+      savings_goal: formData.savings_goal,
+      target_amount: formData.target_amount,
+      target_date: formData.target_date,
+      application_data: {
+        ...formData,
+        simulation_reference: this.simulationData?.id,
+        product_type: this.productData?.type,
+        interest_rate: this.productData?.interest_rate,
+        expected_final_amount: this.simulationData?.finalAmount,
+        // Métadonnées de soumission
+        consents: {
+          data_consent: formData.data_consent,
+          terms_consent: formData.terms_consent,
+          contact_consent: formData.contact_consent
+        },
+        submission_context: {
+          submitted_via: 'savings_simulator',
+          product_name: this.productData?.name,
+          bank_name: this.productData?.bank?.name,
+          submitted_at: new Date().toISOString()
         }
-      };
-
-      // Simuler l'envoi à l'API
-      const response = await this.simulateAPICall(applicationData);
-
-      if (response && response.success) {
-        this.notification = response;
-        this.currentStep = 2;
-        
-        this.applicationSubmitted.emit(response);
-        
-        this.notificationService.showSuccess(
-          `Votre demande d'épargne a été transmise à ${response.contact_info.bank_name}`,
-          'Demande envoyée !'
-        );
-        
-        setTimeout(() => {
-          this.close();
-        }, 5000);
-        
-      } else {
-        throw new Error('La demande a échoué');
       }
+    };
 
-    } catch (error: any) {
-      console.error('Erreur lors de l\'envoi de la demande:', error);
-      this.notificationService.showError('Une erreur est survenue lors de l\'envoi de votre demande');
-    } finally {
-      this.isSubmitting = false;
+    // Validation côté client
+    const validationErrors = this.savingsApplicationService.validateSavingsApplicationData(applicationData);
+    if (validationErrors.length > 0) {
+      this.notificationService.showError(validationErrors.join(', '));
+      return;
     }
+
+    // Debug pour développement
+    this.savingsApplicationService.debugSavingsApplicationData(applicationData);
+
+    // Soumettre à l'API - FIX ICI
+    this.savingsApplicationService.submitSavingsApplication(applicationData).subscribe({
+      next: (response) => {
+        console.log('Response received:', response); // Debug
+        
+        if (response && response.success) {
+          this.notification = response;
+          this.currentStep = 2;
+          
+          this.applicationSubmitted.emit(response);
+          
+          this.notificationService.showSuccess(
+            `Votre demande d'épargne a été transmise à ${response.contact_info.bank_name}`,
+            'Demande envoyée !'
+          );
+          
+          // Auto-fermeture après 5 secondes sur l'écran de confirmation
+          setTimeout(() => {
+            this.close();
+          }, 5000);
+          
+        } else {
+          throw new Error('La demande a échoué');
+        }
+      },
+      error: (error) => {
+        console.error('Erreur lors de l\'envoi de la demande:', error);
+        
+        let errorMessage = 'Une erreur est survenue lors de l\'envoi de votre demande';
+        
+        // Gestion des erreurs spécifiques
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (error.error && error.error.message) {
+          errorMessage = error.error.message;
+        } else if (error.error && error.error.detail) {
+          errorMessage = error.error.detail;
+        }
+        
+        this.notificationService.showError(errorMessage);
+        this.isSubmitting = false;
+      },
+      complete: () => {
+        this.isSubmitting = false;
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Erreur lors de l\'envoi de la demande:', error);
+    
+    let errorMessage = 'Une erreur est survenue lors de l\'envoi de votre demande';
+    
+    // Gestion des erreurs spécifiques
+    if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    this.notificationService.showError(errorMessage);
+    this.isSubmitting = false;
   }
+}
+async checkApplicationStatus(applicationId: string): Promise<void> {
+  try {
+    const status = await this.savingsApplicationService.checkSavingsApplicationStatus(applicationId).toPromise();
+    console.log('Statut de la demande:', status);
+    
+    // Utiliser ! pour dire à TypeScript que status n'est pas undefined
+    this.notificationService.showInfo(
+      `Statut de votre demande: ${status!.status_message}`,
+      'Statut de la demande'
+    );
+    
+  } catch (error) {
+    console.error('Erreur lors de la vérification du statut:', error);
+    this.notificationService.showError('Impossible de vérifier le statut de la demande');
+  }
+}
+
+// Méthode pour valider les montants selon le produit sélectionné
+private validateAmounts(): boolean {
+  const initialDeposit = this.applicationForm.get('initial_deposit')?.value;
+  
+  if (!this.productData) {
+    return false;
+  }
+
+  // Vérifier le dépôt minimum
+  if (initialDeposit < this.productData.minimum_deposit) {
+    this.notificationService.showError(
+      `Le dépôt minimum pour ce produit est de ${this.formatCurrency(this.productData.minimum_deposit)}`
+    );
+    return false;
+  }
+
+  // Vérifier le dépôt maximum (si défini)
+  if (this.productData.maximum_deposit && initialDeposit > this.productData.maximum_deposit) {
+    this.notificationService.showError(
+      `Le dépôt maximum pour ce produit est de ${this.formatCurrency(this.productData.maximum_deposit)}`
+    );
+    return false;
+  }
+
+  return true;
+}
+
+private prefillFormData(): void {
+  if (!this.simulationData) return;
+
+  const prefillData: any = {};
+
+  if (this.simulationData.initialAmount) {
+    prefillData.initial_deposit = this.simulationData.initialAmount;
+  }
+
+  if (this.simulationData.monthlyContribution) {
+    prefillData.monthly_contribution = this.simulationData.monthlyContribution;
+  }
+
+  // Précharger l'objectif d'épargne si disponible
+  if (this.simulationData.savingsGoal) {
+    prefillData.savings_goal = this.simulationData.savingsGoal;
+  }
+
+  // Précharger le montant cible si disponible
+  if (this.simulationData.finalAmount) {
+    prefillData.target_amount = this.simulationData.finalAmount;
+  }
+
+  this.applicationForm.patchValue(prefillData);
+}
+
 
   private async simulateAPICall(data: SavingsApplicationRequest): Promise<SavingsApplicationNotification> {
     // Simuler un délai d'API
@@ -624,6 +692,153 @@ export class SavingsApplicationModalComponent implements OnInit {
     };
   }
 
+  downloadReceipt(): void {
+  if (!this.notification) return;
+  
+  const receiptContent = this.generateReceiptContent();
+  const blob = new Blob([receiptContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `recepisse_epargne_${this.notification.application_number}.html`;
+  link.click();
+  
+  URL.revokeObjectURL(url);
+
+  // Notification de succès
+  this.notificationService.showSuccess('Reçu téléchargé avec succès');
+}
+
+private generateReceiptContent(): string {
+  if (!this.notification) return '';
+  
+  return `
+  <!DOCTYPE html>
+  <html lang="fr">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Récépissé de Demande d'Épargne - ${this.notification.application_number}</title>
+      <style>
+          body { 
+              font-family: Arial, sans-serif; 
+              margin: 20px; 
+              line-height: 1.6;
+              color: #333;
+          }
+          .header { 
+              text-align: center; 
+              margin-bottom: 30px;
+              border-bottom: 2px solid #007bff;
+              padding-bottom: 20px;
+          }
+          .header h1 {
+              color: #007bff;
+              margin: 0;
+          }
+          .details { 
+              margin-bottom: 20px;
+              background: #f8f9fa;
+              padding: 15px;
+              border-radius: 5px;
+          }
+          .details-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 10px;
+          }
+          .detail-item {
+              margin: 5px 0;
+          }
+          .detail-item strong {
+              color: #007bff;
+          }
+          .steps { 
+              margin-top: 20px;
+          }
+          .steps h3 {
+              color: #007bff;
+              border-bottom: 1px solid #dee2e6;
+              padding-bottom: 5px;
+          }
+          .steps ol li {
+              margin: 8px 0;
+              padding-left: 5px;
+          }
+          .contact {
+              background: #e9ecef;
+              padding: 15px;
+              border-radius: 5px;
+              margin-top: 20px;
+          }
+          .contact h3 {
+              color: #007bff;
+              margin-top: 0;
+          }
+          .footer {
+              text-align: center;
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #dee2e6;
+              font-size: 12px;
+              color: #666;
+          }
+      </style>
+  </head>
+  <body>
+      <div class="header">
+          <h1>Récépissé de Demande d'Épargne</h1>
+          <h2>${this.notification.contact_info.bank_name}</h2>
+      </div>
+      
+      <div class="details">
+          <div class="details-grid">
+              <div class="detail-item">
+                  <strong>Numéro de dossier:</strong> ${this.notification.application_number}
+              </div>
+              <div class="detail-item">
+                  <strong>Type de produit:</strong> ${this.productData?.name || 'Produit d\'épargne'}
+              </div>
+              <div class="detail-item">
+                  <strong>Date de soumission:</strong> ${new Date().toLocaleDateString('fr-FR')}
+              </div>
+              <div class="detail-item">
+                  <strong>Délai de traitement:</strong> ${this.notification.expected_processing_time}
+              </div>
+              <div class="detail-item">
+                  <strong>Montant initial:</strong> ${this.formatCurrency(this.applicationForm.get('initial_deposit')?.value || 0)}
+              </div>
+              <div class="detail-item">
+                  <strong>Taux d'intérêt:</strong> ${this.formatPercent(this.productData?.interest_rate || 0)}
+              </div>
+          </div>
+      </div>
+      
+      <div class="steps">
+          <h3>Prochaines étapes:</h3>
+          <ol>
+              ${this.notification.next_steps.map(step => `<li>${step}</li>`).join('')}
+          </ol>
+      </div>
+      
+      <div class="contact">
+          <h3>Informations de contact:</h3>
+          <p><strong>Banque:</strong> ${this.notification.contact_info.bank_name}</p>
+          <p><strong>Téléphone:</strong> ${this.notification.contact_info.phone}</p>
+          <p><strong>Email:</strong> ${this.notification.contact_info.email}</p>
+          <p><strong>Numéro de référence:</strong> ${this.notification.contact_info.application_number}</p>
+      </div>
+
+      <div class="footer">
+          <p>Ce document a été généré automatiquement le ${new Date().toLocaleString('fr-FR')}</p>
+          <p>Conservez ce récépissé pour vos dossiers</p>
+      </div>
+  </body>
+  </html>
+  `;
+}
+  
   getModalTitle(): string {
     if (this.currentStep === 1) {
       return 'Demande d\'Ouverture de Compte Épargne';
@@ -677,67 +892,6 @@ export class SavingsApplicationModalComponent implements OnInit {
     navigator.clipboard.writeText(text).then(() => {
       this.notificationService.showSuccess('Numéro copié dans le presse-papier');
     });
-  }
-
-  downloadReceipt(): void {
-    if (!this.notification) return;
-    
-    const receiptContent = this.generateReceiptContent();
-    const blob = new Blob([receiptContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `recepisse_epargne_${this.notification.application_number}.html`;
-    link.click();
-    
-    URL.revokeObjectURL(url);
-  }
-
-  private generateReceiptContent(): string {
-    if (!this.notification) return '';
-    
-    return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Récépissé de Demande d'Épargne - ${this.notification.application_number}</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .details { margin-bottom: 20px; }
-            .steps { margin-top: 20px; }
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>Récépissé de Demande d'Épargne</h1>
-            <h2>${this.notification.contact_info.bank_name}</h2>
-        </div>
-        
-        <div class="details">
-            <p><strong>Numéro de dossier:</strong> ${this.notification.application_number}</p>
-            <p><strong>Type de produit:</strong> ${this.productData?.name}</p>
-            <p><strong>Date de soumission:</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
-            <p><strong>Délai de traitement:</strong> ${this.notification.expected_processing_time}</p>
-        </div>
-        
-        <div class="steps">
-            <h3>Prochaines étapes:</h3>
-            <ol>
-                ${this.notification.next_steps.map(step => `<li>${step}</li>`).join('')}
-            </ol>
-        </div>
-        
-        <div class="contact">
-            <h3>Contact:</h3>
-            <p>Téléphone: ${this.notification.contact_info.phone}</p>
-            <p>Email: ${this.notification.contact_info.email}</p>
-        </div>
-    </body>
-    </html>
-    `;
   }
 
   onOverlayClick(event: MouseEvent): void {

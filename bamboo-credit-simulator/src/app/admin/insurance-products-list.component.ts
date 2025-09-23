@@ -61,8 +61,8 @@ import { NotificationService } from '../services/notification.service';
         </button>
       </div>
 
-      <!-- Statistiques -->
-      <div class="stats-cards" *ngIf="stats">
+            <!-- Statistiques -->
+      <div class="stats-cards" *ngIf="stats && stats.products && stats.quotes">
         <div class="stat-card">
           <div class="stat-number">{{ stats.products.total }}</div>
           <div class="stat-label">Produits totaux</div>
@@ -78,21 +78,22 @@ import { NotificationService } from '../services/notification.service';
       </div>
 
       <!-- Répartition par type -->
-      <div class="chart-section" *ngIf="stats && stats.products_by_type.length > 0">
-        <h3>Répartition par type</h3>
-        <div class="type-distribution">
-          <div *ngFor="let item of stats.products_by_type" class="type-item">
-            <div class="type-name">{{ getTypeLabel(item.type) }}</div>
-            <div class="type-count">{{ item.count }} produit(s)</div>
-            <div class="type-bar">
-              <div 
-                class="type-fill" 
-                [style.width.%]="(item.count / getMaxTypeCount()) * 100">
-              </div>
+          <div class="chart-section" *ngIf="stats && stats.products_by_type && stats.products_by_type.length > 0">
+      <h3>Répartition par type</h3>
+      <div class="type-distribution">
+        <div *ngFor="let item of stats.products_by_type" class="type-item">
+          <div class="type-name">{{ getTypeLabel(item.type) }}</div>
+          <div class="type-count">{{ item.count }} produit(s)</div>
+          <div class="type-bar">
+            <div 
+              class="type-fill" 
+              [style.width.%]="(item.count / getMaxTypeCount()) * 100">
             </div>
           </div>
         </div>
       </div>
+    </div>
+
 
       <!-- Loading -->
       <div class="loading" *ngIf="isLoading && products.length === 0">

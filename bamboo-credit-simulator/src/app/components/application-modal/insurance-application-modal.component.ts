@@ -7,6 +7,7 @@ import {
   InsuranceApplicationRequest, 
   InsuranceApplicationNotification 
 } from '../../services/insurance-application.service';
+import { AutoFillService } from '../../services/auto-fill.service';
 
 @Component({
   selector: 'app-insurance-application-modal',
@@ -652,6 +653,13 @@ import {
         </button>
       </div>
       
+      <button 
+      type="button" 
+      class="btn btn-link btn-small"
+      (click)="clearAutoFillData()"
+      title="Effacer les données pré-remplies">
+      Vider les champs pré-remplis
+    </button>
       <div *ngIf="currentStep === 2" class="form-actions">
         <button 
           type="button" 
@@ -687,23 +695,44 @@ export class InsuranceApplicationModalComponent implements OnInit, OnChanges {
   constructor(
     private fb: FormBuilder,
     private notificationService: NotificationService,
-    private insuranceApplicationService: InsuranceApplicationService
+    private insuranceApplicationService: InsuranceApplicationService,
+    private autoFillService: AutoFillService
   ) {}
 
   ngOnInit(): void {
-    this.initializeForm();
+  this.initializeForm();
+  
+  // Attendre que les données soient disponibles
+  setTimeout(() => {
+    this.setConditionalValidators();
     
-    // Attendre que les données soient disponibles
-    setTimeout(() => {
-      this.setConditionalValidators();
-    }, 100);
-  }
-
+    // NOUVEAU: Préremplissage automatique
+    this.attemptAutoFill();
+  }, 100);
+}
   ngOnChanges(): void {
     if (this.applicationForm) {
       this.setConditionalValidators();
     }
   }
+
+  private attemptAutoFill(): void {
+  const insuranceType = this.getInsuranceType();
+  const autoFilled = this.autoFillService.prefillApplicationForm(
+    this.applicationForm, 
+    insuranceType
+  );
+
+  if (autoFilled) {
+    this.notificationService.showInfo(
+      'Formulaire prérempli avec vos données de simulation'
+    );
+    console.log(' Préremplissage automatique réussi');
+  } else {
+    console.log('ℹAucune donnée de simulation disponible pour le préremplissage');
+  }
+}
+
 
   // Méthodes à ajouter dans insurance-application-modal.component.ts
 
@@ -1289,7 +1318,22 @@ private getDefaultProductId(): string {
     return productName;
   }
 
+clearAutoFillData(): void {
+  // Réinitialiser uniquement les champs pré-remplis, pas les champs utilisateur
+  const fieldsToKeep = [
+    'applicant_name', 'applicant_email', 'applicant_phone',
+    'data_consent', 'terms_consent', 'contact_consent'
+  ];
 
+  Object.keys(this.applicationForm.controls).forEach(key => {
+    if (!fieldsToKeep.includes(key)) {
+      this.applicationForm.get(key)?.setValue('');
+    }
+  });
+
+  this.autoFillService.clearSimulationData();
+  this.notificationService.showInfo('Données pré-remplies effacées');
+}
 
   getInsuranceType(): string {
     return this.productData?.type || this.quoteData?.insurance_type || 'auto';

@@ -364,6 +364,13 @@ except ImportError:
     print("Warning: admin_application router not available")
 
 try:
+    from routers import savings_application
+    savings_application_available = True
+except ImportError:
+    savings_application_available = False
+    print("Warning: savings_application router not available")
+
+try:
     from routers import admin_dashboard
     admin_dashboard_available = True
 except ImportError:
@@ -601,6 +608,10 @@ if insurance_available:
     app.include_router(insurance.router, prefix="/api/insurance", tags=["Assurances"])
     logger.info("Insurance router included")
 
+if savings_application_available:
+    app.include_router(savings_application.router, prefix="/api", tags=["Savings Applications"])
+    logger.info("Savings application router included")
+
 if insurance_admin_available:
     app.include_router(insurance_admin.router, prefix="/api")
     logger.info("Insurance admin router included")
@@ -624,6 +635,8 @@ if admin_application_available:
 if savings_available:
     app.include_router(savings.router, prefix="/api/savings", tags=["Épargne"])
     logger.info("Savings router included")
+
+
 
 if insurance_application_available:
     app.include_router(insurance_application.router, prefix="/api", tags=["Insurance Applications"])
@@ -678,6 +691,8 @@ async def root():
         available_routes.append("savings")
     if savings_admin_available:
         available_routes.append("savings_admin")
+    if savings_application_available:
+        available_routes.append("savings_application")
     if insurance_admin_available:
         available_routes.append("insurance_admin")
     if admin_management_simple_available:

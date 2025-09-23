@@ -112,7 +112,7 @@ export class PdfQuoteService {
     // Sous-titre
     pdf.setFontSize(14);
     pdf.setTextColor(52, 73, 94);
-    pdf.text('Comparateur Bamboo - Gabon', 20, y + 10);
+    pdf.text('simbot gab - Gabon', 20, y + 10);
     
     // Ligne de séparation
     pdf.setDrawColor(189, 195, 199);

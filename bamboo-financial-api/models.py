@@ -55,8 +55,8 @@ class InsuranceCompany(Base):
     established_year = Column(Integer)
     solvency_ratio = Column(DECIMAL(5, 2))
     rating = Column(String(10))
-    specialties = Column(JSON, default=list)
-    coverage_areas = Column(JSON, default=list)
+    specialties = Column(JSON, default=[])
+    coverage_areas = Column(JSON, default=[]) 
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -328,7 +328,7 @@ class SavingsApplication(Base):
     __tablename__ = "savings_applications"
 
     id = Column(String(50), primary_key=True, default=lambda: str(uuid.uuid4()))
-    simulation_id = Column(String(50), ForeignKey("savings_simulations.id"), nullable=False)
+    simulation_id = Column(String(50), ForeignKey("savings_simulations.id"), nullable=True)
     savings_product_id = Column(String(50), ForeignKey("savings_products.id"), nullable=False)
     
     # Informations personnelles

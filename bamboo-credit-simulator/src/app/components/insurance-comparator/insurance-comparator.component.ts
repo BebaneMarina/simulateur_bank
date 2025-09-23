@@ -13,6 +13,7 @@ import { PdfQuoteService, QuoteData, CustomerData } from '../../services/pdf-quo
 import { InsuranceApplicationModalComponent } from '../../components/application-modal/insurance-application-modal.component';
 import { InsuranceFilterComponent } from './insurance-filter.component';
 import { InsuranceFilterService, FilterResult, ScoredQuote } from '../../services/insurance-filter.service';
+import { AutoFillService } from '../../services/auto-fill.service';
 
 
 // Interfaces existantes...
@@ -1350,6 +1351,7 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
     private analyticsService: AnalyticsService,
     private pdfQuoteService: PdfQuoteService,
     private filterService: InsuranceFilterService,
+    private autoFillService: AutoFillService,
   ) {
     this.initializeForm();
   }
@@ -1496,6 +1498,22 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
         return false;
     }
   }
+
+
+private saveSimulationDataForAutoFill(): void {
+  const formData = this.insuranceForm.value;
+  const selections = {
+    guarantees: this.selectedGuarantees,
+    insurers: this.selectedInsurers,
+    contractType: this.selectedContractType,
+    medicalNeeds: this.selectedMedicalNeeds,
+    travelRisks: this.selectedTravelRisks
+  };
+
+  this.autoFillService.saveSimulationData(formData, this.selectedInsuranceType, selections);
+  
+  console.log('💾 Données sauvegardées pour préremplissage automatique');
+}
 
  openApplicationModal(quoteData: any): void {
     console.log('Données reçues dans openApplicationModal:', quoteData);
@@ -2465,6 +2483,7 @@ private calculateCoverageAmount(): number {
       this.notificationService.showError('Veuillez remplir tous les champs requis');
       return;
     }
+    this.saveSimulationDataForAutoFill();
 
     this.isLoading = true;
 

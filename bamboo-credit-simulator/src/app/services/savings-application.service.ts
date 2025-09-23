@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, retry, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 
 export interface SavingsApplicationRequest {
@@ -67,24 +68,56 @@ export class SavingsApplicationService {
 
   // APPLICATIONS D'ÉPARGNE
   
-  submitSavingsApplication(application: SavingsApplicationRequest): Observable<SavingsApplicationNotification> {
-    const processedApplication = {
-      ...application,
-      initial_deposit: Number(application.initial_deposit),
-      monthly_contribution: Number(application.monthly_contribution || 0),
-      monthly_income: Number(application.monthly_income || 0),
-      target_amount: Number(application.target_amount || 0),
-      client_ip: application.client_ip || '',
-      user_agent: application.user_agent || navigator.userAgent || ''
-    };
+ submitSavingsApplication(application: SavingsApplicationRequest): Observable<SavingsApplicationNotification> {
+  const processedApplication = {
+    ...application,
+    initial_deposit: Number(application.initial_deposit),
+    monthly_contribution: Number(application.monthly_contribution || 0),
+    monthly_income: Number(application.monthly_income || 0),
+    target_amount: Number(application.target_amount || 0),
+    client_ip: this.getClientIP(),
+    user_agent: navigator.userAgent || '',
+    // Ajouter les métadonnées de soumission
+    submission_metadata: {
+      submitted_via: 'web_portal',
+      browser_info: this.getBrowserInfo(),
+      timestamp: new Date().toISOString()
+    }
+  };
 
-    console.log('Sending savings application:', processedApplication);
-    
-    return this.http.post<SavingsApplicationNotification>(`${this.baseUrl}/savings`, processedApplication);
-  }
+  console.log('Envoi demande épargne:', processedApplication);
   
+  return this.http.post<SavingsApplicationNotification>(`${this.baseUrl}/savings`, processedApplication)
+    .pipe(
+      tap(response => {
+        console.log('✅ Réponse API reçue:', response);
+        // Vérifier que la réponse a la structure attendue
+        if (!response.success) {
+          console.warn('⚠️ Réponse API sans success=true:', response);
+        }
+      }),
+      retry(1), // Retry une fois en cas d'erreur réseau
+      catchError((error) => {
+        console.error('❌ Erreur dans submitSavingsApplication:', error);
+        
+        // Si c'est une erreur HTTP 200 mais avec une réponse malformée
+        if (error.status === 200 && error.error) {
+          console.log('Tentative de parsing de la réponse d\'erreur:', error.error);
+          // Parfois l'erreur contient en fait la bonne réponse
+          if (error.error.success) {
+            console.log('🔄 Correction: retour de la réponse depuis l\'erreur');
+            return of(error.error);
+          }
+        }
+        
+        // Gérer les vraies erreurs
+        return this.handleError(error);
+      })
+    );
+}
   getSavingsApplication(applicationId: string): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/savings/${applicationId}`);
+    return this.http.get<any>(`${this.baseUrl}/savings/${applicationId}`)
+      .pipe(catchError(this.handleError));
   }
   
   getSavingsApplications(params?: {
@@ -92,13 +125,15 @@ export class SavingsApplicationService {
     limit?: number;
     status?: string;
   }): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/savings`, { params });
+    return this.http.get<any[]>(`${this.baseUrl}/savings`, { params })
+      .pipe(catchError(this.handleError));
   }
 
   // VÉRIFICATION DE STATUT
   
   checkSavingsApplicationStatus(applicationId: string): Observable<SavingsApplicationStatus> {
-    return this.http.get<SavingsApplicationStatus>(`${this.baseUrl}/status/savings/${applicationId}`);
+    return this.http.get<SavingsApplicationStatus>(`${this.baseUrl}/status/savings/${applicationId}`)
+      .pipe(catchError(this.handleError));
   }
 
   // MÉTHODES UTILITAIRES
@@ -188,6 +223,67 @@ export class SavingsApplicationService {
     return gabonPhoneRegex.test(cleanPhone);
   }
 
+  private getClientIP(): string {
+    // Note: L'IP réelle sera récupérée côté serveur
+    return '127.0.0.1';
+  }
+
+  private getBrowserInfo(): any {
+    return {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  private handleError(error: any): Observable<never> {
+  console.error('🔴 HandleError appelé avec:', error);
+  
+  let errorMessage = 'Une erreur est survenue';
+  
+  if (error.error instanceof ErrorEvent) {
+    // Erreur côté client
+    errorMessage = `Erreur: ${error.error.message}`;
+  } else {
+    // Erreur côté serveur
+    console.log('Status:', error.status);
+    console.log('Error body:', error.error);
+    
+    // Cas particulier : parfois une réponse de succès est mal interprétée comme une erreur
+    if (error.status === 200 && error.error && error.error.success) {
+      console.log('⚠️ Réponse de succès détectée dans handleError - ne pas traiter comme une erreur');
+      // Ne pas traiter ceci comme une erreur
+      return throwError(() => error);
+    }
+    
+    switch (error.status) {
+      case 400:
+        errorMessage = error.error?.message || 'Données invalides';
+        break;
+      case 401:
+        errorMessage = 'Non autorisé';
+        break;
+      case 403:
+        errorMessage = 'Accès refusé';
+        break;
+      case 404:
+        errorMessage = 'Service non trouvé';
+        break;
+      case 500:
+        errorMessage = 'Erreur serveur interne';
+        break;
+      case 0:
+        errorMessage = 'Impossible de contacter le serveur';
+        break;
+      default:
+        errorMessage = error.error?.message || `Erreur ${error.status}`;
+    }
+  }
+  
+  console.error('Message d\'erreur final:', errorMessage);
+  return throwError(() => new Error(errorMessage));
+}
   debugSavingsApplicationData(data: SavingsApplicationRequest): void {
     console.group('🔍 Debug Savings Application Data');
     console.log('Données complètes:', data);
