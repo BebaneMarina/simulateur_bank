@@ -361,6 +361,32 @@ import {
                 </div>
               </div>
 
+              <!-- Section Logo -->
+                  <div class="form-section">
+                    <h3>Logo</h3>
+                    <div class="form-grid">
+                      <div class="form-group span-2">
+                        <label for="companyLogo">Logo de la compagnie</label>
+                        <input 
+                          type="file" 
+                          id="companyLogo"
+                          (change)="onLogoFileSelected($event)"
+                          accept="image/*"
+                          class="form-control">
+                        <small class="form-text">Formats acceptés : PNG, JPG, GIF. Taille max : 2MB</small>
+                      </div>
+                      
+                      <!-- Prévisualisation du logo -->
+                      <div class="form-group span-2" *ngIf="selectedLogoUrl">
+                        <label>Prévisualisation</label>
+                        <div class="logo-preview">
+                          <img [src]="selectedLogoUrl" alt="Logo preview" class="preview-image">
+                          <button type="button" class="btn-remove" (click)="removeLogo()">×</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
               <!-- Contact Info -->
               <div class="form-section">
                 <h3>Informations de contact</h3>
@@ -733,6 +759,8 @@ export class InsuranceManagementComponent implements OnInit, OnDestroy {
   products: InsuranceProduct[] = [];
   filteredCompanies: InsuranceCompany[] = [];
   filteredProducts: InsuranceProduct[] = [];
+  selectedLogoFile: File | null = null;
+  selectedLogoUrl: string | null = null;
   
   // UI State
   activeTab: 'companies' | 'products' = 'companies';
@@ -767,6 +795,55 @@ export class InsuranceManagementComponent implements OnInit, OnDestroy {
   ) {
     this.initializeForms();
   }
+
+  onLogoFileSelected(event: any): void {
+  const file = event.target.files[0];
+  
+  if (file) {
+    // Validation de la taille (2MB max)
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    if (file.size > maxSize) {
+      alert('Le fichier est trop volumineux. Taille maximum : 2MB');
+      return;
+    }
+
+    // Validation du type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Format de fichier non supporté. Utilisez PNG, JPG ou GIF.');
+      return;
+    }
+
+    this.selectedLogoFile = file;
+    
+    // Créer une URL pour la prévisualisation
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.selectedLogoUrl = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+removeLogo(): void {
+  this.selectedLogoFile = null;
+  this.selectedLogoUrl = null;
+  // Reset du champ file input
+  const fileInput = document.getElementById('companyLogo') as HTMLInputElement;
+  if (fileInput) {
+    fileInput.value = '';
+  }
+}
+
+private fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+}
+
 
   ngOnInit(): void {
     this.loadData();
@@ -860,6 +937,9 @@ export class InsuranceManagementComponent implements OnInit, OnDestroy {
   editCompany(company: InsuranceCompany): void {
     this.editingCompany = company;
     this.selectedSpecialties = [...(company.specialties || [])];
+    this.selectedLogoUrl = company.logo_url || company.logo_data || null;
+    this.selectedLogoFile = null;
+  
     this.companyForm.patchValue({
       id: company.id,
       name: company.name,
@@ -874,16 +954,11 @@ export class InsuranceManagementComponent implements OnInit, OnDestroy {
       solvency_ratio: company.solvency_ratio,
       rating: company.rating,
       is_active: company.is_active
+      
     });
     this.showCompanyModal = true;
   }
 
-  closeCompanyModal(): void {
-    this.showCompanyModal = false;
-    this.editingCompany = null;
-    this.selectedSpecialties = [];
-    this.companyForm.reset();
-  }
 
   toggleSpecialty(specialty: string, event: any): void {
     if (event.target.checked) {
@@ -895,20 +970,29 @@ export class InsuranceManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  saveCompany(): void {
-    if (this.companyForm.invalid) {
-      return;
-    }
+ async saveCompany(): Promise<void> {
+  if (this.companyForm.invalid) {
+    return;
+  }
 
-    this.isLoading = true;
+  this.isLoading = true;
+  
+  try {
     const formData = {
       ...this.companyForm.value,
       specialties: this.selectedSpecialties
     };
 
+    // Ajouter les données du logo si un fichier est sélectionné
+    if (this.selectedLogoFile) {
+      const logoBase64 = await this.fileToBase64(this.selectedLogoFile);
+      formData.logo_data = logoBase64;
+      formData.logo_content_type = this.selectedLogoFile.type;
+    }
+
     const operation = this.editingCompany
-  ? this.insuranceService.updateInsuranceCompany(this.editingCompany.id, formData)
-  : this.insuranceService.createInsuranceCompany(formData);
+      ? this.insuranceService.updateInsuranceCompany(this.editingCompany.id, formData)
+      : this.insuranceService.createInsuranceCompany(formData);
 
     operation.pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -930,8 +1014,11 @@ export class InsuranceManagementComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       });
+  } catch (error) {
+    console.error('Erreur lors de la conversion du logo:', error);
+    this.isLoading = false;
   }
-
+}
   deleteCompany(companyId: string): void {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette compagnie ?')) {
       return;
@@ -980,6 +1067,16 @@ export class InsuranceManagementComponent implements OnInit, OnDestroy {
     this.showProductModal = true;
   }
 
+closeCompanyModal(): void {
+  this.showCompanyModal = false;
+  this.editingCompany = null;
+  this.selectedSpecialties = [];
+  // AJOUTEZ CES LIGNES :
+  this.selectedLogoFile = null;
+  this.selectedLogoUrl = null;
+  
+  this.companyForm.reset();
+}
   duplicateProduct(product: InsuranceProduct): void {
     this.editingProduct = null;
     this.productForm.patchValue({

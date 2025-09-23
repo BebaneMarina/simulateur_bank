@@ -229,6 +229,48 @@
     }
   }
 
+  .logo-preview {
+  position: relative;
+  display: inline-block;
+  max-width: 200px;
+  
+  .preview-image {
+    max-width: 100%;
+    max-height: 100px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 4px;
+  }
+  
+  .btn-remove {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+      background: #cc0000;
+    }
+  }
+}
+
+.form-text {
+  color: #666;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
   // Product cell styling
   .product-cell {
     .product-name {

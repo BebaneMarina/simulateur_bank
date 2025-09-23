@@ -124,26 +124,50 @@ export class InsuranceApplicationService {
   // APPLICATIONS D'ASSURANCE
   
   submitInsuranceApplication(application: InsuranceApplicationRequest): Observable<InsuranceApplicationNotification> {
-    // Nettoyer et valider les données avant envoi
-    const processedApplication = {
-      ...application,
-      coverage_amount: Number(application.coverage_amount || 0),
-      vehicle_year: Number(application.vehicle_year || 0),
-      vehicle_value: Number(application.vehicle_value || 0),
-      property_value: Number(application.property_value || 0),
-      // Ajouter les métadonnées client
-      application_data: {
-        ...application.application_data,
-        submitted_from: 'web_client',
-        browser_info: navigator.userAgent,
-        timestamp: new Date().toISOString()
-      }
-    };
+  // Nettoyer le quote_id si il n'est pas valide
+  const processedApplication = {
+    ...application,
+    // 🔧 Vérifier et nettoyer le quote_id
+    quote_id: this.validateQuoteId(application.quote_id),
+    coverage_amount: Number(application.coverage_amount || 0),
+    vehicle_year: Number(application.vehicle_year || 0),
+    vehicle_value: Number(application.vehicle_value || 0),
+    property_value: Number(application.property_value || 0),
+    application_data: {
+      ...application.application_data,
+      submitted_from: 'web_client',
+      browser_info: navigator.userAgent,
+      timestamp: new Date().toISOString(),
+      original_quote_id: application.quote_id // Garder l'original pour debug
+    }
+  };
 
-    console.log('Envoi demande assurance:', processedApplication);
-    
-    return this.http.post<InsuranceApplicationNotification>(`${this.baseUrl}/insurance`, processedApplication);
+  console.log('Envoi demande assurance avec quote_id validé:', processedApplication);
+  
+  return this.http.post<InsuranceApplicationNotification>(`${this.baseUrl}/insurance`, processedApplication);
+}
+
+// Nouvelle méthode de validation
+private validateQuoteId(quoteId?: string): string | undefined {
+  if (!quoteId) return undefined;
+  
+  // Si le quote_id contient des caractères suspects ou est mal formé
+  const invalidPatterns = [
+    /quote_\d{13}/, // Pattern qui semble généré côté client
+    /^main_offer$/,
+    /^temp_/,
+    /^fake_/
+  ];
+  
+  for (const pattern of invalidPatterns) {
+    if (pattern.test(quoteId)) {
+      console.warn(`Quote ID invalide détecté: ${quoteId}, passage en mode sans devis`);
+      return undefined;
+    }
   }
+  
+  return quoteId;
+}
   
   getInsuranceApplication(applicationId: string): Observable<InsuranceApplication> {
     return this.http.get<InsuranceApplication>(`${this.baseUrl}/insurance/${applicationId}`);

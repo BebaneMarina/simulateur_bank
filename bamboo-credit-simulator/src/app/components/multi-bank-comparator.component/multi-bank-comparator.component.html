@@ -4,11 +4,11 @@
     <div class="container">
       <div class="hero-content">
         <h1 class="hero-title">
-          <i class="material-icons">compare_arrows</i>
-          Comparateur Multi-Banques Gabon
+          <i class="material-icons">smart_toy</i>
+          SimBot Gab - Comparateur Multi-Banques
         </h1>
         <p class="hero-subtitle">
-          Trouvez la meilleure offre de crédit parmi nos produits bancaires en 3 étapes simples
+          Votre assistant pour trouver la meilleure offre de crédit au Gabon en 3 étapes simples
         </p>
         <div class="hero-stats">
           <div class="stat-item">
@@ -21,7 +21,7 @@
           </div>
           <div class="stat-item">
             <span class="stat-number">< 3min</span>
-            <span class="stat-label">Comparaison</span>
+            <span class="stat-label">Analyse IA</span>
           </div>
         </div>
       </div>
@@ -35,8 +35,8 @@
         <!-- Stepper Header -->
         <div class="form-stepper">
           <div class="stepper-header">
-            <h2>Votre Simulation de Crédit</h2>
-            <p>Suivez ces étapes pour obtenir vos offres personnalisées</p>
+            <h2>Analyse Personnalisée par IA</h2>
+            <p>SimBot Gab analyse votre profil pour vous recommander les meilleures offres</p>
           </div>
 
           <div class="steps-container">
@@ -79,7 +79,7 @@
             <div class="form-section">
               <div class="section-title">
                 <i class="material-icons">account_circle</i>
-                Type de profil
+                Informations personnelles
               </div>
               
               <div class="form-row">
@@ -227,7 +227,7 @@
                     </option>
                   </select>
                   <div class="form-help" *ngIf="availableCreditTypes.length > 0">
-                    {{ availableCreditTypes.length }} type(s) disponible(s) en base
+                    {{ availableCreditTypes.length }} type(s) disponible(s) analysés par IA
                   </div>
                   <div class="error-message" *ngIf="hasError('creditType')">
                     {{ getErrorMessage('creditType') }}
@@ -365,8 +365,8 @@
 
             <div class="form-section">
               <div class="section-title">
-                <i class="material-icons">summary</i>
-                Récapitulatif de votre demande
+                <i class="material-icons">smart_toy</i>
+                Récapitulatif analysé par SimBot
               </div>
               
               <div class="summary-card">
@@ -427,26 +427,26 @@
 
             <div class="form-section" *ngIf="!isLoadingProducts">
               <div class="section-title">
-                <i class="material-icons">local_offer</i>
-                Produits compatibles trouvés
+                <i class="material-icons">psychology</i>
+                Analyse IA - Produits compatibles
               </div>
               
               <div class="compatibility-info">
                 <div *ngIf="compatibleProducts.length === 0 && alternativeProducts.length === 0" class="info-message">
                   <i class="material-icons">info</i>
                   <div>
-                    <h4>Aucun produit compatible</h4>
-                    <p>Aucun produit ne correspond à vos critères actuels. Veuillez modifier le montant ou la durée dans les étapes précédentes.</p>
+                    <h4>Aucun produit compatible détecté</h4>
+                    <p>SimBot n'a trouvé aucun produit correspondant exactement à vos critères. Veuillez ajuster le montant ou la durée.</p>
                   </div>
                 </div>
 
-                <!-- Affichage des alternatives quand pas de produits compatibles -->
+                <!-- Alternatives SimBot -->
                 <div *ngIf="compatibleProducts.length === 0 && alternativeProducts.length > 0" class="alternatives-section">
                   <div class="info-message">
                     <i class="material-icons">lightbulb_outline</i>
                     <div>
-                      <h4>Suggestions d'ajustement</h4>
-                      <p>Nous avons trouvé des produits similaires avec des conditions légèrement différentes :</p>
+                      <h4>Suggestions d'optimisation SimBot</h4>
+                      <p>Notre simulateur a identifié des ajustements qui pourraient débloquer de meilleures offres :</p>
                     </div>
                   </div>
                   
@@ -487,8 +487,8 @@
                 <div *ngIf="compatibleProducts.length > 0" class="success-message">
                   <i class="material-icons">check_circle</i>
                   <div>
-                    <h4>{{ compatibleProductsCount }} produit{{ compatibleProductsCount > 1 ? 's' : '' }} compatible{{ compatibleProductsCount > 1 ? 's' : '' }}</h4>
-                    <p>Parfait ! Nous avons trouvé des offres qui correspondent à votre profil.</p>
+                    <h4>{{ compatibleProductsCount }} produit{{ compatibleProductsCount > 1 ? 's' : '' }} compatible{{ compatibleProductsCount > 1 ? 's' : '' }} trouvé{{ compatibleProductsCount > 1 ? 's' : '' }}</h4>
+                    <p>Excellent ! SimBot a identifié des offres parfaitement adaptées à votre profil.</p>
                   </div>
                 </div>
 
@@ -511,7 +511,7 @@
             <div class="form-section" *ngIf="isLoadingProducts">
               <div class="loading-products">
                 <div class="spinner"></div>
-                <p>Chargement des produits...</p>
+                <p>SimBot analyse les produits disponibles...</p>
               </div>
             </div>
           </div>
@@ -553,12 +553,12 @@
               [disabled]="!isFormValid || isLoading"
             >
               <span *ngIf="!isLoading" class="btn-content">
-                <i class="material-icons">compare</i>
-                Comparer les Offres
+                <i class="material-icons">psychology</i>
+                Lancer la simulation
               </span>
               <span *ngIf="isLoading" class="btn-loading">
                 <div class="spinner"></div>
-                Comparaison en cours...
+                SimBot analyse...
               </span>
             </button>
           </div>
@@ -577,8 +577,8 @@
                  [style.animation-delay]="idx * 0.2 + 's'"></div>
           </div>
         </div>
-        <h3>Comparaison en cours...</h3>
-        <p>Analyse des offres de {{ compatibleProductsCount }} produit{{ compatibleProductsCount > 1 ? 's' : '' }}</p>
+        <h3>SimBot analyse vos données...</h3>
+        <p>simulateur en cours d'analyse de {{ compatibleProductsCount }} produit{{ compatibleProductsCount > 1 ? 's' : '' }}</p>
         <div class="progress-steps">
           <div class="step active">
             <i class="material-icons">send</i>
@@ -586,11 +586,11 @@
           </div>
           <div class="step active">
             <i class="material-icons">psychology</i>
-            <span>Calcul du scoring</span>
+            <span>Analyse</span>
           </div>
           <div class="step active">
             <i class="material-icons">compare_arrows</i>
-            <span>Comparaison des offres</span>
+            <span>Comparaison intelligente</span>
           </div>
         </div>
       </div>
@@ -603,18 +603,18 @@
       <div class="error-card">
         <div class="error-content">
           <i class="material-icons">error_outline</i>
-          <h3>Erreur lors de la comparaison</h3>
+          <h3>Erreur lors de l'analyse</h3>
           <p>{{ errorMessage }}</p>
           <button class="retry-btn" (click)="onSubmit()">
             <i class="material-icons">refresh</i>
-            Réessayer
+            Relancer l'analyse
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Résultats de Comparaison -->
+  <!-- Résultats de l'Analyse IA -->
   <div class="results-section" *ngIf="productSimulations.length > 0 && !isLoading">
     <div class="container">
       <!-- Résumé des Résultats -->
@@ -622,20 +622,19 @@
         <div class="summary-header">
           <h2>
             <i class="material-icons">analytics</i>
-            Résultats de votre Comparaison
+            Analyse SimBot Terminée
           </h2>
           <div class="summary-actions">
             <button class="action-btn" (click)="saveComparison()" title="Sauvegarder">
               <i class="material-icons">bookmark</i>
             </button>
-            <!-- NOUVEAU BOUTON COMPARAISON PREMIUM -->
             <button 
               class="action-btn btn-export-premium" 
-              (click)="exportComparisonToPDF()" 
-              title="Export Comparaison Premium PDF"
+              (click)="exportSimbotComparisonPDF()" 
+              title="Rapport Premium SimBot"
             >
-              <i class="material-icons">compare</i>
-              PDF Premium
+              <i class="material-icons">auto_awesome</i>
+              Rapport IA
             </button>
             <button class="action-btn" (click)="shareComparison()" title="Partager">
               <i class="material-icons">share</i>
@@ -650,7 +649,7 @@
             </div>
             <div class="stat-content">
               <span class="stat-number">{{ productSimulations.length }}</span>
-              <span class="stat-label">Offres reçues</span>
+              <span class="stat-label">Offres analysées</span>
             </div>
           </div>
 
@@ -661,6 +660,16 @@
             <div class="stat-content">
               <span class="stat-number">{{ eligibleSimulationsCount }}</span>
               <span class="stat-label">Éligible{{ eligibleSimulationsCount > 1 ? 's' : '' }}</span>
+            </div>
+          </div>
+
+          <div class="stat-card" *ngIf="bestOfferSavings > 0">
+            <div class="stat-icon">
+              <i class="material-icons">savings</i>
+            </div>
+            <div class="stat-content">
+              <span class="stat-number">{{ formatCurrency(bestOfferSavings) }}</span>
+              <span class="stat-label">Économie max</span>
             </div>
           </div>
         </div>
@@ -750,6 +759,11 @@
                 <div class="eligibility-badge" [ngClass]="getEligibilityClass(sim.simulation.eligible)">
                   {{ getEligibilityText(sim.simulation.eligible) }}
                 </div>
+
+                <!-- Nouveau badge Score IA -->
+                <div class="ai-score-badge" *ngIf="sim.simulation.eligible">
+                  {{ calculateConfidenceScore(sim) }}%
+                </div>
               </div>
             </div>
           </div>
@@ -831,27 +845,18 @@
                       {{ isAmortizationExpanded(sim.product.id) ? 'Masquer' : 'Afficher' }}
                     </button>
                     
-                    <!-- NOUVEAUX BOUTONS PDF PREMIUM -->
+                    <!-- BOUTONS PDF PREMIUM SIMBOT -->
                     <div class="export-buttons" *ngIf="isAmortizationExpanded(sim.product.id)">
                       <button 
                         class="btn-export btn-premium"
                         (click)="exportAmortizationToPDF(sim)"
                         type="button"
-                        title="Export PDF Premium avec analyse complète"
+                        title="Export PDF premium avec analyse complète"
                       >
                         <i class="material-icons">picture_as_pdf</i>
                         PDF Premium
                       </button>
                       
-                      <button 
-                        class="btn-export btn-quick"
-                        (click)="exportQuickSummaryPDF(sim)"
-                        type="button"
-                        title="Synthèse express 1 page"
-                      >
-                        <i class="material-icons">summarize</i>
-                        Synthèse Express
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -901,7 +906,7 @@
                     class="no-data-message"
                   >
                     <i class="material-icons">table_rows</i>
-                    <p>Aucune donnée d'amortissement disponible</p>
+                    <p>SimBot génère les données d'amortissement...</p>
                     <button 
                       class="btn-small btn-primary" 
                       (click)="initExtendedSimulation(sim)"
@@ -930,7 +935,7 @@
                         <tbody>
                           <!-- Vue mensuelle -->
                           <ng-container *ngIf="!isYearlyView(sim)">
-                            <tr *ngFor="let entry of getFilteredAmortizationData(sim.product.id); let isOdd = odd"
+                            <tr *ngFor="let entry of getFilteredAmortizationData(sim.product.id); let isOdd = odd; trackBy: trackByMonth"
                                 [class.odd-row]="isOdd">
                               <td class="period-cell">Mois {{ entry.month }}</td>
                               <td class="currency-cell">{{ formatCurrency(entry.payment) }}</td>
@@ -962,7 +967,7 @@
                     class="capital-interest-breakdown"
                     *ngIf="getFilteredAmortizationData(sim.product.id).length > 0"
                   >
-                    <h6>Répartition Capital/Intérêts</h6>
+                    <h6>Répartition Capital/Intérêts analysée par SimBot</h6>
                     <div class="breakdown-chart">
                       <div class="breakdown-bar">
                         <div 
@@ -987,9 +992,9 @@
                     </div>
                   </div>
 
-                  <!-- Simulateur d'apport -->
+                  <!-- Simulateur d'apport optimisé par IA -->
                   <div class="down-payment-simulator">
-                    <h6>Impact d'un apport personnel</h6>
+                    <h6>Optimisation IA - Impact d'un apport personnel</h6>
                     <div class="simulator-controls">
                       <input 
                         type="range" 
@@ -1007,7 +1012,7 @@
                     </div>
                     <div class="savings-display" *ngIf="+downPaymentSlider.value > 0">
                       <div class="savings-item">
-                        <span class="savings-label">Apport:</span>
+                        <span class="savings-label">Apport suggéré:</span>
                         <span class="savings-value">{{ formatCurrency(+downPaymentSlider.value) }}</span>
                       </div>
                       <div class="savings-item">
@@ -1015,7 +1020,7 @@
                         <span class="savings-value">{{ formatCurrency(calculateDownPaymentSavings(sim, +downPaymentSlider.value).monthlyPayment) }}</span>
                       </div>
                       <div class="savings-item highlight">
-                        <span class="savings-label">Économie totale:</span>
+                        <span class="savings-label">Économie totale SimBot:</span>
                         <span class="savings-value">{{ formatCurrency(calculateDownPaymentSavings(sim, +downPaymentSlider.value).totalSavings) }}</span>
                       </div>
                     </div>
@@ -1032,7 +1037,7 @@
               (click)="openCreditApplicationModal(sim)"
               class="btn btn-primary btn-application">
               <i class="material-icons">send</i>
-              Faire une vraie demande
+              Faire une demande
             </button>
             
             <button 
@@ -1082,23 +1087,38 @@
         (applicationSubmitted)="onApplicationSubmitted($event)">
       </app-application-modal>
 
-      <!-- Actions Finales avec Export Global Premium -->
+      <!-- Actions Finales avec Export Global Premium SimBot -->
       <div class="final-actions">
         <div class="actions-content">
+          <div class="action-group">
+            <div class="action-icon simbot-gradient">
+              <i class="material-icons">auto_awesome</i>
+            </div>
+            <h4>Rapport Premium SimBot</h4>
+            <p>Téléchargez une analyse complète avec recommandations IA personnalisées</p>
+            <button 
+              class="btn-export-large btn-simbot-premium"
+              (click)="exportSimbotComparisonPDF()"
+              title="Rapport comparaison SimBot avec analyse IA avancée"
+            >
+              <i class="material-icons">psychology</i>
+              Rapport SimBot IA Premium
+            </button>
+          </div>
+
           <div class="action-group">
             <div class="action-icon">
               <i class="material-icons">download</i>
             </div>
-            <h4>Export Premium</h4>
-            <p>Téléchargez un rapport complet de votre comparaison</p>
-            <!-- NOUVEAU BOUTON EXPORT GLOBAL PREMIUM -->
+            <h4>Export Standard</h4>
+            <p>Téléchargez un rapport classique de votre comparaison</p>
             <button 
               class="btn-export-large btn-comparison"
               (click)="exportComparisonToPDF()"
-              title="Export comparaison multi-banques premium"
+              title="Export comparaison multi-banques standard"
             >
               <i class="material-icons">file_download</i>
-              Rapport de Comparaison Premium
+              Rapport Comparaison Standard
             </button>
           </div>
           
@@ -1106,11 +1126,11 @@
             <div class="action-icon">
               <i class="material-icons">support_agent</i>
             </div>
-            <h4>Besoin d'aide ?</h4>
-            <p>Nos conseillers sont là pour vous accompagner dans votre choix</p>
+            <h4>Assistance SimBot</h4>
+            <p>Notre application est disponible 24/7 pour répondre à vos questions</p>
             <button class="contact-btn">
-              <i class="material-icons">call</i>
-              Contacter un Conseiller
+              <i class="material-icons">smart_toy</i>
+              Parler à SimBot
             </button>
           </div>
           
@@ -1119,10 +1139,10 @@
               <i class="material-icons">refresh</i>
             </div>
             <h4>Nouvelle simulation ?</h4>
-            <p>Testez d'autres montants, durées ou types de crédit</p>
+            <p>Testez d'autres montants, durées ou types de crédit avec SimBot</p>
             <button class="new-simulation-btn" (click)="resetForm()">
               <i class="material-icons">add</i>
-              Nouvelle Comparaison
+              Nouvelle simulation
             </button>
           </div>
         </div>
@@ -1131,232 +1151,135 @@
   </div>
 </div>
 
+<!-- Styles CSS pour SimBot Gab -->
 <style>
-/* Styles pour les nouveaux boutons PDF Premium */
-
-/* Boutons d'export dans la section amortissement */
-.export-buttons {
-  display: flex;
-  gap: 0.5rem;
-  margin-left: 1rem;
-  flex-wrap: wrap;
+/* Améliorations spécifiques SimBot */
+.hero-title i {
+  background: linear-gradient(45deg, #1455a6, #32be78);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.btn-export {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-export::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s;
-}
-
-.btn-export:hover::before {
-  left: 100%;
-}
-
-.btn-export.btn-premium {
-  background: linear-gradient(135deg, #1e40af, #3b82f6, #60a5fa);
+.ai-score-badge {
+  background: linear-gradient(135deg, #1455a6, #32be78);
   color: white;
-  box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
-}
-
-.btn-export.btn-quick {
-  background: linear-gradient(135deg, #059669, #10b981, #34d399);
-  color: white;
-  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
-}
-
-.btn-export:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-/* Bouton export premium dans le header */
-.action-btn.btn-export-premium {
-  background: linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa);
-  color: white;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-}
-
-.action-btn.btn-export-premium:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
-}
-
-/* Bouton export global premium */
-.btn-export-large {
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-  background: linear-gradient(135deg, #7c3aed, #8b5cf6, #a78bfa);
-  color: white;
-  border: none;
+  padding: 0.25rem 0.5rem;
   border-radius: 12px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 700;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(20, 85, 166, 0.3);
+}
+
+/* Boutons SimBot Premium */
+.btn-export.btn-premium-simbot {
+  background: linear-gradient(135deg, #1455a6, #32be78, #ff8c00);
+  color: white;
+  box-shadow: 0 4px 15px rgba(20, 85, 166, 0.4);
   position: relative;
   overflow: hidden;
+  animation: shimmer 3s infinite;
 }
 
-.btn-export-large::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.6s;
-}
-
-.btn-export-large:hover::before {
-  left: 100%;
-}
-
-.btn-export-large:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 35px rgba(124, 58, 237, 0.4);
-}
-
-.btn-export-large:active {
-  transform: translateY(-1px) scale(0.98);
-}
-
-/* Amélioration de la section amortization-actions */
-.amortization-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-/* Animation de chargement pour les boutons */
-.btn-export.loading {
-  pointer-events: none;
-  opacity: 0.7;
-}
-
-.btn-export.loading::after {
-  content: '';
-  width: 12px;
-  height: 12px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-left: 0.5rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Responsive design pour les boutons */
-@media (max-width: 768px) {
-  .export-buttons {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  
-  .btn-export {
-    font-size: 0.7rem;
-    padding: 0.375rem 0.75rem;
-  }
-  
-  .btn-export-large {
-    font-size: 1rem;
-    padding: 0.875rem 1.5rem;
-  }
-  
-  .amortization-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-/* Effets visuels avancés */
-.btn-export-premium {
-  position: relative;
-}
-
-.btn-export-premium::after {
+.btn-export.btn-premium-simbot::before {
   content: '✨';
   position: absolute;
-  top: -5px;
-  right: -5px;
-  font-size: 0.8rem;
+  top: -3px;
+  right: -3px;
+  font-size: 0.7rem;
   animation: sparkle 2s infinite;
+}
+
+.btn-export-large.btn-simbot-premium {
+  background: linear-gradient(135deg, #1455a6, #32be78, #ff8c00);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.btn-export-large.btn-simbot-premium::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.btn-export-large.btn-simbot-premium:hover::after {
+  transform: translateX(100%);
+}
+
+.action-icon.simbot-gradient {
+  background: linear-gradient(135deg, #1455a6, #32be78, #ff8c00);
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 @keyframes sparkle {
   0%, 100% { 
     opacity: 0;
-    transform: scale(0.8) rotate(0deg);
+    transform: rotate(0deg) scale(0.8);
   }
   50% { 
     opacity: 1;
-    transform: scale(1.2) rotate(180deg);
+    transform: rotate(180deg) scale(1.2);
   }
 }
 
-/* Style pour les tooltips des boutons */
-.btn-export[title]:hover::before {
-  content: attr(title);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 0.5rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  white-space: nowrap;
-  z-index: 1000;
-  margin-bottom: 5px;
+/* Amélioration du branding SimBot */
+.stepper-header h2::after {
+  content: ' 🤖';
+  font-size: 0.8em;
 }
 
-/* Animation d'entrée pour les boutons */
-.export-buttons {
-  animation: slideInFromRight 0.5s ease-out;
+.loading-card h3::before {
+  content: '🤖 ';
+  background: linear-gradient(45deg, #1455a6, #32be78);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-@keyframes slideInFromRight {
-  0% {
-    opacity: 0;
-    transform: translateX(20px);
+/* Responsive pour SimBot */
+@media (max-width: 768px) {
+  .btn-export.btn-premium-simbot {
+    font-size: 0.7rem;
+    padding: 0.375rem 0.75rem;
   }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
+  
+  .ai-score-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .btn-export-large.btn-simbot-premium {
+    font-size: 1rem;
+    padding: 0.875rem 1.5rem;
+  }
+}
+
+/* États d'accessibilité */
+.btn-export.btn-premium-simbot:focus,
+.btn-export-large.btn-simbot-premium:focus {
+  outline: 3px solid rgba(20, 85, 166, 0.5);
+  outline-offset: 2px;
+}
+
+/* Mode sombre pour SimBot (optionnel) */
+@media (prefers-color-scheme: dark) {
+  .ai-score-badge {
+    background: linear-gradient(135deg, #2563eb, #059669);
+  }
+  
+  .btn-export.btn-premium-simbot {
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
   }
 }
 </style>
