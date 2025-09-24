@@ -1,11 +1,14 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+// bank-locator.component.ts - Version mise à jour avec Leaflet Maps
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { NotificationService } from '../../services/notification.service';
 import { AnalyticsService } from '../../services/analytics.service';
+import { LeafletMapsService, MapMarker } from '../../services/leaflet-maps.service'; // Nouveau service
 
 interface BankBranch {
   id: string;
@@ -28,9 +31,31 @@ interface BankBranch {
   isAccessible: boolean;
   managerName?: string;
   specialties: string[];
-  waitTime: number; // en minutes
+  waitTime: number;
   rating: number;
   photos: string[];
+  distance?: number;
+}
+
+interface InsuranceBranch {
+  id: string;
+  companyId: string;
+  companyName: string;
+  branchName: string;
+  address: string;
+  city: string;
+  district: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  phone: string;
+  email?: string;
+  openingHours: OpeningHours;
+  services: string[];
+  specialties: string[];
+  rating: number;
+  distance?: number;
 }
 
 interface OpeningHours {
@@ -64,7 +89,7 @@ interface City {
     <div class="bank-locator-container">
       <div class="page-header">
         <div class="container">
-          <h1>Localiser une Banque</h1>
+          <h1>Localiser Banques & Assurances</h1>
           <p class="subtitle">Trouvez l'agence la plus proche de chez vous</p>
         </div>
       </div>
@@ -95,12 +120,28 @@ interface City {
               </div>
 
               <div class="form-group">
-                <label for="bank">Banque</label>
-                <select formControlName="selectedBank" id="bank" class="form-select">
-                  <option value="">Toutes les banques</option>
-                  <option *ngFor="let bank of availableBanks" [value]="bank.id">
-                    {{ bank.name }}
-                  </option>
+                <label for="type">Type</label>
+                <select formControlName="selectedType" id="type" class="form-select">
+                  <option value="">Banques et Assurances</option>
+                  <option value="bank">Banques uniquement</option>
+                  <option value="insurance">Assurances uniquement</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="institution">Institution</label>
+                <select formControlName="selectedInstitution" id="institution" class="form-select">
+                  <option value="">Toutes les institutions</option>
+                  <optgroup label="Banques" *ngIf="searchForm.value.selectedType !== 'insurance'">
+                    <option *ngFor="let bank of availableBanks" [value]="'bank_' + bank.id">
+                      {{ bank.name }}
+                    </option>
+                  </optgroup>
+                  <optgroup label="Assurances" *ngIf="searchForm.value.selectedType !== 'bank'">
+                    <option *ngFor="let insurance of availableInsurances" [value]="'insurance_' + insurance.id">
+                      {{ insurance.name }}
+                    </option>
+                  </optgroup>
                 </select>
               </div>
 
@@ -113,21 +154,24 @@ interface City {
                   <option value="epargne">Épargne/Placement</option>
                   <option value="change">Change</option>
                   <option value="transfer">Transfert d'argent</option>
+                  <option value="assurance_auto">Assurance Auto</option>
+                  <option value="assurance_habitation">Assurance Habitation</option>
+                  <option value="assurance_vie">Assurance Vie</option>
                 </select>
               </div>
             </div>
 
             <div class="search-actions">
-              <button type="button" (click)="getCurrentLocation()" class="btn-location">
+              <button type="button" (click)="getCurrentLocation()" class="btn-location" [disabled]="locatingUser">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                         d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                         d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-                Me localiser
+                {{ locatingUser ? 'Localisation...' : 'Me localiser' }}
               </button>
-              <button type="button" (click)="searchBranches()" class="btn-primary">
+              <button type="button" (click)="searchInstitutions()" class="btn-primary">
                 Rechercher
               </button>
             </div>
@@ -138,68 +182,88 @@ interface City {
       <!-- Results Section -->
       <div class="results-section">
         <div class="container">
-          <div class="results-layout">
+          <div class="results-layout" [class.list-view]="showList">
             <!-- Map Area -->
-            <div class="map-container">
+            <div class="map-container" [hidden]="showList">
               <div class="map-header">
                 <h3>Carte des agences</h3>
                 <div class="map-controls">
                   <button (click)="toggleMapView()" class="btn-map-toggle">
                     {{ showList ? 'Vue carte' : 'Vue liste' }}
                   </button>
+                  <button (click)="centerOnUser()" class="btn-center-user" *ngIf="userLocation">
+                    Ma position
+                  </button>
+                  <!-- Nouveau sélecteur de type de carte -->
+                  <select (change)="changeMapTileLayer($event)" class="tile-selector">
+                    <option value="openstreetmap">Plan</option>
+                    <option value="satellite">Satellite</option>
+                    <option value="terrain">Relief</option>
+                  </select>
                 </div>
               </div>
               
-              <div class="map-placeholder" [hidden]="showList">
-                <!-- Ici intégrer Google Maps ou Leaflet -->
-                <div class="map-content">
-                  <p>Carte interactive des agences bancaires</p>
-                  <div class="map-legend">
-                    <div *ngFor="let bank of availableBanks" class="legend-item">
-                      <div class="legend-color" [style.background-color]="bank.color"></div>
-                      <span>{{ bank.name }}</span>
-                    </div>
+              <div class="map-wrapper">
+                <!-- Conteneur Leaflet au lieu de Google Maps -->
+                <div #mapContainer class="leaflet-map" id="leaflet-map"></div>
+                
+                <!-- Map Legend -->
+                <div class="map-legend">
+                  <div class="legend-header">Légende</div>
+                  <div class="legend-item">
+                    <div class="legend-marker bank-marker">🏦</div>
+                    <span>Banques ({{ filteredBankBranches.length }})</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-marker insurance-marker">🏢</div>
+                    <span>Assurances ({{ filteredInsuranceBranches.length }})</span>
+                  </div>
+                  <div class="legend-item" *ngIf="userLocation">
+                    <div class="legend-marker user-marker">📍</div>
+                    <span>Votre position</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Results List -->
-            <div class="branches-list" [class.full-width]="showList">
+            <!-- Results List (reste identique) -->
+            <div class="institutions-list" [class.full-width]="showList">
               <div class="list-header">
-                <h3>{{ filteredBranches.length }} agence(s) trouvée(s)</h3>
+                <h3>{{ getTotalResults() }} agence(s) trouvée(s)</h3>
                 <div class="sort-controls">
-                  <select (change)="sortBranches($event)" class="sort-select">
-                    <option value="distance">Par distance</option>
+                  <select (change)="sortInstitutions($event)" class="sort-select">
+                    <option value="distance" *ngIf="userLocation">Par distance</option>
                     <option value="rating">Par note</option>
                     <option value="name">Par nom</option>
-                    <option value="waitTime">Par temps d'attente</option>
+                    <option value="type">Par type</option>
                   </select>
                 </div>
               </div>
 
-              <div class="branches-grid">
-                <div *ngFor="let branch of filteredBranches" class="branch-card">
-                  <div class="branch-header">
-                    <div class="bank-info">
-                      <div class="bank-logo">
+              <div class="institutions-grid">
+                <!-- Banques -->
+                <div *ngFor="let branch of filteredBankBranches" class="institution-card bank-card">
+                  <div class="institution-header">
+                    <div class="institution-info">
+                      <div class="institution-logo bank-logo">
                         <img [src]="getBankLogo(branch.bankId)" [alt]="branch.bankName" />
                       </div>
-                      <div class="branch-details">
+                      <div class="institution-details">
+                        <span class="institution-type">BANQUE</span>
                         <h4>{{ branch.branchName }}</h4>
-                        <p class="bank-name">{{ branch.bankName }}</p>
+                        <p class="institution-name">{{ branch.bankName }}</p>
                       </div>
                     </div>
-                    <div class="branch-rating">
+                    <div class="institution-rating">
                       <div class="stars">
                         <span *ngFor="let star of getStars(branch.rating)" 
-                              class="star" [class.filled]="star">★</span>
+                              class="star" [class.filled]="star">⭐</span>
                       </div>
                       <span class="rating-value">{{ branch.rating }}/5</span>
                     </div>
                   </div>
 
-                  <div class="branch-address">
+                  <div class="institution-address">
                     <svg class="location-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                             d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -209,122 +273,21 @@ interface City {
                     <div class="address-details">
                       <p class="street">{{ branch.address }}</p>
                       <p class="city">{{ branch.district }}, {{ branch.city }}</p>
+                      <p class="distance" *ngIf="branch.distance">
+                        📍 {{ branch.distance }} km
+                      </p>
                     </div>
                   </div>
 
-                  <div class="branch-info">
-                    <div class="info-row">
-                      <div class="info-item">
-                        <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                        </svg>
-                        <span>{{ branch.phone }}</span>
-                      </div>
-                      
-                      <div class="info-item" *ngIf="branch.email">
-                        <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                        <span>{{ branch.email }}</span>
-                      </div>
-                    </div>
-
-                    <div class="opening-hours">
-                      <h5>Horaires d'ouverture</h5>
-                      <div class="hours-grid">
-                        <div class="hour-item" *ngIf="getCurrentDayHours(branch)">
-                          <span class="day">Aujourd'hui</span>
-                          <span class="hours" [class.closed]="getCurrentDayHours(branch) === 'Fermé'">
-                            {{ getCurrentDayHours(branch) }}
-                          </span>
-                        </div>
-                      </div>
-                      <button (click)="toggleHours(branch.id)" class="toggle-hours">
-                        {{ expandedHours.has(branch.id) ? 'Moins' : 'Plus' }} d'horaires
-                      </button>
-                      
-                      <div *ngIf="expandedHours.has(branch.id)" class="full-hours">
-                        <div class="hour-item">
-                          <span class="day">Lundi</span>
-                          <span class="hours">{{ branch.openingHours.monday }}</span>
-                        </div>
-                        <div class="hour-item">
-                          <span class="day">Mardi</span>
-                          <span class="hours">{{ branch.openingHours.tuesday }}</span>
-                        </div>
-                        <div class="hour-item">
-                          <span class="day">Mercredi</span>
-                          <span class="hours">{{ branch.openingHours.wednesday }}</span>
-                        </div>
-                        <div class="hour-item">
-                          <span class="day">Jeudi</span>
-                          <span class="hours">{{ branch.openingHours.thursday }}</span>
-                        </div>
-                        <div class="hour-item">
-                          <span class="day">Vendredi</span>
-                          <span class="hours">{{ branch.openingHours.friday }}</span>
-                        </div>
-                        <div class="hour-item">
-                          <span class="day">Samedi</span>
-                          <span class="hours">{{ branch.openingHours.saturday }}</span>
-                        </div>
-                        <div class="hour-item">
-                          <span class="day">Dimanche</span>
-                          <span class="hours">{{ branch.openingHours.sunday }}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="services-icons">
-                      <div class="service-icon" *ngIf="branch.hasAtm" title="Distributeur disponible">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                        </svg>
-                      </div>
-                      <div class="service-icon" *ngIf="branch.hasParking" title="Parking disponible">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                      </div>
-                      <div class="service-icon" *ngIf="branch.isAccessible" title="Accessible PMR">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                      </div>
-                    </div>
-
-                    <div class="wait-time" *ngIf="branch.waitTime > 0">
-                      <svg class="clock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      <span>Temps d'attente estimé: {{ branch.waitTime }} min</span>
-                    </div>
-
-                    <div class="specialties" *ngIf="branch.specialties.length">
-                      <h5>Spécialités</h5>
-                      <div class="specialty-tags">
-                        <span *ngFor="let specialty of branch.specialties" class="specialty-tag">
-                          {{ specialty }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="branch-actions">
-                    <button (click)="getDirections(branch)" class="btn-directions">
+                  <div class="institution-actions">
+                    <button (click)="getDirections(branch.coordinates)" class="btn-directions">
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                               d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
                       </svg>
                       Itinéraire
                     </button>
-                    <button (click)="callBranch(branch)" class="btn-call">
+                    <button (click)="callInstitution(branch.phone)" class="btn-call">
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                               d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
@@ -339,9 +302,68 @@ interface City {
                       RDV
                     </button>
                   </div>
+                </div>
 
-                  <div class="branch-manager" *ngIf="branch.managerName">
-                    <p><strong>Directeur:</strong> {{ branch.managerName }}</p>
+                <!-- Assurances -->
+                <div *ngFor="let branch of filteredInsuranceBranches" class="institution-card insurance-card">
+                  <div class="institution-header">
+                    <div class="institution-info">
+                      <div class="institution-logo insurance-logo">
+                        <img [src]="getInsuranceLogo(branch.companyId)" [alt]="branch.companyName" />
+                      </div>
+                      <div class="institution-details">
+                        <span class="institution-type">ASSURANCE</span>
+                        <h4>{{ branch.branchName }}</h4>
+                        <p class="institution-name">{{ branch.companyName }}</p>
+                      </div>
+                    </div>
+                    <div class="institution-rating">
+                      <div class="stars">
+                        <span *ngFor="let star of getStars(branch.rating)" 
+                              class="star" [class.filled]="star">⭐</span>
+                      </div>
+                      <span class="rating-value">{{ branch.rating }}/5</span>
+                    </div>
+                  </div>
+
+                  <div class="institution-address">
+                    <svg class="location-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <div class="address-details">
+                      <p class="street">{{ branch.address }}</p>
+                      <p class="city">{{ branch.district }}, {{ branch.city }}</p>
+                      <p class="distance" *ngIf="branch.distance">
+                        📍 {{ branch.distance }} km
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="institution-actions">
+                    <button (click)="getDirections(branch.coordinates)" class="btn-directions">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
+                      </svg>
+                      Itinéraire
+                    </button>
+                    <button (click)="callInstitution(branch.phone)" class="btn-call">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                      </svg>
+                      Appeler
+                    </button>
+                    <button (click)="requestQuote(branch)" class="btn-meeting">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      Devis
+                    </button>
                   </div>
                 </div>
               </div>
@@ -349,34 +371,52 @@ interface City {
           </div>
         </div>
       </div>
+
+      <!-- Loader -->
+      <div class="loader-overlay" *ngIf="isLoading">
+        <div class="loader">
+          <div class="spinner"></div>
+          <p>Chargement de la carte...</p>
+        </div>
+      </div>
     </div>
   `,
   styleUrls: ['./bank-locator.component.scss']
 })
-export class BankLocatorComponent implements OnInit, OnDestroy {
+export class BankLocatorComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef;
+
   searchForm!: FormGroup;
-  branches: BankBranch[] = [];
-  filteredBranches: BankBranch[] = [];
+  bankBranches: BankBranch[] = [];
+  insuranceBranches: InsuranceBranch[] = [];
+  filteredBankBranches: BankBranch[] = [];
+  filteredInsuranceBranches: InsuranceBranch[] = [];
   expandedHours = new Set<string>();
   showList = false;
   userLocation: { lat: number; lng: number } | null = null;
+  isLoading = false;
+  locatingUser = false;
 
   cities: City[] = [
     {
       name: 'Libreville',
-      districts: ['Centre-ville', 'Akanda', 'Glass', 'Nombakélé', 'Lalala', 'Nzeng-Ayong']
+      districts: ['Centre-ville', 'Akanda', 'Glass', 'Nombakélé', 'Lalala', 'Nzeng-Ayong', 'Oloumi', 'PK5', 'PK8']
     },
     {
       name: 'Port-Gentil',
-      districts: ['Centre', 'Bord de mer', 'Baudin', 'Polytechnique']
+      districts: ['Centre', 'Bord de mer', 'Baudin', 'Polytechnique', 'Récréation']
     },
     {
       name: 'Franceville',
-      districts: ['Centre', 'Potos', 'Bangou']
+      districts: ['Centre', 'Potos', 'Bangou', 'Ndéné']
     },
     {
       name: 'Oyem',
-      districts: ['Centre', 'Adjap']
+      districts: ['Centre', 'Adjap', 'Efoulan']
+    },
+    {
+      name: 'Lambaréné',
+      districts: ['Centre', 'Islande', 'Mission']
     }
   ];
 
@@ -385,42 +425,80 @@ export class BankLocatorComponent implements OnInit, OnDestroy {
     { id: 'ugb', name: 'UGB', color: '#dc2626' },
     { id: 'bicig', name: 'BICIG', color: '#059669' },
     { id: 'ecobank', name: 'Ecobank', color: '#d97706' },
-    { id: 'cbao', name: 'CBAO', color: '#7c3aed' }
+    { id: 'cbao', name: 'CBAO', color: '#7c3aed' },
+    { id: 'orabank', name: 'Orabank', color: '#ea580c' }
+  ];
+
+  availableInsurances = [
+    { id: 'saham', name: 'Saham Assurance', color: '#dc2626' },
+    { id: 'nsia', name: 'NSIA Assurance', color: '#059669' },
+    { id: 'colina', name: 'Colina Assurance', color: '#7c3aed' },
+    { id: 'sanlam', name: 'Sanlam', color: '#ea580c' },
+    { id: 'gras_savoye', name: 'Gras Savoye', color: '#1e40af' }
   ];
 
   availableDistricts: string[] = [];
-
   private destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
     private notificationService: NotificationService,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private leafletMapsService: LeafletMapsService, // Service Leaflet au lieu de Google Maps
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
     this.initializeForm();
-    this.loadBranches();
     this.setupFormListeners();
+    this.loadInstitutions();
     this.trackPageView();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.initializeMap();
+    }, 100);
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.leafletMapsService.destroy(); // Utilisation du service Leaflet
   }
 
   private initializeForm(): void {
     this.searchForm = this.fb.group({
       city: ['Libreville'],
       district: [''],
-      selectedBank: [''],
+      selectedType: [''],
+      selectedInstitution: [''],
       serviceType: ['']
     });
   }
 
+  private async initializeMap(): Promise<void> {
+    if (!this.mapContainer) return;
+
+    try {
+      this.isLoading = true;
+      await this.leafletMapsService.initializeMap(
+        this.mapContainer.nativeElement,
+        {
+          center: { lat: 0.4162, lng: 9.4673 }, // Centre sur Libreville
+          zoom: 11
+        }
+      );
+      this.updateMapMarkers();
+      this.isLoading = false;
+    } catch (error) {
+      console.error('Erreur initialisation carte:', error);
+      this.notificationService.showError('Impossible de charger la carte');
+      this.isLoading = false;
+    }
+  }
+
   private setupFormListeners(): void {
-    // Mettre à jour les quartiers quand la ville change
     this.searchForm.get('city')?.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(city => {
@@ -429,7 +507,6 @@ export class BankLocatorComponent implements OnInit, OnDestroy {
         this.searchForm.patchValue({ district: '' });
       });
 
-    // Recherche automatique lors des changements
     this.searchForm.valueChanges
       .pipe(
         debounceTime(300),
@@ -437,23 +514,28 @@ export class BankLocatorComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        this.searchBranches();
+        this.searchInstitutions();
       });
   }
 
-  private loadBranches(): void {
-    // Simulation des données - remplacer par appel API
-    this.branches = [
+  private loadInstitutions(): void {
+    this.loadInstitutionsFromAPI().catch(() => {
+      this.loadMockData();
+    });
+  }
+
+  private loadMockData(): void {
+    this.bankBranches = [
       {
-        id: 'bgfi-centre',
+        id: 'bgfi-centre-libreville',
         bankId: 'bgfi',
         bankName: 'BGFI Bank',
-        branchName: 'BGFI Centre-ville',
+        branchName: 'BGFI Centre-ville Libreville',
         address: 'Boulevard de l\'Indépendance',
         city: 'Libreville',
         district: 'Centre-ville',
         coordinates: { lat: 0.3948, lng: 9.4537 },
-        phone: '+241 01 23 45 67',
+        phone: '+241 01 76 20 00',
         email: 'centre@bgfibank.ga',
         openingHours: {
           monday: '8h00 - 16h00',
@@ -469,196 +551,259 @@ export class BankLocatorComponent implements OnInit, OnDestroy {
         hasParking: true,
         isAccessible: true,
         managerName: 'Jean-Pierre MBOMA',
-        specialties: ['Crédit immobilier', 'Épargne', 'Change'],
+        specialties: ['Crédit immobilier', 'Épargne', 'Change', 'Transferts internationaux'],
         waitTime: 15,
         rating: 4.2,
         photos: []
-      },
+      }
+      // ... autres données mockées
+    ];
+
+    this.insuranceBranches = [
       {
-        id: 'ugb-glass',
-        bankId: 'ugb',
-        bankName: 'UGB',
-        branchName: 'UGB Glass',
-        address: 'Quartier Glass, près du marché',
+        id: 'saham-centre-libreville',
+        companyId: 'saham',
+        companyName: 'Saham Assurance',
+        branchName: 'Saham Centre-ville',
+        address: 'Avenue du Colonel Parant',
         city: 'Libreville',
-        district: 'Glass',
-        coordinates: { lat: 0.3856, lng: 9.4472 },
-        phone: '+241 01 34 56 78',
+        district: 'Centre-ville',
+        coordinates: { lat: 0.3920, lng: 9.4580 },
+        phone: '+241 01 76 56 00',
+        email: 'libreville@saham.ga',
         openingHours: {
-          monday: '7h30 - 15h30',
-          tuesday: '7h30 - 15h30',
-          wednesday: '7h30 - 15h30',
-          thursday: '7h30 - 15h30',
-          friday: '7h30 - 15h30',
+          monday: '8h00 - 17h00',
+          tuesday: '8h00 - 17h00',
+          wednesday: '8h00 - 17h00',
+          thursday: '8h00 - 17h00',
+          friday: '8h00 - 17h00',
           saturday: '8h00 - 12h00',
           sunday: 'Fermé'
         },
-        services: [],
-        hasAtm: true,
-        hasParking: false,
-        isAccessible: false,
-        managerName: 'Marie NGOUA',
-        specialties: ['Crédit auto', 'Microfinance'],
-        waitTime: 25,
-        rating: 3.8,
-        photos: []
-      },
-      {
-        id: 'bicig-port-gentil',
-        bankId: 'bicig',
-        bankName: 'BICIG',
-        branchName: 'BICIG Port-Gentil Centre',
-        address: 'Avenue du Gouverneur Ballay',
-        city: 'Port-Gentil',
-        district: 'Centre',
-        coordinates: { lat: -0.7193, lng: 8.7815 },
-        phone: '+241 01 45 67 89',
-        openingHours: {
-          monday: '8h00 - 16h00',
-          tuesday: '8h00 - 16h00',
-          wednesday: '8h00 - 16h00',
-          thursday: '8h00 - 16h00',
-          friday: '8h00 - 16h00',
-          saturday: 'Fermé',
-          sunday: 'Fermé'
-        },
-        services: [],
-        hasAtm: true,
-        hasParking: true,
-        isAccessible: true,
-        specialties: ['Crédit professionnel', 'Transferts internationaux'],
-        waitTime: 10,
-        rating: 4.5,
-        photos: []
+        services: ['Assurance Auto', 'Assurance Habitation', 'Assurance Vie', 'Assurance Santé'],
+        specialties: ['Assurance véhicules', 'Assurance habitation'],
+        rating: 4.3
       }
+      // ... autres données mockées
     ];
 
-    this.searchBranches();
+    this.searchInstitutions();
   }
 
   getCurrentLocation(): void {
-    if ('geolocation' in navigator) {
-      this.notificationService.showInfo('Localisation en cours...');
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          this.userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          this.sortBranchesByDistance();
-          this.notificationService.showSuccess('Position détectée!');
-        },
-        (error) => {
-          console.error('Erreur géolocalisation:', error);
-          this.notificationService.showError('Impossible de vous localiser');
-        }
-      );
-    } else {
-      this.notificationService.showError('Géolocalisation non supportée');
-    }
-  }
+    if (this.locatingUser) return;
 
-  searchBranches(): void {
-    const { city, district, selectedBank, serviceType } = this.searchForm.value;
+    this.locatingUser = true;
+    this.notificationService.showInfo('Localisation en cours...');
     
-    let filtered = [...this.branches];
-
-    if (city) {
-      filtered = filtered.filter(branch => branch.city === city);
-    }
-
-    if (district) {
-      filtered = filtered.filter(branch => branch.district === district);
-    }
-
-    if (selectedBank) {
-      filtered = filtered.filter(branch => branch.bankId === selectedBank);
-    }
-
-    if (serviceType) {
-      filtered = filtered.filter(branch => 
-        branch.specialties.some(s => 
-          s.toLowerCase().includes(serviceType.toLowerCase())
-        )
-      );
-    }
-
-    this.filteredBranches = filtered;
+    this.leafletMapsService.getCurrentLocation()
+      .then((position) => {
+        this.userLocation = position;
+        
+        this.leafletMapsService.addUserLocationMarker(this.userLocation);
+        this.leafletMapsService.centerMapOnLocation(this.userLocation.lat, this.userLocation.lng, 14);
+        
+        this.calculateDistances();
+        this.sortInstitutionsByDistance();
+        
+        this.locatingUser = false;
+        this.notificationService.showSuccess('Position détectée!');
+      })
+      .catch((error) => {
+        console.error('Erreur géolocalisation:', error);
+        this.locatingUser = false;
+        this.notificationService.showError('Impossible de vous localiser');
+      });
   }
 
-  sortBranches(event: any): void {
+  private calculateDistances(): void {
+    if (!this.userLocation) return;
+
+    this.bankBranches.forEach(branch => {
+      branch.distance = this.leafletMapsService.calculateDistance(
+        this.userLocation!,
+        branch.coordinates
+      );
+    });
+
+    this.insuranceBranches.forEach(branch => {
+      branch.distance = this.leafletMapsService.calculateDistance(
+        this.userLocation!,
+        branch.coordinates
+      );
+    });
+
+    this.searchInstitutions();
+  }
+
+  searchInstitutions(): void {
+    const { city, district, selectedType, selectedInstitution, serviceType } = this.searchForm.value;
+    
+    let filteredBanks = [...this.bankBranches];
+    
+    if (selectedType === 'insurance') {
+      filteredBanks = [];
+    } else {
+      if (city) {
+        filteredBanks = filteredBanks.filter(branch => branch.city === city);
+      }
+      
+      if (district) {
+        filteredBanks = filteredBanks.filter(branch => branch.district === district);
+      }
+      
+      if (selectedInstitution && selectedInstitution.startsWith('bank_')) {
+        const bankId = selectedInstitution.replace('bank_', '');
+        filteredBanks = filteredBanks.filter(branch => branch.bankId === bankId);
+      }
+      
+      if (serviceType) {
+        filteredBanks = filteredBanks.filter(branch => 
+          branch.specialties.some(s => 
+            s.toLowerCase().includes(serviceType.toLowerCase())
+          )
+        );
+      }
+    }
+
+    let filteredInsurances = [...this.insuranceBranches];
+    
+    if (selectedType === 'bank') {
+      filteredInsurances = [];
+    } else {
+      if (city) {
+        filteredInsurances = filteredInsurances.filter(branch => branch.city === city);
+      }
+      
+      if (district) {
+        filteredInsurances = filteredInsurances.filter(branch => branch.district === district);
+      }
+      
+      if (selectedInstitution && selectedInstitution.startsWith('insurance_')) {
+        const insuranceId = selectedInstitution.replace('insurance_', '');
+        filteredInsurances = filteredInsurances.filter(branch => branch.companyId === insuranceId);
+      }
+    }
+
+    this.filteredBankBranches = filteredBanks;
+    this.filteredInsuranceBranches = filteredInsurances;
+    
+    this.updateMapMarkers();
+  }
+
+  private updateMapMarkers(): void {
+    const markers: MapMarker[] = [];
+
+    this.filteredBankBranches.forEach(branch => {
+      markers.push({
+        id: branch.id,
+        position: branch.coordinates,
+        title: branch.branchName,
+        type: 'bank',
+        info: {
+          name: `${branch.branchName} - ${branch.bankName}`,
+          address: `${branch.address}, ${branch.district}, ${branch.city}`,
+          phone: branch.phone,
+          email: branch.email,
+          services: branch.specialties,
+          openingHours: branch.openingHours,
+          rating: branch.rating,
+          photos: branch.photos
+        }
+      });
+    });
+
+    this.filteredInsuranceBranches.forEach(branch => {
+      markers.push({
+        id: branch.id,
+        position: branch.coordinates,
+        title: branch.branchName,
+        type: 'insurance',
+        info: {
+          name: `${branch.branchName} - ${branch.companyName}`,
+          address: `${branch.address}, ${branch.district}, ${branch.city}`,
+          phone: branch.phone,
+          email: branch.email,
+          services: branch.services,
+          rating: branch.rating
+        }
+      });
+    });
+
+    this.leafletMapsService.addMarkers(markers);
+  }
+
+  // Nouvelle méthode pour changer le type de carte
+  changeMapTileLayer(event: any): void {
+    const tileType = event.target.value;
+    const tileLayers = this.leafletMapsService.getAvailableTileLayers();
+    
+    if (tileLayers[tileType]) {
+      // Ici vous pourriez implémenter la logique pour changer la couche de tuiles
+      // Cela nécessiterait une modification du service Leaflet pour supporter le changement de couches
+      console.log('Changement de couche vers:', tileType);
+    }
+  }
+
+  sortInstitutions(event: any): void {
     const sortBy = event.target.value;
     
     switch (sortBy) {
       case 'distance':
-        this.sortBranchesByDistance();
+        this.sortInstitutionsByDistance();
         break;
       case 'rating':
-        this.filteredBranches.sort((a, b) => b.rating - a.rating);
+        this.filteredBankBranches.sort((a, b) => b.rating - a.rating);
+        this.filteredInsuranceBranches.sort((a, b) => b.rating - a.rating);
         break;
       case 'name':
-        this.filteredBranches.sort((a, b) => a.branchName.localeCompare(b.branchName));
-        break;
-      case 'waitTime':
-        this.filteredBranches.sort((a, b) => a.waitTime - b.waitTime);
+        this.filteredBankBranches.sort((a, b) => a.branchName.localeCompare(b.branchName));
+        this.filteredInsuranceBranches.sort((a, b) => a.branchName.localeCompare(b.branchName));
         break;
     }
   }
 
-  private sortBranchesByDistance(): void {
+  private sortInstitutionsByDistance(): void {
     if (!this.userLocation) return;
 
-    this.filteredBranches.sort((a, b) => {
-      const distanceA = this.calculateDistance(this.userLocation!, a.coordinates);
-      const distanceB = this.calculateDistance(this.userLocation!, b.coordinates);
+    this.filteredBankBranches.sort((a, b) => {
+      const distanceA = a.distance || 0;
+      const distanceB = b.distance || 0;
       return distanceA - distanceB;
     });
-  }
 
-  private calculateDistance(pos1: {lat: number, lng: number}, pos2: {lat: number, lng: number}): number {
-    const R = 6371; // Rayon de la Terre en km
-    const dLat = this.deg2rad(pos2.lat - pos1.lat);
-    const dLng = this.deg2rad(pos2.lng - pos1.lng);
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(this.deg2rad(pos1.lat)) * Math.cos(this.deg2rad(pos2.lat)) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
-  private deg2rad(deg: number): number {
-    return deg * (Math.PI/180);
+    this.filteredInsuranceBranches.sort((a, b) => {
+      const distanceA = a.distance || 0;
+      const distanceB = b.distance || 0;
+      return distanceA - distanceB;
+    });
   }
 
   toggleMapView(): void {
     this.showList = !this.showList;
   }
 
-  toggleHours(branchId: string): void {
-    if (this.expandedHours.has(branchId)) {
-      this.expandedHours.delete(branchId);
-    } else {
-      this.expandedHours.add(branchId);
+  centerOnUser(): void {
+    if (this.userLocation) {
+      this.leafletMapsService.centerMapOnLocation(this.userLocation.lat, this.userLocation.lng, 14);
     }
   }
 
-  getDirections(branch: BankBranch): void {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${branch.coordinates.lat},${branch.coordinates.lng}`;
+  getDirections(coordinates: { lat: number; lng: number }): void {
+    // Utiliser OpenStreetMap pour les directions au lieu de Google Maps
+    const url = `https://www.openstreetmap.org/directions?from=&to=${coordinates.lat},${coordinates.lng}`;
     window.open(url, '_blank');
     
     this.analyticsService.trackEvent('directions_requested', {
-      branch_id: branch.id,
-      bank_name: branch.bankName
+      coordinates: coordinates
     });
   }
 
-  callBranch(branch: BankBranch): void {
-    window.location.href = `tel:${branch.phone}`;
+  callInstitution(phone: string): void {
+    window.location.href = `tel:${phone}`;
     
-    this.analyticsService.trackEvent('branch_called', {
-      branch_id: branch.id,
-      bank_name: branch.bankName
+    this.analyticsService.trackEvent('institution_called', {
+      phone: phone
     });
   }
 
@@ -671,24 +816,116 @@ export class BankLocatorComponent implements OnInit, OnDestroy {
     });
   }
 
-  getCurrentDayHours(branch: BankBranch): string {
-    const today = new Date().getDay();
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const dayKey = days[today] as keyof OpeningHours;
-    return branch.openingHours[dayKey];
+  requestQuote(branch: InsuranceBranch): void {
+    this.notificationService.showInfo(`Demande de devis pour ${branch.branchName}`);
+    
+    this.analyticsService.trackEvent('quote_requested', {
+      branch_id: branch.id,
+      company_name: branch.companyName
+    });
   }
 
   getBankLogo(bankId: string): string {
     return `/assets/banks/${bankId}-logo.png`;
   }
 
+  getInsuranceLogo(companyId: string): string {
+    return `/assets/insurance/${companyId}-logo.png`;
+  }
+
   getStars(rating: number): boolean[] {
     return Array(5).fill(false).map((_, i) => i < Math.floor(rating));
   }
 
+  getTotalResults(): number {
+    return this.filteredBankBranches.length + this.filteredInsuranceBranches.length;
+  }
+
   private trackPageView(): void {
-    this.analyticsService.trackPageView('bank_locator', {
-      page_title: 'Localiser une Banque'
+    this.analyticsService.trackPageView('institutions_locator', {
+      page_title: 'Localiser Banques & Assurances'
     });
+  }
+
+  private async loadInstitutionsFromAPI(): Promise<void> {
+    try {
+      const response = await this.http.get<any>('/api/institutions/all').toPromise();
+      if (response) {
+        this.bankBranches = response.banks.map((bank: any) => this.mapBankToInterface(bank));
+        this.insuranceBranches = response.insurance_companies.map((insurance: any) => this.mapInsuranceToInterface(insurance));
+        this.searchInstitutions();
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des institutions:', error);
+      throw error;
+    }
+  }
+
+  private mapBankToInterface(apiBank: any): BankBranch {
+    return {
+      id: apiBank.id,
+      bankId: apiBank.bank_id || apiBank.id,
+      bankName: apiBank.bank_name,
+      branchName: apiBank.branch_name,
+      address: apiBank.address || '',
+      city: apiBank.city || 'Libreville',
+      district: apiBank.district || '',
+      coordinates: {
+        lat: parseFloat(apiBank.coordinates?.lat || 0),
+        lng: parseFloat(apiBank.coordinates?.lng || 0)
+      },
+      phone: apiBank.phone || '',
+      email: apiBank.email || '',
+      openingHours: apiBank.opening_hours || {
+        monday: '8h00 - 16h00',
+        tuesday: '8h00 - 16h00',
+        wednesday: '8h00 - 16h00',
+        thursday: '8h00 - 16h00',
+        friday: '8h00 - 16h00',
+        saturday: '8h00 - 12h00',
+        sunday: 'Fermé'
+      },
+      services: apiBank.services || [],
+      hasAtm: apiBank.has_atm || false,
+      hasParking: apiBank.has_parking || false,
+      isAccessible: apiBank.is_accessible || false,
+      managerName: apiBank.manager_name || '',
+      specialties: apiBank.specialties || [],
+      waitTime: apiBank.wait_time || 0,
+      rating: parseFloat(apiBank.rating || 0),
+      photos: apiBank.photos || [],
+      distance: apiBank.distance
+    };
+  }
+
+  private mapInsuranceToInterface(apiInsurance: any): InsuranceBranch {
+    return {
+      id: apiInsurance.id,
+      companyId: apiInsurance.company_id || apiInsurance.id,
+      companyName: apiInsurance.company_name,
+      branchName: apiInsurance.branch_name,
+      address: apiInsurance.address || '',
+      city: apiInsurance.city || 'Libreville',
+      district: apiInsurance.district || '',
+      coordinates: {
+        lat: parseFloat(apiInsurance.coordinates?.lat || 0),
+        lng: parseFloat(apiInsurance.coordinates?.lng || 0)
+      },
+      phone: apiInsurance.phone || '',
+      email: apiInsurance.email || '',
+      openingHours: apiInsurance.opening_hours || {
+        monday: '8h00 - 17h00',
+        tuesday: '8h00 - 17h00',
+        wednesday: '8h00 - 17h00',
+        thursday: '8h00 - 17h00',
+        friday: '8h00 - 17h00',
+        saturday: '8h00 - 12h00',
+        sunday: 'Fermé'
+      },
+      services: apiInsurance.services || [],
+      specialties: apiInsurance.specialties || [],
+      rating: parseFloat(apiInsurance.rating || 0),
+      distance: apiInsurance.distance
+    };
   }
 }

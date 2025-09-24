@@ -38,7 +38,7 @@ class NotificationPriority(str, Enum):
 
 class UserRegistrationRequest(BaseModel):
     # Changement: utiliser str au lieu de Literal pour plus de flexibilité
-    registration_method: str = Field(..., pattern="^(email|phone)$")
+    registration_method: str = Field(..., regex="^(email|phone)$")
     email: Optional[str] = None  # Changement: EmailStr peut être trop strict
     phone: Optional[str] = None
     first_name: str = Field(..., min_length=1, max_length=100)
@@ -198,7 +198,7 @@ class AddContactMethodRequest(BaseModel):
 
 class SaveSimulationRequest(BaseModel):
     simulation_id: str
-    simulation_type: str = Field(..., pattern="^(credit|savings|insurance)$")
+    simulation_type: str = Field(..., regex="^(credit|savings|insurance)$")
     name: str = Field(..., min_length=1, max_length=200)
 
 class CreditApplicationRequest(BaseModel):
@@ -278,7 +278,7 @@ class UserStatsResponse(BaseModel):
 
 class ApplicationSummary(BaseModel):
     id: str
-    type: str = Field(..., pattern="^(credit|savings|insurance)$")
+    type: str = Field(..., regex="^(credit|savings|insurance)$")
     product_name: str
     bank_or_company_name: str
     amount: Optional[float] = None
@@ -288,7 +288,7 @@ class ApplicationSummary(BaseModel):
 
 class SimulationSummary(BaseModel):
     id: str
-    type: str = Field(..., pattern="^(credit|savings|insurance)$")
+    type: str = Field(..., regex="^(credit|savings|insurance)$")
     product_name: str
     bank_or_company_name: str
     name: Optional[str] = None

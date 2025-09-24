@@ -984,13 +984,12 @@ interface AssetPaths {
           <!-- Main Quote avec boutons PDF -->
           <div class="main-quote-card">
             <div class="quote-header">
-              <h4>{{ simulationResults.product_name }}</h4>
               <div class="best-offer-badge">Meilleur tarif</div>
             </div>
 
           <!-- Alternative Quotes avec boutons PDF -->
           <div *ngIf="simulationResults.quotes && simulationResults.quotes.length > 0" class="alternative-quotes">
-            <h4>Autres offres</h4>
+            <h4>offres trouvées</h4>
             <div class="quotes-grid">
               <div *ngFor="let quote of simulationResults.quotes" class="quote-card">
                 <div class="quote-header">
@@ -1285,7 +1284,8 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
       saham: '/assets/images/logos/saham-logo.png',
       axa: '/assets/images/logos/axa-logo.png',
       allianz: '/assets/images/logos/allianz-logo.png',
-      nsia: '/assets/images/logos/nsia-logo.png'
+      nsia: '/assets/images/logos/nsia-logo.png',
+      bambooassur: '/assets/images/logos/bamboo-assur'
     }
   };
 
@@ -2442,7 +2442,7 @@ private calculateCoverageAmount(): number {
       full_name: 'Organisation Gabonaise d\'Assurance et de Réassurance',
       logo_url: this.getCompanyLogo('ogar'),
       rating: 4.5,
-      solvency_ratio: undefined, // ✅ CORRECT : undefined est accepté
+      solvency_ratio: undefined, 
       contact_phone: '+241 01 76 20 20',
       contact_email: 'info@ogar.ga',
       specialties: [this.selectedInsuranceType],
@@ -2454,7 +2454,7 @@ private calculateCoverageAmount(): number {
       full_name: 'Nouvelle Société Interafricaine d\'Assurance',
       logo_url: this.getCompanyLogo('nsia'),
       rating: 4.2,
-      solvency_ratio: undefined, // ✅ CORRECT
+      solvency_ratio: undefined, 
       contact_phone: '+241 01 44 26 26',
       contact_email: 'contact@nsia.ga',
       specialties: [this.selectedInsuranceType],
@@ -2466,7 +2466,7 @@ private calculateCoverageAmount(): number {
       full_name: 'AXA Assurances Gabon',
       logo_url: this.getCompanyLogo('axa'),
       rating: 4.3,
-      solvency_ratio: undefined, // ✅ CORRECT
+      solvency_ratio: undefined,
       contact_phone: '+241 01 44 63 63',
       contact_email: 'info@axa-gabon.ga',
       specialties: [this.selectedInsuranceType],

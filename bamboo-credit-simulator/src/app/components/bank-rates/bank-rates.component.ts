@@ -2,64 +2,35 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil, finalize } from 'rxjs/operators';
+import { Subject, forkJoin, of } from 'rxjs';
+import { takeUntil, finalize, switchMap, map, catchError } from 'rxjs/operators';
 import { NotificationService } from '../../services/notification.service';
 import { AnalyticsService } from '../../services/analytics.service';
-import { ApiService, CreditProduct, SavingsProduct, Bank } from '../../services/api.service';
+import { BankRatesService, ExtendedBank, BankAccountConditions, InsuranceProductRate, BankAllProducts, CreditProductRate, SavingsProductRate } from '../../services/bank-rates.service';
 
-// Interfaces étendues pour affichage
-interface BankRate {
-  id: string;
-  bank_id: string;
-  name: string;
-  type: string;
-  description?: string;
-  min_amount: number;
-  max_amount: number;
-  min_duration_months: number;
-  max_duration_months: number;
-  min_rate: number;
-  max_rate: number;
-  average_rate: number;
-  processing_time_hours: number;
-  required_documents?: any;
-  eligibility_criteria?: any;
-  fees?: any;
-  is_active: boolean;
-  created_at?: Date;
-  updated_at?: Date;
-  bank: Bank;
-  specialOffers?: SpecialOffer[];
-}
-
-interface SpecialOffer {
-  title: string;
-  description: string;
-  rate: number;
-  validUntil: Date;
-  conditions: string[];
-}
-
-interface DisplayBank extends Bank {
-  products: BankRate[];
+// Interface étendue pour afficher tous les produits
+interface BankWithAllProducts extends ExtendedBank {
+  creditProducts: CreditProductRate[];
+  savingsProducts: SavingsProductRate[];
+  insuranceProducts: InsuranceProductRate[];
+  accountConditions: BankAccountConditions;
 }
 
 @Component({
-  selector: 'bank-rates',
+  selector: 'enhanced-bank-rates',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
-    <div class="bank-rates-container">
+    <div class="enhanced-bank-rates-container">
       <div class="page-header">
         <div class="container">
-          <h1>Tarifs Bancaires au Gabon</h1>
-          <p class="subtitle">Comparez les taux d'intérêt de toutes les banques partenaires</p>
+          <h1>Services Bancaires et Assurances au Gabon</h1>
+          <p class="subtitle">Comparez les taux, conditions et services de toutes les institutions partenaires</p>
           
           <!-- Loading indicator -->
           <div *ngIf="isLoading" class="loading-indicator">
             <div class="spinner"></div>
-            <p>Chargement des données bancaires...</p>
+            <p>Chargement des données bancaires et d'assurance...</p>
           </div>
 
           <!-- Error message -->
@@ -72,209 +43,274 @@ interface DisplayBank extends Bank {
           <div class="filters-section" *ngIf="!isLoading && !errorMessage">
             <form [formGroup]="filtersForm" class="filters-form">
               <div class="filter-group">
-                <label for="creditType">Type de crédit</label>
+                <label for="productType">Type de produit</label>
+                <select formControlName="productType" id="productType" class="form-select">
+                  <option value="">Tous les produits</option>
+                  <option value="credit">Crédit</option>
+                  <option value="savings">Épargne</option>
+                  <option value="insurance">Assurance</option>
+                  <option value="conditions">Conditions d'ouverture</option>
+                </select>
+              </div>
+              
+              <div class="filter-group">
+                <label for="creditType">Sous-type</label>
                 <select formControlName="creditType" id="creditType" class="form-select">
                   <option value="">Tous les types</option>
                   <option value="immobilier">Crédit Immobilier</option>
                   <option value="consommation">Crédit Consommation</option>
-                  <option value="auto">Crédit Auto</option>
-                  <option value="professionnel">Crédit Professionnel</option>
+                  <option value="auto">Crédit/Assurance Auto</option>
+                  <option value="vie">Assurance Vie</option>
+                  <option value="habitation">Assurance Habitation</option>
+                  <option value="sante">Assurance Santé</option>
                 </select>
               </div>
               
               <div class="filter-group">
                 <label for="sortBy">Trier par</label>
                 <select formControlName="sortBy" id="sortBy" class="form-select">
-                  <option value="rate">Taux croissant</option>
                   <option value="bank">Nom banque</option>
-                  <option value="processing">Délai traitement</option>
+                  <option value="rate">Taux/Prime croissant</option>
+                  <option value="conditions">Conditions d'ouverture</option>
                 </select>
               </div>
               
               <div class="filter-group">
-                <label for="bank">Banque</label>
+                <label for="bank">Institution</label>
                 <select formControlName="selectedBank" id="bank" class="form-select">
-                  <option value="">Toutes les banques</option>
-                  <option *ngFor="let bank of banks" [value]="bank.id">
+                  <option value="">Toutes les institutions</option>
+                  <option *ngFor="let bank of banksWithProducts" [value]="bank.id">
                     {{ bank.name }}
                   </option>
                 </select>
-              </div>
-
-              <div class="filter-group">
-                <label for="minAmount">Montant minimum</label>
-                <input 
-                  type="number" 
-                  formControlName="minAmount" 
-                  id="minAmount" 
-                  class="form-input"
-                  placeholder="0"
-                />
-              </div>
-
-              <div class="filter-group">
-                <label for="maxAmount">Montant maximum</label>
-                <input 
-                  type="number" 
-                  formControlName="maxAmount" 
-                  id="maxAmount" 
-                  class="form-input"
-                  placeholder="Illimité"
-                />
               </div>
             </form>
           </div>
         </div>
       </div>
 
-      <!-- Rates Comparison Table -->
-      <div class="rates-section" *ngIf="!isLoading && !errorMessage">
+      <!-- Banks and Products Display -->
+      <div class="products-section" *ngIf="!isLoading && !errorMessage">
         <div class="container">
           <div class="results-info">
-            <p>{{ filteredRates.length }} produit(s) trouvé(s)</p>
+            <p>{{ getBankCount() }} institution(s) - {{ getTotalProductsCount() }} produit(s) disponible(s)</p>
           </div>
 
-          <div class="rates-grid">
-            <div *ngFor="let rate of filteredRates" class="rate-card" [class.featured]="rate.specialOffers?.length">
+          <div class="banks-grid">
+            <div *ngFor="let bank of filteredBanks" class="bank-card">
+              <!-- Bank Header -->
               <div class="bank-header">
                 <div class="bank-logo">
-                  <img [src]="rate.bank.logo_url || '/assets/banks/default-logo.png'" [alt]="rate.bank.name" />
+                  <img [src]="bank.logo_url || '/assets/banks/default-logo.png'" [alt]="bank.name" />
                 </div>
                 <div class="bank-info">
-                  <h3>{{ rate.bank.name }}</h3>
-                  <span class="credit-type">{{ getCreditTypeLabel(rate.type) }}</span>
-                </div>
-              </div>
-
-              <div class="rate-details">
-                <div class="main-rate">
-                  <span class="rate-label">Taux moyen</span>
-                  <span class="rate-value">{{ formatPercent(rate.average_rate) }}</span>
-                </div>
-                
-                <div class="rate-range">
-                  <span>De {{ formatPercent(rate.min_rate) }} à {{ formatPercent(rate.max_rate) }}</span>
-                </div>
-
-                <div class="amount-info">
-                  <div class="info-item">
-                    <span class="label">Montant</span>
-                    <span class="value">
-                      {{ formatCurrency(rate.min_amount) }} - {{ formatCurrency(rate.max_amount) }}
-                    </span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Durée max</span>
-                    <span class="value">{{ Math.floor(rate.max_duration_months / 12) }} ans</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Délai</span>
-                    <span class="value">{{ rate.processing_time_hours }}h</span>
+                  <h2>{{ bank.name }}</h2>
+                  <p class="bank-description">{{ bank.description }}</p>
+                  <div class="bank-contact">
+                    <span *ngIf="bank.contact_phone">📞 {{ bank.contact_phone }}</span>
+                    <span *ngIf="bank.contact_email">✉️ {{ bank.contact_email }}</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Product description -->
-              <div class="product-description" *ngIf="rate.description">
-                <p>{{ rate.description }}</p>
-              </div>
-
-              <!-- Special Offers -->
-              <div *ngIf="rate.specialOffers?.length" class="special-offers">
-                <h4>Offres spéciales</h4>
-                <div *ngFor="let offer of rate.specialOffers" class="offer-item">
-                  <div class="offer-header">
-                    <span class="offer-title">{{ offer.title }}</span>
-                    <span class="offer-rate">{{ formatPercent(offer.rate) }}</span>
-                  </div>
-                  <p class="offer-description">{{ offer.description }}</p>
-                  <span class="offer-validity">
-                    Valable jusqu'au {{ formatDate(offer.validUntil) }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Eligibility Criteria -->
-              <div class="conditions" *ngIf="rate.eligibility_criteria">
-                <h4>Conditions d'éligibilité</h4>
-                <ul>
-                  <li *ngFor="let criterion of getEligibilityCriteria(rate.eligibility_criteria)">
-                    {{ criterion }}
-                  </li>
-                </ul>
-              </div>
-
-              <!-- Required Documents -->
-              <div class="documents" *ngIf="rate.required_documents">
-                <h4>Documents requis</h4>
-                <ul>
-                  <li *ngFor="let doc of getRequiredDocuments(rate.required_documents)">
-                    {{ doc }}
-                  </li>
-                </ul>
-              </div>
-
-              <!-- Fees -->
-              <div class="fees" *ngIf="rate.fees">
-                <h4>Frais</h4>
-                <div class="fees-list">
-                  <div *ngFor="let fee of getFees(rate.fees)" class="fee-item">
-                    <span class="fee-label">{{ fee.label }}</span>
-                    <span class="fee-value">{{ fee.value }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="card-actions">
-                <button (click)="simulateWithBank(rate)" class="btn-primary">
-                  Simuler avec {{ rate.bank.name }}
-                </button>
-                <button (click)="contactBank(rate)" class="btn-secondary">
-                  Contacter
-                </button>
-                <button (click)="viewBankDetails(rate.bank)" class="btn-outline">
-                  Détails banque
+              <!-- Tabs Navigation -->
+              <div class="product-tabs">
+                <button 
+                  *ngFor="let tab of getAvailableTabs(bank)" 
+                  [class]="'tab-btn ' + (getActiveTab(bank.id) === tab.id ? 'active' : '')"
+                  (click)="setActiveTab(bank.id, tab.id)">
+                  {{ tab.label }} ({{ tab.count }})
                 </button>
               </div>
 
-              <div class="last-updated">
-                Mis à jour le {{ formatDate(rate.updated_at) }}
+              <!-- Account Conditions Tab -->
+              <div *ngIf="getActiveTab(bank.id) === 'conditions'" class="tab-content conditions-content">
+                <div class="conditions-section">
+                  <h3>Conditions d'ouverture de compte</h3>
+                  
+                  <div class="condition-item">
+                    <h4>💰 Dépôt minimum</h4>
+                    <p class="amount">{{ formatCurrency(bank.account_conditions.minimum_deposit) }}</p>
+                  </div>
+
+                  <div class="condition-item">
+                    <h4>📄 Documents requis</h4>
+                    <ul>
+                      <li *ngFor="let doc of bank.account_conditions.required_documents">{{ doc }}</li>
+                    </ul>
+                  </div>
+
+                  <div class="condition-item">
+                    <h4>✅ Critères d'éligibilité</h4>
+                    <ul>
+                      <li *ngFor="let criteria of bank.account_conditions.eligibility_criteria">{{ criteria }}</li>
+                    </ul>
+                  </div>
+
+                  <div class="condition-item">
+                    <h4>💳 Frais et tarifs</h4>
+                    <div class="fees-grid">
+                      <div *ngFor="let fee of bank.account_conditions.fees" class="fee-item">
+                        <span class="fee-type">{{ fee.type }}</span>
+                        <span class="fee-amount">{{ formatCurrency(fee.amount) }}</span>
+                        <span class="fee-frequency">{{ fee.frequency }}</span>
+                        <p class="fee-description">{{ fee.description }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="condition-item">
+                    <h4>⏱️ Délai de traitement</h4>
+                    <p class="processing-time">{{ bank.account_conditions.processing_time }}</p>
+                  </div>
+
+                  <div class="condition-item">
+                    <h4>🏢 Services disponibles</h4>
+                    <div class="services-grid">
+                      <span *ngFor="let service of bank.available_services" class="service-tag">{{ service }}</span>
+                    </div>
+                  </div>
+
+                  <div class="condition-item" *ngIf="bank.branch_locations?.length">
+                    <h4>📍 Agences</h4>
+                    <div class="locations-grid">
+                      <span *ngFor="let location of bank.branch_locations" class="location-tag">{{ location }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="actions">
+                  <button (click)="contactBank(bank)" class="btn-primary">
+                    Ouvrir un compte
+                  </button>
+                  <button (click)="getBankInfo(bank)" class="btn-secondary">
+                    Plus d'infos
+                  </button>
+                </div>
+              </div>
+
+              <!-- Credit Products Tab -->
+              <div *ngIf="getActiveTab(bank.id) === 'credit'" class="tab-content products-content">
+                <div *ngFor="let product of bank.creditProducts" class="product-card credit-product">
+                  <div class="product-header">
+                    <h4>{{ product.name }}</h4>
+                    <span class="product-type">{{ getCreditTypeLabel(product.type) }}</span>
+                  </div>
+                  
+                  <div class="product-details">
+                    <div class="rate-info">
+                      <span class="rate-label">Taux moyen</span>
+                      <span class="rate-value">{{ formatPercent(product.average_rate) }}</span>
+                    </div>
+                    
+                    <div class="product-specs">
+                      <div class="spec-item">
+                        <span class="label">Montant</span>
+                        <span class="value">{{ formatCurrency(product.min_amount) }} - {{ formatCurrency(product.max_amount) }}</span>
+                      </div>
+                      <div class="spec-item">
+                        <span class="label">Durée max</span>
+                        <span class="value">{{ Math.floor(product.max_duration_months / 12) }} ans</span>
+                      </div>
+                      <div class="spec-item">
+                        <span class="label">Délai</span>
+                        <span class="value">{{ product.processing_time_hours }}h</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="product-actions">
+                    <button (click)="simulateCredit(product, bank)" class="btn-primary">
+                      Simuler
+                    </button>
+                    <button (click)="getProductDetails(product)" class="btn-secondary">
+                      Détails
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Savings Products Tab -->
+              <div *ngIf="getActiveTab(bank.id) === 'savings'" class="tab-content products-content">
+                <div *ngFor="let product of bank.savingsProducts" class="product-card savings-product">
+                  <div class="product-header">
+                    <h4>{{ product.name }}</h4>
+                    <span class="product-type">{{ getSavingsTypeLabel(product.type) }}</span>
+                  </div>
+                  
+                  <div class="product-details">
+                    <div class="rate-info">
+                      <span class="rate-label">Taux d'intérêt</span>
+                      <span class="rate-value">{{ formatPercent(product.interest_rate) }}</span>
+                    </div>
+                    
+                    <div class="product-specs">
+                      <div class="spec-item">
+                        <span class="label">Dépôt min</span>
+                        <span class="value">{{ formatCurrency(product.minimum_deposit) }}</span>
+                      </div>
+                      <div class="spec-item">
+                        <span class="label">Liquidité</span>
+                        <span class="value">{{ getLiquidityLabel(product.liquidity) }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="product-actions">
+                    <button (click)="simulateSavings(product, bank)" class="btn-primary">
+                      Simuler
+                    </button>
+                    <button (click)="getProductDetails(product)" class="btn-secondary">
+                      Détails
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Insurance Products Tab -->
+              <div *ngIf="getActiveTab(bank.id) === 'insurance'" class="tab-content products-content">
+                <div *ngFor="let product of bank.insuranceProducts" class="product-card insurance-product">
+                  <div class="product-header">
+                    <h4>{{ product.name }}</h4>
+                    <span class="product-type">{{ getInsuranceTypeLabel(product.type) }}</span>
+                    <span class="company-badge">{{ product.company.name }}</span>
+                  </div>
+                  
+                  <div class="product-details">
+                    <div class="rate-info">
+                      <span class="rate-label">Prime de base</span>
+                      <span class="rate-value">{{ formatCurrency(product.base_premium) }}</span>
+                    </div>
+                    
+                    <div class="product-specs">
+                      <div class="spec-item" *ngIf="product.features?.length">
+                        <span class="label">Garanties</span>
+                        <div class="features-list">
+                          <span *ngFor="let feature of product.features.slice(0, 3)" class="feature-tag">{{ feature }}</span>
+                          <span *ngIf="product.features.length > 3" class="more-features">+{{ product.features.length - 3 }} autres</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="product-actions">
+                    <button (click)="getInsuranceQuote(product)" class="btn-primary">
+                      Devis
+                    </button>
+                    <button (click)="getProductDetails(product)" class="btn-secondary">
+                      Détails
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- No results -->
-          <div *ngIf="filteredRates.length === 0 && !isLoading" class="no-results">
-            <h3>Aucun produit trouvé</h3>
+          <div *ngIf="filteredBanks.length === 0 && !isLoading" class="no-results">
+            <h3>Aucune institution trouvée</h3>
             <p>Essayez de modifier vos critères de recherche</p>
             <button (click)="clearFilters()" class="btn-secondary">Effacer les filtres</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Market Analysis -->
-      <div class="market-analysis" *ngIf="!isLoading && marketStatistics">
-        <div class="container">
-          <h2>Analyse du marché</h2>
-          <div class="analysis-grid">
-
-            <div class="analysis-card">
-              <h3>Meilleur taux disponible</h3>
-              <div class="stat-value">{{ formatPercent(marketStatistics.best_rate) }}</div>
-              <span class="bank-name">chez {{ marketStatistics.best_rate_bank }}</span>
-            </div>
-            
-            <div class="analysis-card">
-              <h3>Délai moyen de traitement</h3>
-              <div class="stat-value">{{ marketStatistics.average_processing_time }}h</div>
-              <span class="info">pour un dossier complet</span>
-            </div>
-
-            <div class="analysis-card">
-              <h3>Banques partenaires</h3>
-              <div class="stat-value">{{ banks.length }}</div>
-              <span class="info">institutions financières</span>
-            </div>
           </div>
         </div>
       </div>
@@ -284,37 +320,26 @@ interface DisplayBank extends Bank {
 })
 export class BankRatesComponent implements OnInit, OnDestroy {
   filtersForm!: FormGroup;
-  bankRates: BankRate[] = [];
-  filteredRates: BankRate[] = [];
-  banks: Bank[] = [];
-  savingsProducts: SavingsProduct[] = [];
+  banksWithProducts: BankWithAllProducts[] = [];
+  filteredBanks: BankWithAllProducts[] = [];
+  
+  // Active tabs per bank
+  activeTabs: { [bankId: string]: string } = {};
   
   // Loading and error states
   isLoading = false;
   errorMessage = '';
   
-  // Market statistics
-  marketStatistics: any = null;
-  
-  selectedPeriod = '6m';
-  chartPeriods = [
-    { value: '1m', label: '1 mois' },
-    { value: '3m', label: '3 mois' },
-    { value: '6m', label: '6 mois' },
-    { value: '1y', label: '1 an' }
-  ];
-
   // Expose Math to template
   Math = Math;
 
   private destroy$ = new Subject<void>();
-  loadDemoData: any;
 
   constructor(
     private fb: FormBuilder,
     private notificationService: NotificationService,
     private analyticsService: AnalyticsService,
-    private apiService: ApiService
+    public bankRatesService: BankRatesService // Changé de private à public
   ) {}
 
   ngOnInit(): void {
@@ -331,11 +356,10 @@ export class BankRatesComponent implements OnInit, OnDestroy {
 
   private initializeFilters(): void {
     this.filtersForm = this.fb.group({
+      productType: [''],
       creditType: [''],
-      sortBy: ['rate'],
-      selectedBank: [''],
-      minAmount: [''],
-      maxAmount: ['']
+      sortBy: ['bank'],
+      selectedBank: ['']
     });
   }
 
@@ -352,7 +376,7 @@ export class BankRatesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
 
     // Test de connexion d'abord
-    this.apiService.testConnection()
+    this.bankRatesService.testEnhancedBanksEndpoint()
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => this.isLoading = false)
@@ -360,186 +384,209 @@ export class BankRatesComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           // Si la connexion est OK, charger les données
-          this.loadBanks();
-          this.loadBankRates();
-          this.loadMarketStatistics();
+          this.loadBanksWithData();
         },
         error: (error) => {
           console.error('Erreur de connexion API:', error);
-          this.errorMessage = 'Impossible de se connecter au serveur. Utilisation des données de démonstration.';
-          this.loadDemoData();
+          this.errorMessage = 'Impossible de se connecter au serveur. Chargement des données de démonstration.';
+          this.loadBanksWithFallback();
         }
       });
   }
 
-  private loadBanks(): void {
-    this.apiService.getBanks()
+  private loadBanksWithData(): void {
+    this.bankRatesService.getBanksWithConditions()
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(banks => {
+          // Charger les produits pour chaque banque
+          const bankProductRequests = banks.map(bank =>
+            this.bankRatesService.getBankAllProducts(bank.id).pipe(
+              map(products => ({
+                ...bank,
+                creditProducts: products.credit_products,
+                savingsProducts: products.savings_products,
+                insuranceProducts: products.insurance_products,
+                accountConditions: bank.account_conditions // Ajout explicite
+              })),
+              catchError(error => {
+                console.warn(`Erreur lors du chargement des produits pour ${bank.name}:`, error);
+                return of({
+                  ...bank,
+                  creditProducts: [],
+                  savingsProducts: [],
+                  insuranceProducts: [],
+                  accountConditions: bank.account_conditions // Ajout explicite
+                });
+              })
+            )
+          );
+
+          return forkJoin(bankProductRequests);
+        })
+      )
+      .subscribe({
+        next: (banksWithProducts) => {
+          this.banksWithProducts = banksWithProducts;
+          this.setDefaultActiveTabs();
+          this.applyFilters();
+          console.log('Banques avec produits chargées:', banksWithProducts);
+        },
+        error: (error) => {
+          console.error('Erreur lors du chargement:', error);
+          this.errorMessage = 'Erreur lors du chargement des données bancaires.';
+          this.loadBanksWithFallback();
+        }
+      });
+  }
+
+  private loadBanksWithFallback(): void {
+    // Utiliser les données de fallback du service
+    this.bankRatesService.getBanksWithConditions()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (banks) => {
-          this.banks = banks;
-          console.log('Banques chargées:', banks);
-        },
-        error: (error) => {
-          console.error('Erreur lors du chargement des banques:', error);
-          this.notificationService.showError('Erreur lors du chargement des banques');
-        }
-      });
-  }
-
-  private loadBankRates(): void {
-    this.apiService.getCreditProducts()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (products) => {
-          this.bankRates = products.map(product => {
-            const bankRate: BankRate = {
-              id: product.id,
-              bank_id: product.bank_id,
-              name: product.name,
-              type: product.type,
-              description: product.description,
-              min_amount: product.min_amount,
-              max_amount: product.max_amount,
-              min_duration_months: product.min_duration_months,
-              max_duration_months: product.max_duration_months,
-              min_rate: (product as any).min_rate || product.average_rate - 1,
-              max_rate: (product as any).max_rate || product.average_rate + 1,
-              average_rate: product.average_rate,
-              processing_time_hours: product.processing_time_hours,
-              required_documents: (product as any).required_documents,
-              eligibility_criteria: (product as any).eligibility_criteria,
-              fees: (product as any).fees,
-              is_active: product['is_active'] ?? true,
-              created_at: (product as any).created_at,
-              updated_at: (product as any).updated_at || new Date(),
-              bank: product.bank,
-              specialOffers: this.generateSpecialOffers(product)
-            };
-            return bankRate;
-          });
+          this.banksWithProducts = banks.map(bank => ({
+            ...bank,
+            creditProducts: [],
+            savingsProducts: [],
+            insuranceProducts: [],
+            accountConditions: bank.account_conditions // Ajout explicite
+          }));
+          this.setDefaultActiveTabs();
           this.applyFilters();
-          console.log('Produits de crédit chargés:', products);
         },
         error: (error) => {
-          console.error('Erreur lors du chargement des produits:', error);
-          this.notificationService.showError('Erreur lors du chargement des produits de crédit');
-          this.loadDemoData();
+          console.error('Erreur fallback:', error);
+          this.errorMessage = 'Impossible de charger les données.';
         }
       });
   }
 
-  private loadMarketStatistics(): void {
-    this.apiService.getMarketStatistics()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (stats: any) => {
-          this.marketStatistics = stats;
-          console.log('Statistiques de marché chargées:', stats);
-        },
-        error: (error: any) => {
-          console.error('Erreur lors du chargement des statistiques:', error);
-          // Générer des statistiques par défaut si l'API ne répond pas
-          this.generateDefaultStatistics();
-        }
-      });
+  private setDefaultActiveTabs(): void {
+    this.banksWithProducts.forEach(bank => {
+      this.activeTabs[bank.id] = 'conditions';
+    });
   }
 
-  private generateDefaultStatistics(): void {
-    if (this.bankRates.length > 0) {
-      const rates = this.bankRates.map(r => r.average_rate);
-      const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
-      const minRate = Math.min(...rates);
-      const bestRateProduct = this.bankRates.find(r => r.average_rate === minRate);
-      const avgProcessingTime = this.bankRates.reduce((sum, r) => sum + r.processing_time_hours, 0) / this.bankRates.length;
+  getAvailableTabs(bank: BankWithAllProducts): { id: string; label: string; count: number }[] {
+    const tabs = [
+      { id: 'conditions', label: 'Conditions', count: 1 }
+    ];
 
-      this.marketStatistics = {
-        average_rate: avgRate,
-        trend: -0.2, // Simulation
-        best_rate: minRate,
-        best_rate_bank: bestRateProduct?.bank.name || 'N/A',
-        average_processing_time: Math.round(avgProcessingTime)
-      };
+    if (bank.creditProducts?.length > 0) {
+      tabs.push({ id: 'credit', label: 'Crédits', count: bank.creditProducts.length });
     }
+
+    if (bank.savingsProducts?.length > 0) {
+      tabs.push({ id: 'savings', label: 'Épargne', count: bank.savingsProducts.length });
+    }
+
+    if (bank.insuranceProducts?.length > 0) {
+      tabs.push({ id: 'insurance', label: 'Assurances', count: bank.insuranceProducts.length });
+    }
+
+    return tabs;
   }
 
-  private generateSpecialOffers(product: CreditProduct): SpecialOffer[] {
-    // Génération d'offres spéciales basées sur le type de produit
-    const offers: SpecialOffer[] = [];
-    
-    if (product.type === 'immobilier' && Math.random() > 0.5) {
-      offers.push({
-        title: 'Offre Primo-accédants',
-        description: 'Taux réduit pour les premiers achats immobiliers',
-        rate: (product as any).min_rate || product.average_rate - 1,
-        validUntil: new Date('2024-12-31'),
-        conditions: ['Premier achat', 'Revenus < 800,000 FCFA']
-      });
-    }
-
-    if (product.type === 'consommation' && Math.random() > 0.7) {
-      offers.push({
-        title: 'Offre Rentrée',
-        description: 'Conditions préférentielles pour la rentrée scolaire',
-        rate: product.average_rate - 0.5,
-        validUntil: new Date('2024-10-31'),
-        conditions: ['Usage éducatif', 'Dossier complet']
-      });
-    }
-
-    return offers;
+  getActiveTab(bankId: string): string {
+    return this.activeTabs[bankId] || 'conditions';
   }
 
-  
+  setActiveTab(bankId: string, tabId: string): void {
+    this.activeTabs[bankId] = tabId;
+  }
 
   private applyFilters(): void {
-    const { creditType, sortBy, selectedBank, minAmount, maxAmount } = this.filtersForm.value;
+    const { productType, creditType, sortBy, selectedBank } = this.filtersForm.value;
     
-    let filtered = [...this.bankRates];
-
-    // Filtrer par type de crédit
-    if (creditType) {
-      filtered = filtered.filter(rate => rate.type === creditType);
-    }
+    let filtered = [...this.banksWithProducts];
 
     // Filtrer par banque
     if (selectedBank) {
-      filtered = filtered.filter(rate => rate.bank_id === selectedBank);
+      filtered = filtered.filter(bank => bank.id === selectedBank);
     }
 
-    // Filtrer par montant minimum
-    if (minAmount && !isNaN(minAmount)) {
-      filtered = filtered.filter(rate => rate.max_amount >= Number(minAmount));
+    // Filtrer par type de produit
+    if (productType) {
+      filtered = filtered.filter(bank => {
+        switch (productType) {
+          case 'credit':
+            return bank.creditProducts?.length > 0;
+          case 'savings':
+            return bank.savingsProducts?.length > 0;
+          case 'insurance':
+            return bank.insuranceProducts?.length > 0;
+          case 'conditions':
+            return true; // Toutes les banques ont des conditions
+          default:
+            return true;
+        }
+      });
     }
 
-    // Filtrer par montant maximum
-    if (maxAmount && !isNaN(maxAmount)) {
-      filtered = filtered.filter(rate => rate.min_amount <= Number(maxAmount));
+    // Filtrer par sous-type
+    if (creditType) {
+      filtered = filtered.filter(bank => {
+        switch (creditType) {
+          case 'immobilier':
+          case 'consommation':
+            return bank.creditProducts?.some(p => p.type === creditType);
+          case 'auto':
+            return bank.creditProducts?.some(p => p.type === 'auto') ||
+                   bank.insuranceProducts?.some(p => p.type === 'auto');
+          case 'vie':
+          case 'habitation':
+          case 'sante':
+            return bank.insuranceProducts?.some(p => p.type === creditType);
+          default:
+            return true;
+        }
+      });
     }
 
     // Trier
     switch (sortBy) {
-      case 'rate':
-        filtered.sort((a, b) => a.average_rate - b.average_rate);
-        break;
       case 'bank':
-        filtered.sort((a, b) => a.bank.name.localeCompare(b.bank.name));
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case 'processing':
-        filtered.sort((a, b) => a.processing_time_hours - b.processing_time_hours);
+      case 'rate':
+        filtered.sort((a, b) => this.getMinRate(a) - this.getMinRate(b));
+        break;
+      case 'conditions':
+        filtered.sort((a, b) => a.accountConditions.minimum_deposit - b.accountConditions.minimum_deposit);
         break;
     }
 
-    this.filteredRates = filtered;
+    this.filteredBanks = filtered;
+  }
+
+  private getMinRate(bank: BankWithAllProducts): number {
+    let minRate = Infinity;
+    
+    // Chercher le taux minimum parmi les crédits
+    bank.creditProducts?.forEach(p => {
+      if (p.average_rate < minRate) {
+        minRate = p.average_rate;
+      }
+    });
+
+    // Chercher parmi les produits d'épargne
+    bank.savingsProducts?.forEach(p => {
+      if (p.interest_rate < minRate) {
+        minRate = p.interest_rate;
+      }
+    });
+
+    return minRate === Infinity ? 0 : minRate;
   }
 
   clearFilters(): void {
     this.filtersForm.reset({
+      productType: '',
       creditType: '',
-      sortBy: 'rate',
-      selectedBank: '',
-      minAmount: '',
-      maxAmount: ''
+      sortBy: 'bank',
+      selectedBank: ''
     });
   }
 
@@ -547,115 +594,110 @@ export class BankRatesComponent implements OnInit, OnDestroy {
     this.loadInitialData();
   }
 
-  simulateWithBank(rate: BankRate): void {
-    this.analyticsService.trackEvent('bank_simulation_started', {
-      bank_id: rate.bank_id,
-      bank_name: rate.bank.name,
-      credit_type: rate.type,
-      avg_rate: rate.average_rate
-    });
-
-    // Navigation vers simulateur avec paramètres pré-remplis
-    this.notificationService.showInfo(`Redirection vers le simulateur ${rate.bank.name}...`);
+  getBankCount(): number {
+    return this.filteredBanks.length;
   }
 
-  contactBank(rate: BankRate): void {
-    const message = `Contact ${rate.bank.name} : ${rate.bank.contact_phone}`;
+  getTotalProductsCount(): number {
+    return this.filteredBanks.reduce((total, bank) => {
+      return total + 
+        (bank.creditProducts?.length || 0) + 
+        (bank.savingsProducts?.length || 0) + 
+        (bank.insuranceProducts?.length || 0) + 
+        1; // +1 pour les conditions d'ouverture
+    }, 0);
+  }
+
+  // Ajout de la méthode trackPageView manquante
+  private trackPageView(): void {
+    this.analyticsService.trackEvent('page_view', {
+      page: 'bank-rates',
+      section: 'enhanced-bank-rates'
+    });
+  }
+
+  // Actions handlers
+  contactBank(bank: BankWithAllProducts): void {
+    this.analyticsService.trackEvent('bank_contact', {
+      bank_id: bank.id,
+      bank_name: bank.name,
+      action: 'account_opening'
+    });
+
+    const message = `Contact ${bank.name} pour ouverture de compte:\n` +
+                   `Téléphone: ${bank.contact_phone}\n` +
+                   `Email: ${bank.contact_email}\n` +
+                   `Dépôt minimum: ${this.formatCurrency(bank.accountConditions.minimum_deposit)}`;
+    
     this.notificationService.showInfo(message);
-    
-    // Optionnel: ouvrir le lien de contact
-    if (rate.bank.website) {
-      window.open(rate.bank.website, '_blank');
-    }
   }
 
-  viewBankDetails(bank: Bank): void {
-    this.notificationService.showInfo(`Détails de ${bank.name} : ${bank.description}`);
+  getBankInfo(bank: BankWithAllProducts): void {
+    this.notificationService.showInfo(`Plus d'informations sur ${bank.name}: ${bank.description}`);
   }
 
-  setChartPeriod(period: string): void {
-    this.selectedPeriod = period;
-    // Ici vous pourriez recharger les données du graphique
-  }
-
-  getCreditTypeLabel(type: string): string {
-    const labels: { [key: string]: string } = {
-      'immobilier': 'Crédit Immobilier',
-      'consommation': 'Crédit Consommation',
-      'auto': 'Crédit Auto',
-      'professionnel': 'Crédit Professionnel'
-    };
-    return labels[type] || type;
-  }
-
-  getSelectedPeriodLabel(): string {
-    const period = this.chartPeriods.find(p => p.value === this.selectedPeriod);
-    return period?.label || '6 mois';
-  }
-
-  getEligibilityCriteria(criteria: any): string[] {
-    if (criteria?.criteria && Array.isArray(criteria.criteria)) {
-      return criteria.criteria;
-    }
-    return ['Informations non disponibles'];
-  }
-
-  getRequiredDocuments(documents: any): string[] {
-    if (documents?.documents && Array.isArray(documents.documents)) {
-      return documents.documents;
-    }
-    return ['Documents standards requis'];
-  }
-
-  getFees(fees: any): Array<{label: string, value: string}> {
-    if (!fees || typeof fees !== 'object') {
-      return [{label: 'Frais de dossier', value: 'Sur devis'}];
-    }
-
-    const feeList: Array<{label: string, value: string}> = [];
-    
-    Object.keys(fees).forEach(key => {
-      const value = fees[key];
-      const label = this.getFeeLabel(key);
-      const formattedValue = typeof value === 'number' ? this.formatCurrency(value) : String(value);
-      feeList.push({ label, value: formattedValue });
+  simulateCredit(product: CreditProductRate, bank: BankWithAllProducts): void {
+    this.analyticsService.trackEvent('credit_simulation_started', {
+      bank_id: bank.id,
+      product_id: product.id,
+      product_type: product.type
     });
-
-    return feeList;
+    
+    this.notificationService.showInfo(`Redirection vers simulation crédit ${product.name}...`);
   }
 
-  private getFeeLabel(key: string): string {
+  simulateSavings(product: SavingsProductRate, bank: BankWithAllProducts): void {
+    this.analyticsService.trackEvent('savings_simulation_started', {
+      bank_id: bank.id,
+      product_id: product.id,
+      interest_rate: product.interest_rate
+    });
+    
+    this.notificationService.showInfo(`Redirection vers simulation épargne ${product.name}...`);
+  }
+
+  getInsuranceQuote(product: InsuranceProductRate): void {
+    this.analyticsService.trackEvent('insurance_quote_started', {
+      product_id: product.id,
+      company_id: product.company.id,
+      product_type: product.type
+    });
+    
+    this.notificationService.showInfo(`Redirection vers devis assurance ${product.name}...`);
+  }
+
+  getProductDetails(product: any): void {
+    this.notificationService.showInfo(`Détails du produit: ${product.name} - ${product.description || 'Plus d\'informations disponibles en agence'}`);
+  }
+
+  // Utility methods for labels - utilise maintenant les méthodes du service
+  getCreditTypeLabel(type: string): string {
+    return this.bankRatesService.getCreditTypeLabel(type);
+  }
+
+  getSavingsTypeLabel(type: string): string {
+    return this.bankRatesService.getSavingsTypeLabel(type);
+  }
+
+  getInsuranceTypeLabel(type: string): string {
+    return this.bankRatesService.getInsuranceTypeLabel(type);
+  }
+
+  getLiquidityLabel(liquidity: string): string {
     const labels: { [key: string]: string } = {
-      'dossier': 'Frais de dossier',
-      'garantie': 'Frais de garantie',
-      'assurance': 'Assurance',
-      'notaire': 'Frais de notaire',
-      'expertise': 'Frais d\'expertise'
+      'immediate': 'Immédiate',
+      'notice': 'Avec préavis',
+      'term': 'À terme'
     };
-    return labels[key] || key;
+    return labels[liquidity] || liquidity;
   }
 
+  // Formatting methods - utilise maintenant les méthodes du service
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XAF',
-      minimumFractionDigits: 0
-    }).format(amount);
+    return this.bankRatesService.formatCurrency(amount);
   }
 
   formatPercent(value: number): string {
-    return `${value.toFixed(1)}%`;
-  }
-
-  formatDate(date: Date | string | undefined): string {
-    if (!date) return 'Non spécifié';
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return new Intl.DateTimeFormat('fr-FR').format(dateObj);
-  }
-
-  private trackPageView(): void {
-    this.analyticsService.trackPageView('bank_rates', {
-      page_title: 'Tarifs Bancaires'
-    });
+    return this.bankRatesService.formatPercent(value);
   }
 }

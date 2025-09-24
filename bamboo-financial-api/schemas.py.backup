@@ -748,7 +748,7 @@ class CreditApplicationCreate(BaseModel):
 
 # Schéma pour mettre à jour une demande (admin)
 class CreditApplicationUpdate(BaseModel):
-    status: Optional[str] = Field(None, pattern=r'^(pending|under_review|approved|rejected|cancelled|completed)$')
+    status: Optional[str] = Field(None, regex=r'^(pending|under_review|approved|rejected|cancelled|completed)$')
     processing_notes: Optional[str] = None
     assigned_to: Optional[str] = Field(None, max_length=100)
     bank_response: Optional[Dict[str, Any]] = None
@@ -901,7 +901,7 @@ class CreditApplicationStats(BaseModel):
 # Schéma pour les actions spécifiques
 class CreditApplicationStatusUpdate(BaseModel):
     """Mise à jour du statut uniquement"""
-    status: str = Field(..., pattern=r'^(pending|under_review|approved|rejected|cancelled|completed)$')
+    status: str = Field(..., regex=r'^(pending|under_review|approved|rejected|cancelled|completed)$')
     processing_notes: Optional[str] = None
 
 class CreditApplicationAssignment(BaseModel):

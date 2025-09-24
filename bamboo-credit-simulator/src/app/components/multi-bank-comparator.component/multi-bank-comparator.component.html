@@ -21,7 +21,7 @@
           </div>
           <div class="stat-item">
             <span class="stat-number">< 3min</span>
-            <span class="stat-label">Analyse IA</span>
+            <span class="stat-label">Analyse</span>
           </div>
         </div>
       </div>
@@ -35,7 +35,7 @@
         <!-- Stepper Header -->
         <div class="form-stepper">
           <div class="stepper-header">
-            <h2>Analyse Personnalisée par IA</h2>
+            <h2>Analyse Personnalisée</h2>
             <p>SimBot Gab analyse votre profil pour vous recommander les meilleures offres</p>
           </div>
 
@@ -428,7 +428,7 @@
             <div class="form-section" *ngIf="!isLoadingProducts">
               <div class="section-title">
                 <i class="material-icons">psychology</i>
-                Analyse IA - Produits compatibles
+                Analyse  - Produits compatibles
               </div>
               
               <div class="compatibility-info">
@@ -634,7 +634,7 @@
               title="Rapport Premium SimBot"
             >
               <i class="material-icons">auto_awesome</i>
-              Rapport IA
+              Rapport simulation
             </button>
             <button class="action-btn" (click)="shareComparison()" title="Partager">
               <i class="material-icons">share</i>
@@ -854,7 +854,7 @@
                         title="Export PDF premium avec analyse complète"
                       >
                         <i class="material-icons">picture_as_pdf</i>
-                        PDF Premium
+                        PDF 
                       </button>
                       
                     </div>
@@ -994,7 +994,7 @@
 
                   <!-- Simulateur d'apport optimisé par IA -->
                   <div class="down-payment-simulator">
-                    <h6>Optimisation IA - Impact d'un apport personnel</h6>
+                    <h6>Optimisation  - Impact d'un apport personnel</h6>
                     <div class="simulator-controls">
                       <input 
                         type="range" 
@@ -1091,50 +1091,6 @@
       <div class="final-actions">
         <div class="actions-content">
           <div class="action-group">
-            <div class="action-icon simbot-gradient">
-              <i class="material-icons">auto_awesome</i>
-            </div>
-            <h4>Rapport Premium SimBot</h4>
-            <p>Téléchargez une analyse complète avec recommandations IA personnalisées</p>
-            <button 
-              class="btn-export-large btn-simbot-premium"
-              (click)="exportSimbotComparisonPDF()"
-              title="Rapport comparaison SimBot avec analyse IA avancée"
-            >
-              <i class="material-icons">psychology</i>
-              Rapport SimBot IA Premium
-            </button>
-          </div>
-
-          <div class="action-group">
-            <div class="action-icon">
-              <i class="material-icons">download</i>
-            </div>
-            <h4>Export Standard</h4>
-            <p>Téléchargez un rapport classique de votre comparaison</p>
-            <button 
-              class="btn-export-large btn-comparison"
-              (click)="exportComparisonToPDF()"
-              title="Export comparaison multi-banques standard"
-            >
-              <i class="material-icons">file_download</i>
-              Rapport Comparaison Standard
-            </button>
-          </div>
-          
-          <div class="action-group">
-            <div class="action-icon">
-              <i class="material-icons">support_agent</i>
-            </div>
-            <h4>Assistance SimBot</h4>
-            <p>Notre application est disponible 24/7 pour répondre à vos questions</p>
-            <button class="contact-btn">
-              <i class="material-icons">smart_toy</i>
-              Parler à SimBot
-            </button>
-          </div>
-          
-          <div class="action-group">
             <div class="action-icon">
               <i class="material-icons">refresh</i>
             </div>
@@ -1173,7 +1129,7 @@
 
 /* Boutons SimBot Premium */
 .btn-export.btn-premium-simbot {
-  background: linear-gradient(135deg, #1455a6, #32be78, #ff8c00);
+  background: linear-gradient(135deg,  #32be78);
   color: white;
   box-shadow: 0 4px 15px rgba(20, 85, 166, 0.4);
   position: relative;
@@ -1191,7 +1147,7 @@
 }
 
 .btn-export-large.btn-simbot-premium {
-  background: linear-gradient(135deg, #1455a6, #32be78, #ff8c00);
+  background: linear-gradient(135deg,  #32be78);
   border: 2px solid transparent;
   background-clip: padding-box;
   position: relative;
@@ -1214,7 +1170,7 @@
 }
 
 .action-icon.simbot-gradient {
-  background: linear-gradient(135deg, #1455a6, #32be78, #ff8c00);
+  background: linear-gradient(135deg, #32be78);
 }
 
 /* Animations */
@@ -1236,12 +1192,12 @@
 
 /* Amélioration du branding SimBot */
 .stepper-header h2::after {
-  content: ' 🤖';
+  content: ' ';
   font-size: 0.8em;
 }
 
 .loading-card h3::before {
-  content: '🤖 ';
+  content: ' ';
   background: linear-gradient(45deg, #1455a6, #32be78);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

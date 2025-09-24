@@ -336,11 +336,25 @@ except ImportError:
     print("Warning: insurance_admin router not available")
 
 try:
+    from routers import enhanced_bank
+    enhanced_bank_available = True
+except ImportError:
+    enhanced_bank_available = False
+    print("Warning: enhanced_bank router not available")
+
+try:
     from routers import insurance_application
     insurance_application_available = True
 except ImportError:
     insurance_application_available = False
     print("Warning: insurance_application router not available")
+
+try:
+    from routers import institution_locator
+    institution_locator_available = True
+except ImportError:
+    institution_locator_available = False
+    print("Warning: institution_locator router not available")
 
 try:
     from routers import credit_admin
@@ -584,6 +598,14 @@ if credits_available:
     app.include_router(credits.router, prefix="/api/credits", tags=["Crédits"])
     logger.info("Credits router included")
 
+if institution_locator_available:
+    app.include_router(institution_locator.router, prefix="/api/institution-locator", tags=["Localisateur d'Institutions"])
+    logger.info("Institution locator router included")
+
+if enhanced_bank_available:
+    app.include_router(enhanced_bank.router, prefix="/api/enhanced-banks", tags=["Banques Améliorées"])
+    logger.info("Enhanced bank router included")
+
 if analytics_available:
     app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
     logger.info("Analytics router included")
@@ -685,12 +707,16 @@ async def root():
         available_routes.append("application")
     if admin_application_available:
         available_routes.append("admin_application")
+    if enhanced_bank_available:
+        available_routes.append("enhanced_banks")
     if admin_insurance_application_available:
         available_routes.append("admin_insurance_application")
     if savings_available:
         available_routes.append("savings")
     if savings_admin_available:
         available_routes.append("savings_admin")
+    if institution_locator_available:
+        available_routes.append("institution_locator")
     if savings_application_available:
         available_routes.append("savings_application")
     if insurance_admin_available:

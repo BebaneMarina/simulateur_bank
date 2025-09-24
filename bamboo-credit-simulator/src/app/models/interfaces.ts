@@ -464,6 +464,45 @@ export enum ApplicationStatus {
   COMPLETED = 'completed'
 }
 
+// Nouvelles interfaces pour les conditions d'ouverture
+export interface BankAccountConditions {
+  minimumDeposit: number;
+  requiredDocuments: string[];
+  eligibilityCriteria: string[];
+  fees: BankFee[];
+  processingTime: string;
+}
+
+export interface BankFee {
+  type: string;
+  amount: number;
+  frequency: string;
+  description: string;
+}
+
+// Extension de l'interface Bank existante
+export interface ExtendedBank extends Bank {
+  accountConditions?: BankAccountConditions;
+  availableServices: string[];
+  branchLocations?: string[];
+}
+
+// Interface pour les produits d'assurance avec banque
+export interface InsuranceProductWithBank {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  basePremium: number;
+  coverageDetails: any;
+  features: string[];
+  exclusions: string[];
+  company: InsuranceCompany;
+  partnerBanks?: string[]; // IDs des banques partenaires
+  specialOffers?: string[];
+}
+
+
 // Types utilitaires
 export type CreateRequest<T> = Omit<T, 'id' | 'created_at' | 'updated_at'>;
 export type UpdateRequest<T> = Partial<Omit<T, 'id' | 'created_at' | 'updated_at'>>;

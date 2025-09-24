@@ -567,7 +567,7 @@ async def get_bank_simulations(
 @router.get("/{bank_id}/performance")
 async def get_bank_performance(
     bank_id: str,
-    period: str = Query("6m", pattern="^(1m|3m|6m|1y|2y)$"),
+    period: str = Query("6m", regex="^(1m|3m|6m|1y|2y)$"),
     db: Session = Depends(get_db)
 ):
     """Récupère les performances d'une banque sur une période"""
@@ -816,7 +816,7 @@ async def toggle_bank_status(bank_id: str, db: Session = Depends(get_db)):
 
 @router.get("/export")
 async def export_banks(
-    format: str = Query("csv", pattern="^(csv|excel)$"),
+    format: str = Query("csv", regex="^(csv|excel)$"),
     db: Session = Depends(get_db)
 ):
     """Exporte la liste des banques"""

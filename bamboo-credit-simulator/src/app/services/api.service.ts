@@ -239,6 +239,43 @@ export interface InsuranceQuoteResponse {
   };
 }
 
+export interface BankAccountConditions {
+  minimumDeposit: number;
+  requiredDocuments: string[];
+  eligibilityCriteria: string[];
+  fees: BankFee[];
+  processingTime: string;
+}
+
+export interface BankFee {
+  type: string;
+  amount: number;
+  frequency: string;
+  description: string;
+}
+
+// Extension de l'interface Bank existante
+export interface ExtendedBank extends Bank {
+  accountConditions?: BankAccountConditions;
+  availableServices: string[];
+  branchLocations?: string[];
+}
+
+// Interface pour les produits d'assurance avec banque
+export interface InsuranceProductWithBank {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  basePremium: number;
+  coverageDetails: any;
+  features: string[];
+  exclusions: string[];
+  company: InsuranceCompany;
+  partnerBanks?: string[]; // IDs des banques partenaires
+  specialOffers?: string[];
+}
+
 export interface QuoteOption {
   company_name: string;
   product_name: string;
@@ -332,7 +369,174 @@ export class ApiService {
       catchError(this.handleError('Test CORS'))
     );
   }
+  
 
+  // Récupérer les conditions d'ouverture de compte pour une banque
+  getBankAccountConditions(bankId: string): Observable<BankAccountConditions> {
+    return this.http.get<BankAccountConditions>(
+      `${this.baseUrl}/banks/${bankId}/account-conditions`,
+      this.getHttpOptions()
+    ).pipe(
+      catchError(this.handleError('Get Bank Account Conditions'))
+    );
+  }
+
+  // Récupérer les banques avec leurs conditions
+  getBanksWithConditions(): Observable<ExtendedBank[]> {
+    return this.http.get<ExtendedBank[]>(
+      `${this.baseUrl}/banks/with-conditions`,
+      this.getHttpOptions()
+    ).pipe(
+      catchError(error => {
+        console.warn('Conditions API non disponible, utilisation des banques standard');
+        return this.getBanks().pipe(
+          map(banks => banks.map(bank => this.mapToExtendedBank(bank)))
+        );
+      })
+    );
+  }
+
+  // Récupérer les produits d'assurance avec leurs banques partenaires
+  getInsuranceProductsWithBanks(): Observable<InsuranceProductWithBank[]> {
+    return this.http.get<InsuranceProductWithBank[]>(
+      `${this.baseUrl}/insurance/products-with-banks`,
+      this.getHttpOptions()
+    ).pipe(
+      catchError(this.handleError('Get Insurance Products With Banks'))
+    );
+  }
+
+  // Récupérer tous les produits (crédit + assurance) d'une banque
+  getBankAllProducts(bankId: string): Observable<{
+    creditProducts: CreditProduct[];
+    savingsProducts: SavingsProduct[];
+    insuranceProducts: InsuranceProductWithBank[];
+  }> {
+    return this.http.get<any>(
+      `${this.baseUrl}/banks/${bankId}/all-products`,
+      this.getHttpOptions()
+    ).pipe(
+      catchError(this.handleError('Get All Bank Products'))
+    );
+  }
+
+  // Méthode privée pour mapper vers ExtendedBank
+  private mapToExtendedBank(bank: Bank): ExtendedBank {
+    return {
+      ...bank,
+      accountConditions: this.getDefaultAccountConditions(bank.id),
+      availableServices: this.getDefaultServices(bank.id),
+      branchLocations: this.getDefaultBranchLocations(bank.id)
+    };
+  }
+
+  // Conditions par défaut si l'API n'est pas disponible
+  private getDefaultAccountConditions(bankId: string): BankAccountConditions {
+    const defaultConditions: { [key: string]: BankAccountConditions } = {
+      'bgfi': {
+        minimumDeposit: 25000,
+        requiredDocuments: [
+          'Pièce d\'identité en cours de validité',
+          'Justificatif de domicile récent',
+          'Justificatif de revenus'
+        ],
+        eligibilityCriteria: [
+          'Être âgé de 18 ans minimum',
+          'Résider au Gabon',
+          'Avoir des revenus réguliers'
+        ],
+        fees: [
+          { type: 'Ouverture', amount: 5000, frequency: 'unique', description: 'Frais d\'ouverture de compte' },
+          { type: 'Tenue de compte', amount: 2500, frequency: 'mensuel', description: 'Frais de tenue de compte mensuel' },
+          { type: 'Carte bancaire', amount: 15000, frequency: 'annuel', description: 'Frais de carte bancaire' }
+        ],
+        processingTime: '24-48 heures'
+      },
+      'ugb': {
+        minimumDeposit: 20000,
+        requiredDocuments: [
+          'Carte d\'identité nationale',
+          'Attestation de résidence',
+          'Bulletin de salaire'
+        ],
+        eligibilityCriteria: [
+          'Majorité civile',
+          'Résidence au Gabon',
+          'Justifier de revenus'
+        ],
+        fees: [
+          { type: 'Ouverture', amount: 3000, frequency: 'unique', description: 'Frais d\'ouverture' },
+          { type: 'Tenue de compte', amount: 2000, frequency: 'mensuel', description: 'Gestion mensuelle' }
+        ],
+        processingTime: '2-3 jours ouvrés'
+      }
+    };
+    
+    return defaultConditions[bankId] || {
+      minimumDeposit: 25000,
+      requiredDocuments: ['Pièce d\'identité', 'Justificatif de domicile', 'Justificatif de revenus'],
+      eligibilityCriteria: ['Âge minimum 18 ans', 'Résidence au Gabon'],
+      fees: [
+        { type: 'Ouverture', amount: 5000, frequency: 'unique', description: 'Frais d\'ouverture de compte' },
+        { type: 'Tenue de compte', amount: 2500, frequency: 'mensuel', description: 'Frais mensuels' }
+      ],
+      processingTime: '24-72 heures'
+    };
+  }
+
+  // Services par défaut
+  private getDefaultServices(bankId: string): string[] {
+    const services = [
+      'Comptes courants',
+      'Comptes d\'épargne',
+      'Crédits immobiliers',
+      'Crédits consommation',
+      'Cartes bancaires',
+      'Virements',
+      'Banking en ligne',
+      'Mobile banking'
+    ];
+
+    // Services spécifiques par banque
+    const bankSpecificServices: { [key: string]: string[] } = {
+      'bgfi': [...services, 'Change', 'Trade finance'],
+      'ecobank': [...services, 'Western Union', 'MoneyGram'],
+      'bicig': [...services, 'Crédit-bail', 'Factoring'],
+      'ugb': [...services, 'Assurance-vie', 'Épargne retraite'],
+      'cbao': [...services, 'Microfinance', 'Crédit agricole']
+    };
+
+    return bankSpecificServices[bankId] || services;
+  }
+
+  // Localisations des agences par défaut
+  private getDefaultBranchLocations(bankId: string): string[] {
+    const commonLocations = [
+      'Libreville Centre-ville',
+      'Libreville Louis',
+      'Port-Gentil',
+      'Franceville'
+    ];
+
+    const bankLocations: { [key: string]: string[] } = {
+      'bgfi': [...commonLocations, 'Oyem', 'Lambaréné', 'Mouila'],
+      'ecobank': [...commonLocations, 'Bitam', 'Tchibanga'],
+      'ugb': [...commonLocations, 'Koulamoutou', 'Makokou'],
+      'bicig': [...commonLocations, 'Gamba', 'Mayumba'],
+      'cbao': [...commonLocations, 'Mitzic', 'Lastoursville']
+    };
+
+    return bankLocations[bankId] || commonLocations;
+  }
+
+  // Récupérer les produits d'assurance liés à une banque
+  getBankInsuranceProducts(bankId: string): Observable<InsuranceProductWithBank[]> {
+    return this.getInsuranceProductsWithBanks().pipe(
+      map(products => products.filter(product => 
+        product.partnerBanks?.includes(bankId)
+      ))
+    );
+  }
   // Banques
   getBanks(): Observable<Bank[]> {
     return this.http.get<any[]>(`${this.baseUrl}/banks/`).pipe(
