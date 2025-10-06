@@ -233,7 +233,7 @@ interface SavingsGoalOption {
               </div>
             </div>
 
-            <p class="product-description">{{ product.description || 'Produit d\'épargne avantageux' }}</p>
+           <p class="product-description">{{ product.description }}</p>
 
             <div class="product-highlights">
               <div class="highlight-main">
@@ -470,14 +470,14 @@ interface SavingsGoalOption {
             <div class="summary-card primary">
               <div class="card-header">
                 <h3>Capital final</h3>
-                <div class="card-icon">💰</div>
+                <div class="card-icon"></div>
               </div>
               <div class="amount primary">{{ formatCurrency(results.finalAmount) }}</div>
               <div class="subtitle">
                 Capital initial + intérêts générés
               </div>
               <div class="growth-indicator positive">
-                <span class="growth-icon">📈</span>
+                <span class="growth-icon"></span>
                 <span>+{{ formatPercent(getTotalYield()) }} de croissance</span>
               </div>
             </div>
@@ -485,7 +485,7 @@ interface SavingsGoalOption {
             <div class="summary-card success">
               <div class="card-header">
                 <h3>Intérêts gagnés</h3>
-                <div class="card-icon">🎯</div>
+                <div class="card-icon"></div>
               </div>
               <div class="amount success">{{ formatCurrency(results.totalInterest) }}</div>
               <div class="subtitle">
@@ -499,7 +499,7 @@ interface SavingsGoalOption {
             <div class="summary-card info">
               <div class="card-header">
                 <h3>Rendement total</h3>
-                <div class="card-icon">📊</div>
+                <div class="card-icon"></div>
               </div>
               <div class="amount info">{{ formatPercent(getTotalYield()) }}</div>
               <div class="subtitle">
@@ -513,7 +513,7 @@ interface SavingsGoalOption {
             <div class="summary-card warning">
               <div class="card-header">
                 <h3>Capital investi</h3>
-                <div class="card-icon">💵</div>
+                <div class="card-icon"></div>
               </div>
               <div class="amount">{{ formatCurrency(results.totalContributions) }}</div>
               <div class="subtitle">

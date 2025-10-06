@@ -5,6 +5,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule} f
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { InsuranceService } from '../services/insurance.service';
+import { NotificationService } from '../services/notification.service';
 import { 
   InsuranceCompany, 
   InsuranceProduct,
@@ -156,19 +157,19 @@ import {
                       class="btn-icon"
                       (click)="editCompany(company)"
                       title="Modifier">
-                      ✏️
+                      modifier
                     </button>
                     <button 
                       class="btn-icon"
                       (click)="viewCompanyProducts(company.id)"
                       title="Voir les produits">
-                      📋
+                      voir
                     </button>
                     <button 
                       class="btn-icon danger"
                       (click)="deleteCompany(company.id)"
                       title="Supprimer">
-                      🗑️
+                      supprimer
                     </button>
                   </div>
                 </td>
@@ -791,7 +792,9 @@ export class InsuranceManagementComponent implements OnInit, OnDestroy {
 
   constructor(
     private fb: FormBuilder,
-    private insuranceService: InsuranceService 
+    private insuranceService: InsuranceService,
+     private notificationService: NotificationService
+
   ) {
     this.initializeForms();
   }
@@ -972,10 +975,17 @@ private fileToBase64(file: File): Promise<string> {
 
  async saveCompany(): Promise<void> {
   if (this.companyForm.invalid) {
+    this.notificationService.showValidationErrors([
+      'Veuillez remplir tous les champs obligatoires'
+    ]);
     return;
   }
 
   this.isLoading = true;
+  const progressId = this.notificationService.showProgress(
+    `${this.editingCompany ? 'Mise à jour' : 'Création'} de la compagnie en cours...`,
+    'Traitement'
+  );
   
   try {
     const formData = {
@@ -983,11 +993,12 @@ private fileToBase64(file: File): Promise<string> {
       specialties: this.selectedSpecialties
     };
 
-    // Ajouter les données du logo si un fichier est sélectionné
+    // Gestion du logo
     if (this.selectedLogoFile) {
       const logoBase64 = await this.fileToBase64(this.selectedLogoFile);
       formData.logo_data = logoBase64;
       formData.logo_content_type = this.selectedLogoFile.type;
+      delete formData.logo_url;
     }
 
     const operation = this.editingCompany
@@ -996,46 +1007,95 @@ private fileToBase64(file: File): Promise<string> {
 
     operation.pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (company) => {
+        next: (response) => {
+          this.notificationService.updateProgress(progressId, '', true);
+          
           if (this.editingCompany) {
-            const index = this.companies.findIndex(c => c.id === company.id);
-            if (index !== -1) {
-              this.companies[index] = company;
-            }
+            this.notificationService.showSuccess(
+              `La compagnie "${formData.name}" a été mise à jour avec succès`,
+              'Modification réussie',
+              6000
+            );
           } else {
-            this.companies.push(company);
+            this.notificationService.showSuccess(
+              `La compagnie "${formData.name}" a été créée avec succès`,
+              'Création réussie',
+              6000
+            );
           }
-          this.applyCompanyFilters();
+          
+          this.loadCompanies();
           this.closeCompanyModal();
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('Erreur lors de la sauvegarde:', error);
+          this.notificationService.removeNotification(progressId);
+          
+          console.error('Erreur:', error);
+          
+          const errorMessage = error.error?.detail || error.message || 'Une erreur est survenue';
+          
+          this.notificationService.showError(
+            typeof errorMessage === 'string' 
+              ? errorMessage 
+              : JSON.stringify(errorMessage),
+            this.editingCompany ? 'Échec de la modification' : 'Échec de la création',
+            true
+          );
+          
           this.isLoading = false;
         }
       });
   } catch (error) {
-    console.error('Erreur lors de la conversion du logo:', error);
+    this.notificationService.removeNotification(progressId);
+    console.error('Erreur lors du traitement:', error);
+    this.notificationService.showError(
+      'Erreur lors du traitement du fichier logo',
+      'Erreur de traitement'
+    );
     this.isLoading = false;
   }
 }
-  deleteCompany(companyId: string): void {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette compagnie ?')) {
-      return;
-    }
 
-    this.insuranceService.deleteInsuranceCompany(companyId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.companies = this.companies.filter(c => c.id !== companyId);
-          this.applyCompanyFilters();
-        },
-        error: (error) => {
-          console.error('Erreur lors de la suppression:', error);
-        }
-      });
-  }
+ deleteCompany(companyId: string): void {
+  const company = this.companies.find(c => c.id === companyId);
+  const companyName = company?.name || 'cette compagnie';
+  
+  this.notificationService.showConfirmation(
+    `Êtes-vous sûr de vouloir supprimer "${companyName}" ?`,
+    () => {
+      const progressId = this.notificationService.showProgress(
+        'Suppression en cours...',
+        'Traitement'
+      );
+      
+      this.insuranceService.deleteInsuranceCompany(companyId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.notificationService.updateProgress(progressId, '', true);
+            this.notificationService.showSuccess(
+              `La compagnie "${companyName}" a été supprimée avec succès`,
+              'Suppression réussie'
+            );
+            this.companies = this.companies.filter(c => c.id !== companyId);
+            this.applyCompanyFilters();
+          },
+          error: (error) => {
+            this.notificationService.removeNotification(progressId);
+            console.error('Erreur:', error);
+            this.notificationService.showError(
+              error.error?.detail || 'Impossible de supprimer la compagnie',
+              'Échec de la suppression',
+              true
+            );
+          }
+        });
+    },
+    undefined,
+    'Confirmer la suppression'
+  );
+}
 
   // Product Management
   openCreateProductModal(): void {

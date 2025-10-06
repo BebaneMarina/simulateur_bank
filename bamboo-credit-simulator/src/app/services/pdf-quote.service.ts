@@ -1,6 +1,7 @@
-// pdf-quote.service.ts
+// pdf-quote.service.ts - Version corrigée avec formatage amélioré
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export interface QuoteData {
   quote_id: string;
@@ -30,12 +31,18 @@ export interface CustomerData {
   providedIn: 'root'
 })
 export class PdfQuoteService {
+  private readonly colors = {
+    primary: { r: 16, g: 185, b: 129 },
+    secondary: { r: 59, g: 130, b: 246 },
+    white: { r: 255, g: 255, b: 255 },
+    dark: { r: 17, g: 24, b: 39 },
+    lightGray: { r: 249, g: 250, b: 251 },
+    success: { r: 34, g: 197, b: 94 },
+    warning: { r: 251, g: 191, b: 36 }
+  };
 
   constructor() {}
 
-  /**
-   * Génère et télécharge un PDF de devis d'assurance
-   */
   async generateAndDownloadQuote(
     quoteData: QuoteData, 
     customerData: CustomerData = {},
@@ -43,507 +50,499 @@ export class PdfQuoteService {
   ): Promise<void> {
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      await this.buildQuotePDF(pdf, quoteData, customerData, formData);
-      
-      const filename = `devis_${quoteData.insurance_type}_${quoteData.quote_id}_${this.getDateString()}.pdf`;
+      await this.buildSimbotGabPDF(pdf, quoteData, customerData, formData);
+      const filename = `simbot_devis_${quoteData.insurance_type}_${Date.now()}.pdf`;
       pdf.save(filename);
-      
     } catch (error) {
-      console.error('Erreur lors de la génération du PDF:', error);
+      console.error('Erreur génération PDF:', error);
       throw new Error('Impossible de générer le PDF');
     }
   }
 
-  /**
-   * Construit le contenu du PDF
-   */
-  private async buildQuotePDF(
+  private async buildSimbotGabPDF(
     pdf: jsPDF, 
     quoteData: QuoteData, 
     customerData: CustomerData,
     formData: any
   ): Promise<void> {
-    let currentY = 20;
+    let currentY = 15;
 
-    // En-tête
-    currentY = this.addHeader(pdf, currentY);
+    currentY = this.addSimbotHeader(pdf, currentY);
+    currentY = this.addQuoteTitle(pdf, quoteData, currentY);
+    currentY = this.addTwoColumnInfo(pdf, quoteData, customerData, formData, currentY);
+    currentY = this.addPremiumPricing(pdf, quoteData, currentY);
+    currentY = this.addModernCoverageTable(pdf, quoteData, currentY);
     
-    // Informations du devis
-    currentY = this.addQuoteInfo(pdf, quoteData, currentY);
-    
-    // Informations client
-    if (Object.keys(customerData).length > 0) {
-      currentY = this.addCustomerInfo(pdf, customerData, currentY);
-    }
-    
-    // Détails de l'assurance selon le type
-    currentY = this.addInsuranceDetails(pdf, quoteData, formData, currentY);
-    
-    // Tarification
-    currentY = this.addPricing(pdf, quoteData, currentY);
-    
-    // Garanties et exclusions
-    currentY = this.addCoverageDetails(pdf, quoteData, currentY);
-    
-    // Offres alternatives (si disponibles)
     if (quoteData.quotes && quoteData.quotes.length > 0) {
-      currentY = this.addAlternativeQuotes(pdf, quoteData.quotes, currentY);
+      currentY = this.addAlternativeOffersTable(pdf, quoteData.quotes, currentY);
     }
     
-    // Recommandations
-    currentY = this.addRecommendations(pdf, quoteData.recommendations, currentY);
+    if (quoteData.recommendations && quoteData.recommendations.length > 0) {
+      currentY = this.addRecommendations(pdf, quoteData.recommendations, currentY);
+    }
     
-    // Pied de page
-    this.addFooter(pdf);
+    this.addSimbotFooter(pdf);
   }
 
-  /**
-   * Ajoute l'en-tête du document
-   */
-  private addHeader(pdf: jsPDF, startY: number): number {
-    let y = startY;
+  private addSimbotHeader(pdf: jsPDF, startY: number): number {
+    const bannerHeight = 25;
     
-    // Logo ou titre principal
+    // Bannière tricolore
+    pdf.setFillColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.rect(0, 0, 70, bannerHeight, 'F');
+    
+    pdf.setFillColor(this.colors.secondary.r, this.colors.secondary.g, this.colors.secondary.b);
+    pdf.rect(70, 0, 70, bannerHeight, 'F');
+    
+    pdf.setFillColor(this.colors.white.r, this.colors.white.g, this.colors.white.b);
+    pdf.rect(140, 0, 70, bannerHeight, 'F');
+    
+    // Logo et titre
     pdf.setFontSize(24);
-    pdf.setTextColor(41, 128, 185);
-    pdf.text('DEVIS D\'ASSURANCE', 20, y);
-    
-    // Sous-titre
-    pdf.setFontSize(14);
-    pdf.setTextColor(52, 73, 94);
-    pdf.text('simbot gab - Gabon', 20, y + 10);
-    
-    // Ligne de séparation
-    pdf.setDrawColor(189, 195, 199);
-    pdf.setLineWidth(0.5);
-    pdf.line(20, y + 20, 190, y + 20);
-    
-    return y + 30;
-  }
-
-  /**
-   * Ajoute les informations du devis
-   */
-  private addQuoteInfo(pdf: jsPDF, quoteData: QuoteData, startY: number): number {
-    let y = startY;
-    
-    pdf.setFontSize(16);
-    pdf.setTextColor(41, 128, 185);
-    pdf.text('INFORMATIONS DU DEVIS', 20, y);
-    y += 10;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(255, 255, 255);
+    pdf.text('SIMBOT GAB', 15, 17);
     
     pdf.setFontSize(10);
-    pdf.setTextColor(0, 0, 0);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Comparateur d\'Assurances - Gabon', 15, 22);
     
-    const quoteInfo = [
-      `Numéro de devis: ${quoteData.quote_id}`,
-      `Type d'assurance: ${this.getInsuranceTypeName(quoteData.insurance_type)}`,
-      `Assureur: ${quoteData.company_name}`,
-      `Produit: ${quoteData.product_name}`,
-      `Date de génération: ${this.formatDate(new Date())}`,
-      `Validité: ${this.formatDate(new Date(quoteData.valid_until))}`
-    ];
+    // Contact
+    pdf.setFontSize(8);
+    pdf.setTextColor(this.colors.dark.r, this.colors.dark.g, this.colors.dark.b);
+    pdf.text('Tel: +241 01 00 00 00', 145, 15);
+    pdf.text('contact@simbotgab.com', 145, 20);
     
-    quoteInfo.forEach(info => {
-      pdf.text(info, 20, y);
-      y += 6;
-    });
-    
-    return y + 10;
+    return bannerHeight + 10;
   }
 
-  /**
-   * Ajoute les informations client
-   */
-  private addCustomerInfo(pdf: jsPDF, customerData: CustomerData, startY: number): number {
+  private addQuoteTitle(pdf: jsPDF, quoteData: QuoteData, startY: number): number {
     let y = startY;
     
-    pdf.setFontSize(16);
-    pdf.setTextColor(41, 128, 185);
-    pdf.text('INFORMATIONS CLIENT', 20, y);
-    y += 10;
+    pdf.setFillColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.roundedRect(15, y, 180, 28, 3, 3, 'F');
     
-    pdf.setFontSize(10);
-    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(255, 255, 255);
+    const title = `DEVIS ${this.getInsuranceTypeName(quoteData.insurance_type).toUpperCase()}`;
+    pdf.text(title, 105, y + 11, { align: 'center' });
     
-    const clientInfo = [
-      customerData.name ? `Nom: ${customerData.name}` : null,
-      customerData.email ? `Email: ${customerData.email}` : null,
-      customerData.phone ? `Téléphone: ${customerData.phone}` : null,
-      customerData.age ? `Âge: ${customerData.age} ans` : null,
-      customerData.city ? `Ville: ${customerData.city}` : null,
-      customerData.address ? `Adresse: ${customerData.address}` : null
-    ].filter(Boolean);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`N° ${quoteData.quote_id.substring(0, 20)}`, 105, y + 18, { align: 'center' });
+    pdf.text(`Généré le ${this.formatDate(new Date())}`, 105, y + 24, { align: 'center' });
     
-    clientInfo.forEach(info => {
-      if (info) {
-        pdf.text(info, 20, y);
-        y += 6;
-      }
-    });
-    
-    return y + 10;
+    return y + 38;
   }
 
-  /**
-   * Ajoute les détails spécifiques selon le type d'assurance
-   */
-  private addInsuranceDetails(pdf: jsPDF, quoteData: QuoteData, formData: any, startY: number): number {
+  private addTwoColumnInfo(
+    pdf: jsPDF, 
+    quoteData: QuoteData, 
+    customerData: CustomerData,
+    formData: any,
+    startY: number
+  ): number {
     let y = startY;
     
-    pdf.setFontSize(16);
-    pdf.setTextColor(41, 128, 185);
-    pdf.text('DÉTAILS DE L\'ASSURANCE', 20, y);
-    y += 10;
+    // Colonne gauche - Souscripteur
+    pdf.setFillColor(this.colors.lightGray.r, this.colors.lightGray.g, this.colors.lightGray.b);
+    pdf.roundedRect(15, y, 85, 65, 2, 2, 'F');
     
-    pdf.setFontSize(10);
-    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.text('SOUSCRIPTEUR', 20, y + 8);
     
-    switch (quoteData.insurance_type) {
-      case 'auto':
-        y = this.addAutoDetails(pdf, formData, y);
-        break;
-      case 'habitation':
-        y = this.addHabitationDetails(pdf, formData, y);
-        break;
-      case 'vie':
-        y = this.addVieDetails(pdf, formData, y);
-        break;
-      case 'sante':
-        y = this.addSanteDetails(pdf, formData, y);
-        break;
-      case 'voyage':
-        y = this.addVoyageDetails(pdf, formData, y);
-        break;
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(this.colors.dark.r, this.colors.dark.g, this.colors.dark.b);
+    
+    let leftY = y + 18;
+    
+    if (customerData.name) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('NOM :', 20, leftY);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(customerData.name, 20, leftY + 5);
+      leftY += 12;
     }
     
-    return y + 10;
-  }
-
-  /**
-   * Détails spécifiques à l'assurance auto
-   */
-  private addAutoDetails(pdf: jsPDF, formData: any, startY: number): number {
-    let y = startY;
+    if (customerData.email) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('EMAIL :', 20, leftY);
+      pdf.setFont('helvetica', 'normal');
+      const emailLines = pdf.splitTextToSize(customerData.email, 60);
+      pdf.text(emailLines, 20, leftY + 5);
+      leftY += 12;
+    }
     
-    const autoDetails = [
-      `Catégorie de véhicule: ${formData.vehicleCategory || 'Non spécifié'}`,
-      `Type de carburant: ${formData.fuelType || 'Non spécifié'}`,
-      `Puissance fiscale: ${formData.fiscalPower ? formData.fiscalPower + ' CV' : 'Non spécifié'}`,
-      `Nombre de places: ${formData.seats || 'Non spécifié'}`,
-      `Valeur du véhicule: ${formData.vehicleValue ? this.formatCurrency(formData.vehicleValue) : 'Non spécifié'}`,
-      `Ville de circulation: ${formData.city || 'Non spécifié'}`
-    ];
+    if (customerData.phone) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('TEL :', 20, leftY);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(customerData.phone, 20, leftY + 5);
+      leftY += 12;
+    }
     
-    autoDetails.forEach(detail => {
-      pdf.text(detail, 20, y);
-      y += 6;
+    if (customerData.city) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('VILLE :', 20, leftY);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(customerData.city, 20, leftY + 5);
+    }
+    
+    // Colonne droite - Caractéristiques
+    pdf.setFillColor(this.colors.lightGray.r, this.colors.lightGray.g, this.colors.lightGray.b);
+    pdf.roundedRect(110, y, 85, 65, 2, 2, 'F');
+    
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(this.colors.secondary.r, this.colors.secondary.g, this.colors.secondary.b);
+    pdf.text('CARACTÉRISTIQUES', 115, y + 8);
+    
+    pdf.setFontSize(9);
+    pdf.setTextColor(this.colors.dark.r, this.colors.dark.g, this.colors.dark.b);
+    
+    let rightY = y + 18;
+    const details = this.getInsuranceSpecificDetails(quoteData.insurance_type, formData);
+    
+    details.slice(0, 5).forEach(detail => {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(detail.label, 115, rightY);
+      pdf.setFont('helvetica', 'normal');
+      const valueLines = pdf.splitTextToSize(detail.value, 65);
+      pdf.text(valueLines, 115, rightY + 5);
+      rightY += 12;
     });
     
-    return y;
+    return y + 75;
   }
 
-  /**
-   * Détails spécifiques à l'assurance habitation
-   */
-  private addHabitationDetails(pdf: jsPDF, formData: any, startY: number): number {
+  private addPremiumPricing(pdf: jsPDF, quoteData: QuoteData, startY: number): number {
     let y = startY;
     
-    const habitationDetails = [
-      `Type de logement: ${formData.propertyType || 'Non spécifié'}`,
-      `Surface habitable: ${formData.surface ? formData.surface + ' m²' : 'Non spécifié'}`,
-      `Valeur du bien: ${formData.propertyValue ? this.formatCurrency(formData.propertyValue) : 'Non spécifié'}`,
-      `Année de construction: ${formData.constructionYear || 'Non spécifié'}`,
-      `Niveau de sécurité: ${formData.securityLevel || 'Non spécifié'}`,
-      `Type d'occupation: ${formData.occupancy || 'Non spécifié'}`
-    ];
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.text('TARIFICATION', 15, y);
+    y += 8;
     
-    habitationDetails.forEach(detail => {
-      pdf.text(detail, 20, y);
-      y += 6;
-    });
+    pdf.setDrawColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.setLineWidth(2);
+    pdf.roundedRect(15, y, 180, 50, 3, 3);
     
-    return y;
-  }
-
-  /**
-   * Détails spécifiques à l'assurance vie
-   */
-  private addVieDetails(pdf: jsPDF, formData: any, startY: number): number {
-    let y = startY;
-    
-    const vieDetails = [
-      `Capital souhaité: ${formData.coverageAmount ? this.formatCurrency(formData.coverageAmount) : 'Non spécifié'}`,
-      `État de santé: ${formData.healthStatus || 'Non spécifié'}`,
-      `Statut fumeur: ${formData.smokingStatus || 'Non spécifié'}`,
-      `Profession: ${formData.profession || 'Non spécifié'}`,
-      `Bénéficiaires: ${formData.beneficiaries || 'Non spécifié'}`
-    ];
-    
-    vieDetails.forEach(detail => {
-      pdf.text(detail, 20, y);
-      y += 6;
-    });
-    
-    return y;
-  }
-
-  /**
-   * Détails spécifiques à l'assurance santé
-   */
-  private addSanteDetails(pdf: jsPDF, formData: any, startY: number): number {
-    let y = startY;
-    
-    const santeDetails = [
-      `Composition familiale: ${formData.familySize || 'Non spécifié'}`,
-      `Antécédents médicaux: ${formData.medicalHistory || 'Non spécifié'}`,
-      `Niveau de couverture: ${formData.coverageLevel || 'Non spécifié'}`,
-      `Préférence hospitalisation: ${formData.hospitalization || 'Non spécifié'}`
-    ];
-    
-    santeDetails.forEach(detail => {
-      pdf.text(detail, 20, y);
-      y += 6;
-    });
-    
-    return y;
-  }
-
-  /**
-   * Détails spécifiques à l'assurance voyage
-   */
-  private addVoyageDetails(pdf: jsPDF, formData: any, startY: number): number {
-    let y = startY;
-    
-    const voyageDetails = [
-      `Destination: ${formData.destination || 'Non spécifié'}`,
-      `Durée du voyage: ${formData.duration ? formData.duration + ' jours' : 'Non spécifié'}`,
-      `Type d'activités: ${formData.activities || 'Non spécifié'}`,
-      `Fréquence de voyage: ${formData.travelFrequency || 'Non spécifié'}`,
-      `Nombre de voyageurs: ${formData.travelers || 'Non spécifié'}`
-    ];
-    
-    voyageDetails.forEach(detail => {
-      pdf.text(detail, 20, y);
-      y += 6;
-    });
-    
-    return y;
-  }
-
-  /**
-   * Ajoute la section tarification
-   */
-  private addPricing(pdf: jsPDF, quoteData: QuoteData, startY: number): number {
-    let y = startY;
-    
-    // Titre
-    pdf.setFontSize(16);
-    pdf.setTextColor(41, 128, 185);
-    pdf.text('TARIFICATION', 20, y);
-    y += 15;
-    
-    // Encadré pour la tarification principale
-    pdf.setDrawColor(41, 128, 185);
-    pdf.setLineWidth(1);
-    pdf.rect(20, y - 5, 170, 40);
+    pdf.setFillColor(250, 252, 251);
+    pdf.roundedRect(16, y + 1, 178, 48, 2, 2, 'F');
     
     // Prime mensuelle
-    pdf.setFontSize(14);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text('Prime mensuelle:', 25, y + 5);
-    pdf.setFontSize(16);
-    pdf.setTextColor(41, 128, 185);
-    pdf.text(this.formatCurrency(quoteData.monthly_premium), 120, y + 5);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(this.colors.dark.r, this.colors.dark.g, this.colors.dark.b);
+    pdf.text('Prime Mensuelle', 25, y + 17);
+    
+    pdf.setFontSize(20);
+    pdf.setTextColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.text(this.formatCurrency(quoteData.monthly_premium), 180, y + 17, { align: 'right' });
+    
+    // Séparateur
+    pdf.setDrawColor(200, 200, 200);
+    pdf.setLineWidth(0.3);
+    pdf.line(25, y + 25, 185, y + 25);
     
     // Prime annuelle
-    pdf.setFontSize(14);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text('Prime annuelle:', 25, y + 15);
-    pdf.setFontSize(16);
-    pdf.setTextColor(41, 128, 185);
-    pdf.text(this.formatCurrency(quoteData.annual_premium), 120, y + 15);
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(this.colors.dark.r, this.colors.dark.g, this.colors.dark.b);
+    pdf.text('Prime Annuelle', 25, y + 34);
+    
+    pdf.setFontSize(13);
+    pdf.setTextColor(this.colors.secondary.r, this.colors.secondary.g, this.colors.secondary.b);
+    pdf.text(this.formatCurrency(quoteData.annual_premium), 180, y + 34, { align: 'right' });
     
     // Franchise
-    pdf.setFontSize(14);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text('Franchise:', 25, y + 25);
-    pdf.setFontSize(16);
-    pdf.setTextColor(231, 76, 60);
-    pdf.text(this.formatCurrency(quoteData.deductible), 120, y + 25);
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(this.colors.dark.r, this.colors.dark.g, this.colors.dark.b);
+    pdf.text('Franchise', 25, y + 44);
     
-    return y + 50;
+    pdf.setFontSize(12);
+    pdf.setTextColor(this.colors.warning.r, this.colors.warning.g, this.colors.warning.b);
+    pdf.text(this.formatCurrency(quoteData.deductible), 180, y + 44, { align: 'right' });
+    
+    return y + 60;
   }
 
-  /**
-   * Ajoute les détails de couverture
-   */
-  private addCoverageDetails(pdf: jsPDF, quoteData: QuoteData, startY: number): number {
+  private addModernCoverageTable(pdf: jsPDF, quoteData: QuoteData, startY: number): number {
     let y = startY;
     
-    // Garanties incluses
-    if (quoteData.coverage_details && Object.keys(quoteData.coverage_details).length > 0) {
-      pdf.setFontSize(14);
-      pdf.setTextColor(46, 204, 113);
-      pdf.text('✓ GARANTIES INCLUSES', 20, y);
-      y += 10;
-      
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
-      
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.text('GARANTIES INCLUSES', 15, y);
+    y += 8;
+    
+    // Préparer les données
+    const guaranteesData: any[] = [];
+    
+    if (quoteData.coverage_details && typeof quoteData.coverage_details === 'object') {
       Object.entries(quoteData.coverage_details).forEach(([key, value]) => {
-        pdf.text(`• ${key}: ${value}`, 25, y);
-        y += 6;
+        guaranteesData.push([
+          key, 
+          String(value), 
+          '✓ Inclus'
+        ]);
       });
-      
-      y += 10;
     }
+    
+    // Si pas de données, ajouter un message
+    if (guaranteesData.length === 0) {
+      guaranteesData.push([
+        'Responsabilité civile',
+        'Selon contrat',
+        '✓ Inclus'
+      ]);
+      guaranteesData.push([
+        'Dommages matériels',
+        'Selon contrat',
+        '✓ Inclus'
+      ]);
+    }
+    
+    // Créer le tableau
+    autoTable(pdf, {
+      startY: y,
+      head: [['Garantie', 'Montant/Détails', 'Statut']],
+      body: guaranteesData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [this.colors.primary.r, this.colors.primary.g, this.colors.primary.b],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10,
+        halign: 'left'
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [this.colors.dark.r, this.colors.dark.g, this.colors.dark.b],
+        cellPadding: 3
+      },
+      alternateRowStyles: {
+        fillColor: [this.colors.lightGray.r, this.colors.lightGray.g, this.colors.lightGray.b]
+      },
+      columnStyles: {
+        0: { cellWidth: 60 },
+        1: { cellWidth: 80 },
+        2: { cellWidth: 35, halign: 'center' }
+      },
+      margin: { left: 15, right: 15 }
+    });
+    
+    y = (pdf as any).lastAutoTable.finalY + 15;
     
     // Exclusions
     if (quoteData.exclusions && quoteData.exclusions.length > 0) {
-      pdf.setFontSize(14);
-      pdf.setTextColor(231, 76, 60);
-      pdf.text('✗ EXCLUSIONS', 20, y);
-      y += 10;
-      
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
-      
-      quoteData.exclusions.slice(0, 8).forEach(exclusion => {
-        const lines = pdf.splitTextToSize(`• ${exclusion}`, 160);
-        lines.forEach((line: string) => {
-          pdf.text(line, 25, y);
-          y += 6;
-        });
-      });
-      
-      if (quoteData.exclusions.length > 8) {
-        pdf.text(`... et ${quoteData.exclusions.length - 8} autres exclusions`, 25, y);
-        y += 6;
+      // Vérifier si on a assez d'espace
+      if (y > 240) {
+        pdf.addPage();
+        y = 20;
       }
-    }
-    
-    return y + 10;
-  }
-
-  /**
-   * Ajoute les offres alternatives
-   */
-  private addAlternativeQuotes(pdf: jsPDF, quotes: any[], startY: number): number {
-    let y = startY;
-    
-    pdf.setFontSize(16);
-    pdf.setTextColor(41, 128, 185);
-    pdf.text('AUTRES OFFRES DISPONIBLES', 20, y);
-    y += 15;
-    
-    quotes.slice(0, 3).forEach((quote, index) => {
-      // Encadré pour chaque offre alternative
-      pdf.setDrawColor(189, 195, 199);
-      pdf.setLineWidth(0.5);
-      pdf.rect(20, y - 2, 170, 25);
       
       pdf.setFontSize(12);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(`${quote.company_name} - ${quote.product_name}`, 25, y + 5);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(231, 76, 60);
+      pdf.text('EXCLUSIONS', 15, y);
+      y += 8;
       
-      pdf.setFontSize(10);
-      pdf.text(`${this.formatCurrency(quote.monthly_premium)}/mois`, 25, y + 12);
-      pdf.text(`${this.formatCurrency(quote.annual_premium)}/an`, 25, y + 18);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(this.colors.dark.r, this.colors.dark.g, this.colors.dark.b);
       
-      if (quote.rating) {
-        pdf.text(`Note: ${quote.rating}/5`, 140, y + 12);
-      }
+      quoteData.exclusions.slice(0, 5).forEach(exclusion => {
+        const lines = pdf.splitTextToSize(`• ${exclusion}`, 170);
+        lines.forEach((line: string) => {
+          if (y > 270) {
+            pdf.addPage();
+            y = 20;
+          }
+          pdf.text(line, 20, y);
+          y += 4;
+        });
+        y += 1;
+      });
       
-      y += 30;
-    });
+      y += 5;
+    }
     
-    return y + 10;
+    return y;
   }
 
-  /**
-   * Ajoute les recommandations
-   */
-  private addRecommendations(pdf: jsPDF, recommendations: string[], startY: number): number {
-    if (!recommendations || recommendations.length === 0) return startY;
-    
+  private addAlternativeOffersTable(pdf: jsPDF, quotes: any[], startY: number): number {
     let y = startY;
     
-    pdf.setFontSize(16);
-    pdf.setTextColor(41, 128, 185);
-    pdf.text('CONSEILS ET RECOMMANDATIONS', 20, y);
-    y += 15;
+    // Vérifier si on a assez d'espace
+    if (y > 220) {
+      pdf.addPage();
+      y = 20;
+    }
     
-    pdf.setFontSize(10);
-    pdf.setTextColor(0, 0, 0);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(this.colors.secondary.r, this.colors.secondary.g, this.colors.secondary.b);
+    pdf.text('AUTRES OFFRES', 15, y);
+    y += 8;
     
-    recommendations.slice(0, 5).forEach(recommendation => {
-      const lines = pdf.splitTextToSize(`💡 ${recommendation}`, 160);
+    const quotesData: any[] = quotes.slice(0, 3).map(quote => [
+      quote.company_name || 'Assureur',
+      quote.product_name || 'Produit',
+      this.formatCurrency(quote.monthly_premium || 0),
+      quote.rating ? `${quote.rating}/5 ⭐` : 'N/A'
+    ]);
+    
+    autoTable(pdf, {
+      startY: y,
+      head: [['Assureur', 'Produit', 'Prime/mois', 'Note']],
+      body: quotesData,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [this.colors.secondary.r, this.colors.secondary.g, this.colors.secondary.b],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      bodyStyles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      margin: { left: 15, right: 15 }
+    });
+    
+    return (pdf as any).lastAutoTable.finalY + 10;
+  }
+
+  private addRecommendations(pdf: jsPDF, recommendations: string[], startY: number): number {
+    let y = startY;
+    
+    // Vérifier si on a assez d'espace
+    if (y > 230) {
+      pdf.addPage();
+      y = 20;
+    }
+    
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.text('CONSEILS', 15, y);
+    y += 8;
+    
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(this.colors.dark.r, this.colors.dark.g, this.colors.dark.b);
+    
+    recommendations.slice(0, 3).forEach(rec => {
+      const lines = pdf.splitTextToSize(`• ${rec}`, 170);
       lines.forEach((line: string) => {
-        pdf.text(line, 25, y);
-        y += 6;
+        if (y > 270) {
+          pdf.addPage();
+          y = 20;
+        }
+        pdf.text(line, 20, y);
+        y += 5;
       });
       y += 2;
     });
     
-    return y + 10;
+    return y;
   }
 
-  /**
-   * Ajoute le pied de page
-   */
-  private addFooter(pdf: jsPDF): void {
+  private addSimbotFooter(pdf: jsPDF): void {
     const pageHeight = pdf.internal.pageSize.height;
     
-    // Ligne de séparation
-    pdf.setDrawColor(189, 195, 199);
-    pdf.setLineWidth(0.5);
-    pdf.line(20, pageHeight - 30, 190, pageHeight - 30);
+    pdf.setDrawColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.setLineWidth(1);
+    pdf.line(15, pageHeight - 25, 195, pageHeight - 25);
     
-    // Texte du pied de page
     pdf.setFontSize(8);
-    pdf.setTextColor(127, 140, 141);
-    pdf.text('Ce devis est valable 30 jours à compter de sa date de génération.', 20, pageHeight - 20);
-    pdf.text('Pour toute question, contactez notre service client au +241 01 00 00 00', 20, pageHeight - 15);
-    pdf.text('© 2024 Comparateur Bamboo - Tous droits réservés', 20, pageHeight - 10);
+    pdf.setTextColor(this.colors.dark.r, this.colors.dark.g, this.colors.dark.b);
+    pdf.text('Ce devis est valable 30 jours. Pour souscrire, contactez-nous.', 15, pageHeight - 18);
+    pdf.text('Simbot Gab - Libreville, Gabon | Tel: +241 01 00 00 00 | contact@simbotgab.com', 15, pageHeight - 13);
     
-    // Numéro de page
-    pdf.text(`Page 1`, 170, pageHeight - 10);
+    pdf.setTextColor(this.colors.primary.r, this.colors.primary.g, this.colors.primary.b);
+    pdf.text('© 2024 Simbot Gab - Tous droits réservés', 15, pageHeight - 8);
   }
 
-  /**
-   * Méthodes utilitaires
-   */
+  private getInsuranceSpecificDetails(type: string, formData: any): Array<{label: string, value: string}> {
+    const details: Array<{label: string, value: string}> = [];
+    
+    switch (type) {
+      case 'auto':
+        details.push(
+          { label: 'Catégorie :', value: formData.vehicleCategory || 'Particulier' },
+          { label: 'Valeur véhicule :', value: formData.vehicleValue ? this.formatCurrency(formData.vehicleValue) : 'Non spécifié' },
+          { label: 'Carburant :', value: formData.fuelType || 'Non spécifié' },
+          { label: 'Places :', value: formData.seats ? `${formData.seats} places` : 'Non spécifié' },
+          { label: 'Ville :', value: formData.city || 'Non spécifié' }
+        );
+        break;
+      case 'habitation':
+        details.push(
+          { label: 'Type logement :', value: formData.propertyType || 'Non spécifié' },
+          { label: 'Valeur bien :', value: formData.propertyValue ? this.formatCurrency(formData.propertyValue) : 'Non spécifié' },
+          { label: 'Surface :', value: formData.surface ? `${formData.surface} m²` : 'Non spécifié' },
+          { label: 'Ville :', value: formData.city || 'Non spécifié' }
+        );
+        break;
+      case 'vie':
+        details.push(
+          { label: 'Capital souhaité :', value: formData.coverageAmount ? this.formatCurrency(formData.coverageAmount) : 'Non spécifié' },
+          { label: 'État santé :', value: formData.healthStatus || 'Non spécifié' },
+          { label: 'Âge :', value: formData.age ? `${formData.age} ans` : 'Non spécifié' }
+        );
+        break;
+      case 'sante':
+        details.push(
+          { label: 'Composition :', value: formData.familySize || '1 personne' },
+          { label: 'Niveau couverture :', value: formData.coverageLevel || 'Standard' },
+          { label: 'Âge :', value: formData.age ? `${formData.age} ans` : 'Non spécifié' }
+        );
+        break;
+      case 'voyage':
+        details.push(
+          { label: 'Destination :', value: formData.destination || 'Non spécifié' },
+          { label: 'Durée :', value: formData.duration ? `${formData.duration} jours` : 'Non spécifié' },
+          { label: 'Voyageurs :', value: formData.travelers || '1' }
+        );
+        break;
+    }
+    
+    return details;
+  }
+
   private formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XAF',
-      minimumFractionDigits: 0
-    }).format(amount).replace('XAF', 'FCFA');
+    if (!amount || isNaN(amount)) return '0 FCFA';
+    
+    return amount.toLocaleString('fr-FR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).replace(/\s/g, ' ') + ' FCFA';
   }
 
   private formatDate(date: Date): string {
-    return new Intl.DateTimeFormat('fr-FR', {
+    return date.toLocaleDateString('fr-FR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
-    }).format(date);
-  }
-
-  private getDateString(): string {
-    const now = new Date();
-    return now.toISOString().slice(0, 10).replace(/-/g, '');
+    });
   }
 
   private getInsuranceTypeName(type: string): string {
     const types: { [key: string]: string } = {
-      'auto': 'Assurance Automobile',
-      'habitation': 'Assurance Habitation',
-      'vie': 'Assurance Vie',
-      'sante': 'Assurance Santé',
-      'voyage': 'Assurance Voyage',
-      'transport': 'Assurance Transport'
+      'auto': 'Automobile',
+      'habitation': 'Habitation',
+      'vie': 'Vie',
+      'sante': 'Santé',
+      'voyage': 'Voyage',
+      'transport': 'Transport'
     };
     return types[type] || type;
   }

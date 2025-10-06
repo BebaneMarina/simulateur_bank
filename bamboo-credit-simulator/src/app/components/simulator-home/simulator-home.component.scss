@@ -1,5 +1,5 @@
 // ========================================================================================
-// SIMULATOR-HOME.COMPONENT.SCSS - Version corrigée
+// SIMULATOR-HOME.COMPONENT.SCSS - Version complète avec carrousel PNG
 // ========================================================================================
 
 // Variables de couleurs - Tons verts foncés cohérents
@@ -53,6 +53,24 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
   100% { transform: translateX(0); }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.05); 
+  }
+}
+
 // Container responsive
 .container {
   max-width: 1280px;
@@ -75,54 +93,38 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
   font-family: $font-family;
 }
 
-// Section Hero avec carrousel
+// Section Hero avec carrousel PNG
 .hero {
-  background: linear-gradient(135deg, $very-light-green 0%, rgba($light-green, 0.5) 100%);
+  background: linear-gradient(135deg, rgba($very-light-green, 0.5) 100%);
   padding: 8rem 0 6rem;
   position: relative;
   overflow: hidden;
   
-  // Carrousel d'images en arrière-plan
-  .hero-carousel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0.1;
-    overflow: hidden;
-    z-index: 0;
-  }
+  // Carrousel d'images PNG en arrière-plan
+ .hero-carousel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
 
   .carousel-track {
     display: flex;
-    width: 500%;
+    width: 500%; // 100% × 5 images
     height: 100%;
-    animation: slide 20s infinite;
+    animation: slide 30s infinite ease-in-out;
   }
 
   .carousel-slide {
-    width: 20%;
+    width: 20%; // 100% ÷ 5 images
     height: 100%;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    
-    &.slide-1 { 
-      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%23134e4a" width="400" height="300"/><circle fill="%23ffffff" opacity="0.1" cx="100" cy="100" r="50"/><circle fill="%23ffffff" opacity="0.1" cx="300" cy="200" r="60"/><rect fill="%23ffffff" opacity="0.1" x="50" y="200" width="100" height="60" rx="10"/></svg>'); 
-    }
-    &.slide-2 { 
-      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%23155e63" width="400" height="300"/><polygon fill="%23ffffff" opacity="0.1" points="200,50 300,150 200,250 100,150"/><circle fill="%23ffffff" opacity="0.1" cx="350" cy="50" r="30"/></svg>'); 
-    }
-    &.slide-3 { 
-      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%230f766e" width="400" height="300"/><rect fill="%23ffffff" opacity="0.1" x="100" y="100" width="200" height="100" rx="20"/><circle fill="%23ffffff" opacity="0.1" cx="200" cy="50" r="25"/></svg>'); 
-    }
-    &.slide-4 { 
-      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%2314b8a6" width="400" height="300"/><path fill="%23ffffff" opacity="0.1" d="M200,50 L350,150 L200,250 L50,150 Z"/></svg>'); 
-    }
-    &.slide-5 { 
-      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%232dd4bf" width="400" height="300"/><circle fill="%23ffffff" opacity="0.1" cx="150" cy="150" r="80"/><rect fill="%23ffffff" opacity="0.1" x="250" y="100" width="80" height="100" rx="15"/></svg>'); 
-    }
+    flex-shrink: 0;
   }
   
   &::before {
@@ -183,7 +185,7 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
   
   .subtitle {
     font-size: 1.125rem;
-    color: $gray-600;
+    color: $white;
     margin: 0 0 2rem;
     line-height: 1.6;
     
@@ -362,7 +364,7 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
     
     p {
       font-size: 1.125rem;
-      color: $gray-600;
+      color: $gray-900;
       max-width: 600px;
       margin: 0 auto;
     }
@@ -615,7 +617,7 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
       margin: 0 auto;
       
       @media (min-width: 768px) {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
       }
       
       .action-card {
@@ -672,505 +674,20 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
   }
 }
 
-// Section Stats
-.stats-section {
-  padding: 4rem 0;
-  background: linear-gradient(135deg, $gray-900 0%, $gray-800 100%);
-  
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-    
-    @media (min-width: 768px) {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-  
-  .stat-item {
-    text-align: center;
-    padding: 1.5rem;
-    background: rgba($white, 0.05);
-    border-radius: 1rem;
-    border: 1px solid rgba($white, 0.1);
-    transition: all 0.3s ease;
-    
-    &:hover {
-      background: rgba($white, 0.1);
-      transform: translateY(-4px);
-      
-      .stat-svg svg {
-        transform: scale(1.1);
-      }
-    }
-    
-    .stat-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 3.5rem;
-      height: 3.5rem;
-      background: linear-gradient(135deg, $primary-green 0%, $accent-green 100%);
-      border-radius: 50%;
-      margin-bottom: 1rem;
-      
-      .stat-svg {
-        width: 2rem;
-        height: 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        
-        svg {
-          width: 100%;
-          height: 100%;
-          transition: all 0.3s ease;
-        }
-      }
-    }
-    
-    .stat-number {
-      font-size: 2.25rem;
-      font-weight: 800;
-      color: $white;
-      margin-bottom: 0.5rem;
-      
-      @media (min-width: 768px) {
-        font-size: 2.5rem;
-      }
-    }
-    
-    .stat-label {
-      color: $gray-300;
-      font-size: 0.875rem;
-      font-weight: 500;
-      margin: 0;
-    }
-  }
-}
-
-// Styles à ajouter à simulator-home.component.scss après la section stats-section
-
-// Section d'invitation à l'authentification
-.auth-invitation-section {
-  padding: 6rem 0;
-  background: linear-gradient(135deg, $gray-50 0%, $very-light-green 100%);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 60%;
-    height: 200%;
-    background: radial-gradient(circle, rgba($primary-green, 0.05) 0%, transparent 70%);
-    transform: rotate(15deg);
-  }
-
-  .auth-invitation-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-
-    @media (max-width: 1024px) {
-      grid-template-columns: 1fr;
-      gap: 3rem;
-      text-align: center;
-    }
-  }
-
-  .invitation-text {
-    h2 {
-      font-size: 2.25rem;
-      font-weight: 800;
-      color: $gray-900;
-      margin: 0 0 1.5rem;
-      line-height: 1.2;
-
-      @media (min-width: 768px) {
-        font-size: 2.5rem;
-      }
-
-      @media (max-width: 640px) {
-        font-size: 1.875rem;
-      }
-    }
-
-    p {
-      font-size: 1.125rem;
-      color: $gray-600;
-      margin: 0 0 2.5rem;
-      line-height: 1.6;
-
-      @media (max-width: 640px) {
-        font-size: 1rem;
-      }
-    }
-
-    .benefits-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-bottom: 2.5rem;
-
-      .benefit-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 0.75rem;
-        background: $white;
-        border-radius: 0.75rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-
-        @media (max-width: 640px) {
-          justify-content: center;
-          text-align: center;
-        }
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 15px rgba($primary-green, 0.15);
-
-          .benefit-icon {
-            transform: scale(1.1);
-          }
-        }
-
-        .benefit-icon {
-          font-size: 1.5rem;
-          background: linear-gradient(135deg, $primary-green 0%, $accent-green 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          transition: transform 0.3s ease;
-          flex-shrink: 0;
-        }
-
-        span {
-          font-weight: 600;
-          color: $gray-700;
-          font-size: 0.875rem;
-
-          @media (min-width: 768px) {
-            font-size: 1rem;
-          }
-        }
-      }
-    }
-
-    .auth-buttons {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-
-      @media (max-width: 640px) {
-        flex-direction: column;
-        align-items: center;
-      }
-    }
-
-    .btn-auth-primary {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      background: linear-gradient(135deg, $primary-green 0%, $secondary-green 100%);
-      color: $white;
-      border: none;
-      padding: 1rem 2rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 1.125rem;
-      text-decoration: none;
-
-      &:hover {
-        background: linear-gradient(135deg, $secondary-green 0%, $primary-green 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba($primary-green, 0.3);
-      }
-    }
-
-    .btn-auth-secondary {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      background: $white;
-      color: $primary-green;
-      border: 2px solid $primary-green;
-      padding: 1rem 2rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 1.125rem;
-      text-decoration: none;
-
-      &:hover {
-        background: $primary-green;
-        color: $white;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba($primary-green, 0.3);
-      }
-    }
-
-    .auth-note {
-      color: $gray-500;
-      font-size: 0.875rem;
-      font-style: italic;
-      margin: 0;
-      text-align: center;
-
-      @media (max-width: 1024px) {
-        text-align: center;
-      }
-    }
-  }
-
-  .invitation-visual {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-    .dashboard-preview {
-      background: $white;
-      border-radius: 1rem;
-      padding: 1.5rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      max-width: 350px;
-      width: 100%;
-      position: relative;
-      
-      &::before {
-        content: '';
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: linear-gradient(135deg, $primary-green 0%, $accent-green 50%, $teal 100%);
-        border-radius: inherit;
-        z-index: -1;
-      }
-
-      .preview-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid $gray-200;
-
-        .preview-avatar {
-          width: 3rem;
-          height: 3rem;
-          background: linear-gradient(135deg, $primary-green 0%, $accent-green 100%);
-          border-radius: 50%;
-          position: relative;
-
-          &::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 1.5rem;
-            height: 1.5rem;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
-            background-size: contain;
-            background-repeat: no-repeat;
-          }
-        }
-
-        .preview-info {
-          .preview-name {
-            width: 120px;
-            height: 1rem;
-            background: linear-gradient(90deg, $gray-300 0%, $gray-200 50%, $gray-300 100%);
-            border-radius: 0.25rem;
-            margin-bottom: 0.5rem;
-            animation: shimmer 2s infinite;
-          }
-
-          .preview-subtitle {
-            width: 80px;
-            height: 0.75rem;
-            background: linear-gradient(90deg, $gray-300 0%, $gray-200 50%, $gray-300 100%);
-            border-radius: 0.25rem;
-            animation: shimmer 2s infinite 0.5s;
-          }
-        }
-      }
-
-      .preview-cards {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-
-        .preview-card {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 1rem;
-          background: $gray-50;
-          border-radius: 0.5rem;
-          transition: all 0.3s ease;
-
-          &:hover {
-            background: $very-light-green;
-            transform: translateX(4px);
-          }
-
-          .card-icon {
-            font-size: 1.25rem;
-            opacity: 0.7;
-          }
-
-          .card-content {
-            flex: 1;
-
-            .card-title {
-              width: 100px;
-              height: 0.875rem;
-              background: linear-gradient(90deg, $gray-300 0%, $gray-200 50%, $gray-300 100%);
-              border-radius: 0.25rem;
-              margin-bottom: 0.5rem;
-              animation: shimmer 2s infinite 1s;
-            }
-
-            .card-subtitle {
-              width: 70px;
-              height: 0.75rem;
-              background: linear-gradient(90deg, $gray-300 0%, $gray-200 50%, $gray-300 100%);
-              border-radius: 0.25rem;
-              animation: shimmer 2s infinite 1.5s;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
-  }
-}
-
-// Responsive pour la section d'authentification
-@media (max-width: 768px) {
-  .auth-invitation-section {
-    padding: 4rem 0;
-
-    .auth-invitation-content {
-      gap: 2rem;
-    }
-
-    .invitation-text {
-      h2 {
-        font-size: 1.75rem;
-      }
-
-      .benefits-list {
-        .benefit-item {
-          flex-direction: column;
-          text-align: center;
-          gap: 0.5rem;
-        }
-      }
-    }
-
-    .invitation-visual {
-      .dashboard-preview {
-        max-width: 300px;
-        padding: 1rem;
-
-        .preview-header {
-          .preview-avatar {
-            width: 2.5rem;
-            height: 2.5rem;
-
-            &::after {
-              width: 1.25rem;
-              height: 1.25rem;
-            }
-          }
-        }
-
-        .preview-cards {
-          .preview-card {
-            padding: 0.75rem;
-
-            .card-icon {
-              font-size: 1rem;
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .auth-invitation-section {
-    padding: 3rem 0;
-
-    .invitation-text {
-      h2 {
-        font-size: 1.5rem;
-      }
-
-      p {
-        font-size: 0.875rem;
-      }
-
-      .auth-buttons {
-        .btn-auth-primary,
-        .btn-auth-secondary {
-          padding: 0.875rem 1.5rem;
-          font-size: 1rem;
-        }
-      }
-    }
-
-    .invitation-visual {
-      .dashboard-preview {
-        max-width: 280px;
-      }
-    }
-  }
-}
-// Section Bamboo Assur
+// Section Bamboo Assur avec carrousel pleine largeur
 .bamboo-assur-section {
   padding: 5rem 0;
   background: linear-gradient(135deg, $very-light-green 0%, rgba($light-green, 0.3) 100%);
   
-  .assur-content {
-    display: grid;
-    gap: 3rem;
-    align-items: center;
+  .assur-header {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 4rem;
     
-    @media (min-width: 1024px) {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-  
-  .assur-info {
     .assur-logo {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 1rem;
       margin-bottom: 1.5rem;
       
@@ -1209,13 +726,22 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
     
     .assur-products {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 1rem;
       margin-bottom: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+        max-width: 300px;
+      }
       
       .product-item {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 0.75rem;
         padding: 1rem;
         background: $white;
@@ -1248,9 +774,10 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
           }
         }
         
-        span:last-child {
+        span {
           font-weight: 600;
           color: $gray-700;
+          font-size: 0.875rem;
         }
       }
     }
@@ -1262,73 +789,258 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
     }
   }
   
-  .assur-visual {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  // Carrousel pleine largeur amélioré
+  .partners-carousel-full {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    overflow: hidden;
+    padding: 4rem 0;
+    background: $white;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
     
-    .assur-graphic {
-      position: relative;
-      
-      .protection-circle {
-        width: 200px;
-        height: 200px;
-        background: linear-gradient(135deg, $primary-green 0%, $accent-green 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        animation: pulse 3s ease-in-out infinite;
-        
-        @keyframes pulse {
-          0%, 100% { 
-            transform: scale(1); 
-          }
-          50% { 
-            transform: scale(1.05); 
-          }
-        }
-        
-        &::before {
-          content: '';
-          position: absolute;
-          inset: -20px;
-          border: 3px solid rgba($primary-green, 0.3);
-          border-radius: 50%;
-          animation: pulse 3s ease-in-out infinite reverse;
-        }
-        
-        &::after {
-          content: '';
-          position: absolute;
-          inset: -40px;
-          border: 2px solid rgba($primary-green, 0.2);
-          border-radius: 50%;
-          animation: pulse 3s ease-in-out infinite;
-        }
-        
-        .shield-svg {
-          width: 4rem;
-          height: 4rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          
-          svg {
-            width: 100%;
-            height: 100%;
-          }
-          
-          @media (min-width: 768px) {
-            width: 5rem;
-            height: 5rem;
-          }
-        }
-      }
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 200px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    
+    &::before {
+      left: 0;
+      background: linear-gradient(to right, 
+        $white 0%, 
+        rgba($white, 0.8) 50%,
+        transparent 100%);
+    }
+    
+    &::after {
+      right: 0;
+      background: linear-gradient(to left, 
+        $white 0%, 
+        rgba($white, 0.8) 50%,
+        transparent 100%);
+    }
+  }
+  
+  .partners-track {
+    display: flex;
+    animation: scrollLogos 50s linear infinite;
+    
+    &:hover {
+      animation-play-state: paused;
+    }
+  }
+  
+  .partner-logo-slide {
+    flex-shrink: 0;
+    width: 220px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 2.5rem;
+    background: $white;
+    border-radius: 0.75rem;
+    margin: 0 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    @media (max-width: 768px) {
+      width: 180px;
+      height: 100px;
+      padding: 1rem 2rem;
+      margin: 0 0.75rem;
+    }
+    
+    &:hover {
+      transform: translateY(-8px) scale(1.05);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      z-index: 10;
+    }
+  }
+  
+  .partner-logo-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    // Pas d'effet grisâtre - couleurs naturelles
+    filter: none;
+    
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+  
+  @keyframes scrollLogos {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
     }
   }
 }
+
+// Responsive
+@media (max-width: 768px) {
+  .bamboo-assur-section {
+    padding: 3rem 0;
+    
+    .assur-header {
+      margin-bottom: 3rem;
+      
+      .assur-logo h2 {
+        font-size: 1.5rem;
+      }
+      
+      .assur-description {
+        font-size: 1rem;
+      }
+    }
+    
+    .partners-carousel-full {
+      padding: 3rem 0;
+      
+      &::before,
+      &::after {
+        width: 100px;
+      }
+    }
+    
+    .partner-logo-slide {
+      margin: 0 0.5rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .bamboo-assur-section {
+    .partners-carousel-full {
+      padding: 2rem 0;
+    }
+    
+    .partner-logo-slide {
+      width: 150px;
+      height: 80px;
+      padding: 0.75rem 1.5rem;
+    }
+  }
+}
+
+  
+ .assur-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 0;
+  
+  .partners-carousel {
+    width: 100%;
+    max-width: 600px;
+    overflow: hidden;
+    position: relative;
+    padding: 2rem 0;
+    
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    
+    &::before {
+      left: 0;
+      background: linear-gradient(to right, 
+        rgba($very-light-green, 1) 0%, 
+        rgba($very-light-green, 0) 100%);
+    }
+    
+    &::after {
+      right: 0;
+      background: linear-gradient(to left, 
+        rgba($very-light-green, 1) 0%, 
+        rgba($very-light-green, 0) 100%);
+    }
+  }
+  
+  .partners-track {
+    display: flex;
+    animation: scrollLogos 30s linear infinite;
+    
+    &:hover {
+      animation-play-state: paused;
+    }
+  }
+  
+  .partner-logo-slide {
+    flex-shrink: 0;
+    width: 150px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1.5rem;
+    
+    @media (max-width: 768px) {
+      width: 120px;
+      height: 60px;
+      padding: 0 1rem;
+    }
+  }
+  
+  .partner-logo-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: grayscale(100%) opacity(0.6);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      filter: grayscale(0%) opacity(1);
+      transform: scale(1.1);
+    }
+  }
+  
+  @keyframes scrollLogos {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 1024px) {
+  .bamboo-assur-section {
+    .assur-content {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+    
+    .partners-carousel {
+      margin-top: 2rem;
+    }
+  }
+}
+
 
 // Section Advantages
 .advantages-section {
@@ -1373,7 +1085,6 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
     &:hover {
       transform: translateY(-8px);
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      border-color: rgba($primary-green, 0.2);
       
       .advantage-svg svg {
         transform: scale(1.1);
@@ -1414,7 +1125,6 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
         z-index: 0;
       }
       
-      // Couleurs spécifiques par avantage
       &.text-blue-600 {
         background: linear-gradient(135deg, rgba($info-blue, 0.1) 0%, rgba($info-blue, 0.2) 100%);
         color: $info-blue;
@@ -1458,108 +1168,6 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
       font-size: 0.875rem;
       line-height: 1.5;
       margin: 0;
-    }
-  }
-}
-
-// Section Testimonials
-.testimonials-section {
-  padding: 5rem 0;
-  background: linear-gradient(135deg, $gray-50 0%, $very-light-green 100%);
-  
-  h2 {
-    text-align: center;
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: $gray-900;
-    margin: 0 0 4rem;
-    
-    @media (min-width: 768px) {
-      font-size: 2.5rem;
-    }
-  }
-  
-  .testimonials-grid {
-    display: grid;
-    gap: 2rem;
-    
-    @media (min-width: 768px) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    @media (min-width: 1024px) {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-  
-  .testimonial-item {
-    background: $white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-    
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      border-color: rgba($primary-green, 0.2);
-    }
-    
-    .testimonial-content {
-      margin-bottom: 1.5rem;
-      
-      p {
-        font-style: italic;
-        color: $gray-700;
-        font-size: 1rem;
-        line-height: 1.6;
-        margin: 0;
-      }
-    }
-    
-    .testimonial-author {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      
-      .author-avatar {
-        width: 3rem;
-        height: 3rem;
-        background: linear-gradient(135deg, $primary-green 0%, $accent-green 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: $white;
-        font-weight: 700;
-        font-size: 1.125rem;
-      }
-      
-      .author-info {
-        strong {
-          display: block;
-          font-weight: 600;
-          color: $gray-900;
-          margin-bottom: 0.25rem;
-        }
-        
-        span {
-          color: $gray-600;
-          font-size: 0.875rem;
-        }
-      }
-    }
-    
-    .testimonial-rating {
-      text-align: center;
-      
-      .star {
-        color: $gold;
-        font-size: 1.125rem;
-        margin: 0 0.25rem;
-      }
     }
   }
 }
@@ -1652,97 +1260,6 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
   }
 }
 
-// Section Newsletter
-.newsletter-section {
-  padding: 4rem 0;
-  background-color: $gray-800;
-  
-  .newsletter-content {
-    text-align: center;
-    max-width: 600px;
-    margin: 0 auto;
-    
-    h3 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: $white;
-      margin: 0 0 1rem;
-      
-      @media (min-width: 768px) {
-        font-size: 1.875rem;
-      }
-    }
-    
-    p {
-      color: $gray-300;
-      font-size: 1rem;
-      margin: 0 0 2rem;
-      line-height: 1.6;
-    }
-  }
-  
-  .newsletter-form {
-    .form-group {
-      display: flex;
-      gap: 0.75rem;
-      flex-direction: column;
-      
-      @media (min-width: 640px) {
-        flex-direction: row;
-      }
-      
-      .newsletter-input {
-        flex: 1;
-        padding: 1rem;
-        border: 2px solid $gray-600;
-        border-radius: 0.5rem;
-        background: $gray-700;
-        color: $white;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        
-        &:focus {
-          outline: none;
-          border-color: $primary-green;
-          background: $gray-600;
-        }
-        
-        &::placeholder {
-          color: $gray-400;
-        }
-      }
-      
-      .btn-newsletter {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        background: linear-gradient(135deg, $primary-green 0%, $accent-green 100%);
-        color: $white;
-        border: none;
-        padding: 1rem 1.5rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-        
-        &:hover {
-          background: linear-gradient(135deg, $accent-green 0%, $primary-green 100%);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 15px rgba($primary-green, 0.3);
-        }
-        
-        &:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none !important;
-        }
-      }
-    }
-  }
-}
-
 // Classes utilitaires pour les couleurs de background
 .bg-blue-100 { background-color: rgba($info-blue, 0.1); }
 .bg-green-100 { background-color: rgba($success-green, 0.1); }
@@ -1762,107 +1279,6 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
 .text-teal-600 { color: $teal; }
 .text-indigo-600 { color: $indigo; }
 .text-yellow-600 { color: $gold; }
-
-// Responsive design
-@media (max-width: 640px) {
-  .hero {
-    padding: 4rem 0;
-    
-    h1 {
-      font-size: 1.875rem !important;
-    }
-    
-    .subtitle {
-      font-size: 1rem !important;
-    }
-  }
-  
-  .services-section {
-    .services-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .quick-actions .actions-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  .stats-section {
-    .stats-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  .bamboo-assur-section {
-    .assur-content {
-      grid-template-columns: 1fr;
-    }
-    
-    .assur-products {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  .advantages-section {
-    .advantages-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  .testimonials-section {
-    .testimonials-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  .cta-section {
-    .cta-buttons {
-      flex-direction: column;
-    }
-  }
-  
-  .newsletter-section {
-    .newsletter-form .form-group {
-      flex-direction: column;
-    }
-  }
-}
-
-// Améliorations d'accessibilité
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  
-  .hero::before {
-    animation: none;
-  }
-  
-  .carousel-track {
-    animation: none !important;
-  }
-  
-  .protection-circle {
-    animation: none !important;
-    
-    &::before,
-    &::after {
-      animation: none !important;
-    }
-  }
-}
-
-// Focus visible pour l'accessibilité
-.service-card:focus-visible,
-.action-card:focus-visible,
-.category-button:focus-visible {
-  outline: 2px solid $primary-green;
-  outline-offset: 2px;
-}
-
-// Styles finaux pour les éléments restants
 
 // Section icon générique
 .section-icon {
@@ -1904,17 +1320,75 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
   }
 }
 
-// Responsive final adjustments
-@media (max-width: 480px) {
+// Responsive design
+@media (max-width: 768px) {
+  .hero {
+    padding: 6rem 0 4rem;
+    
+    h1 {
+      font-size: 2rem !important;
+    }
+    
+    .subtitle {
+      font-size: 1rem !important;
+    }
+  }
+  
+  .rates-section {
+    .rates-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .rates-list {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+  
+  .services-section {
+    .services-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .quick-actions .actions-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .bamboo-assur-section {
+    .assur-content {
+      grid-template-columns: 1fr;
+    }
+    
+    .assur-products {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .advantages-section {
+    .advantages-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .cta-section {
+    .cta-buttons {
+      flex-direction: column;
+    }
+  }
+}
+
+@media (max-width: 640px) {
   .container {
     padding: 0 0.75rem;
   }
   
   .hero {
-    padding: 3rem 0;
+    padding: 4rem 0 3rem;
     
     h1 {
-      font-size: 1.5rem !important;
+      font-size: 1.75rem !important;
       line-height: 1.2;
     }
     
@@ -1929,6 +1403,7 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
       .btn-secondary {
         padding: 0.75rem 1.5rem;
         font-size: 1rem;
+        width: 100%;
       }
     }
   }
@@ -1936,11 +1411,17 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
   .rates-section {
     padding: 1.5rem 0;
     
+    h3 {
+      font-size: 1.125rem;
+    }
+    
     .rates-list {
       gap: 0.5rem;
       
       .rate-item {
         padding: 0.5rem 0.75rem;
+        flex: 1;
+        min-width: calc(50% - 0.25rem);
         
         .rate-label {
           font-size: 0.75rem;
@@ -1950,6 +1431,11 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
           font-size: 0.875rem;
         }
       }
+    }
+    
+    .btn-rates-detail {
+      width: 100%;
+      text-align: center;
     }
   }
   
@@ -1965,6 +1451,20 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
       
       p {
         font-size: 1rem;
+      }
+    }
+    
+    .service-categories {
+      gap: 0.5rem;
+      
+      .category-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+        
+        .category-icon {
+          width: 1rem;
+          height: 1rem;
+        }
       }
     }
     
@@ -1993,5 +1493,188 @@ $font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sa
         font-size: 0.6875rem;
       }
     }
+    
+    .quick-actions {
+      h3 {
+        font-size: 1.25rem;
+      }
+      
+      .actions-grid {
+        grid-template-columns: 1fr;
+        
+        .action-card {
+          padding: 1.25rem;
+        }
+      }
+    }
+  }
+  
+  .bamboo-assur-section {
+    padding: 3rem 0;
+    
+    .assur-info {
+      .assur-logo {
+        h2 {
+          font-size: 1.5rem;
+        }
+      }
+      
+      .assur-description {
+        font-size: 1rem;
+      }
+      
+      .assur-products {
+        grid-template-columns: 1fr;
+      }
+      
+      .btn-assur {
+        width: 100%;
+        text-align: center;
+      }
+    }
+    
+    .assur-visual {
+      .protection-circle {
+        width: 180px;
+        height: 180px;
+      }
+    }
+  }
+  
+  .advantages-section {
+    padding: 3rem 0;
+    
+    .section-header {
+      h2 {
+        font-size: 1.75rem;
+      }
+    }
+    
+    .advantage-item {
+      padding: 1.5rem 1rem;
+      
+      .advantage-icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        
+        .advantage-svg {
+          width: 2rem;
+          height: 2rem;
+        }
+      }
+      
+      h3 {
+        font-size: 1rem;
+      }
+      
+      p {
+        font-size: 0.8125rem;
+      }
+    }
+  }
+  
+  .cta-section {
+    padding: 3rem 0;
+    
+    h2 {
+      font-size: 1.75rem;
+    }
+    
+    p {
+      font-size: 1rem;
+    }
+    
+    .cta-buttons {
+      .btn-white,
+      .btn-outline {
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 3rem 0 2rem;
+    
+    h1 {
+      font-size: 1.5rem !important;
+    }
+  }
+  
+  .rates-section {
+    .rates-list {
+      flex-direction: column;
+      
+      .rate-item {
+        width: 100%;
+        min-width: 100%;
+      }
+    }
+  }
+}
+
+// Améliorations d'accessibilité
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .hero::before {
+    animation: none;
+  }
+  
+  .carousel-track {
+    animation: none !important;
+  }
+  
+  .protection-circle {
+    animation: none !important;
+    
+    &::before,
+    &::after {
+      animation: none !important;
+    }
+  }
+}
+
+// Focus visible pour l'accessibilité
+.service-card:focus-visible,
+.action-card:focus-visible,
+.category-button:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-rates-detail:focus-visible,
+.btn-assur:focus-visible,
+.btn-white:focus-visible,
+.btn-outline:focus-visible {
+  outline: 2px solid $primary-green;
+  outline-offset: 2px;
+}
+
+// Optimisations de performance
+.hero-carousel,
+.carousel-track,
+.carousel-slide {
+  will-change: transform;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+// Print styles
+@media print {
+  .hero-carousel,
+  .hero::before {
+    display: none;
+  }
+  
+  .cta-buttons,
+  .btn-rates-detail,
+  .btn-assur {
+    display: none;
   }
 }

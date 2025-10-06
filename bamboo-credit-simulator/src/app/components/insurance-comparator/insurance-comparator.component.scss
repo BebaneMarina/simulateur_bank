@@ -1764,3 +1764,647 @@ $shadow-premium: 0 10px 25px rgba(16, 185, 129, 0.2);
     visibility: visible;
   }
 }
+// Styles additionnels pour l'affichage des résultats filtrés
+// À ajouter dans insurance-comparator.component.scss
+
+// SECTION RÉSULTATS AVEC FILTRAGE AMÉLIORÉ
+.enhanced-results-section {
+  margin-top: 40px;
+
+  h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #111827;
+    text-align: center;
+    margin-bottom: 30px;
+    
+    &::after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      margin: 12px auto 0;
+      border-radius: 2px;
+    }
+  }
+}
+
+// Meilleure recommandation (top offer)
+.top-recommendation {
+  margin-bottom: 40px;
+
+  .recommendation-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+    animation: pulse-gold 2s infinite;
+  }
+
+  @keyframes pulse-gold {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+
+  .offer-card.premium {
+    border: 3px solid #10b981;
+    box-shadow: 0 12px 30px rgba(16, 185, 129, 0.25);
+    position: relative;
+    background: linear-gradient(145deg, #ffffff 0%, rgba(16, 185, 129, 0.03) 100%);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 12px 12px 0 0;
+    }
+  }
+}
+
+// Cartes d'offres optimisées
+.offer-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  &.selected {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.02);
+  }
+
+  .offer-rank {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+
+  .offer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+
+    .company-info {
+      flex: 1;
+
+      h4 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 4px;
+      }
+
+      p {
+        font-size: 14px;
+        color: #6b7280;
+        margin: 0;
+      }
+    }
+
+    .score-display {
+      text-align: center;
+
+      .score-circle {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 800;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        margin-bottom: 4px;
+      }
+
+      small {
+        font-size: 11px;
+        color: #6b7280;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .offer-pricing {
+    background: rgba(16, 185, 129, 0.05);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 4px solid #10b981;
+
+    .main-price {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #10b981;
+      margin-bottom: 4px;
+
+      span {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #6b7280;
+      }
+    }
+
+    .annual-info {
+      font-size: 14px;
+      color: #6b7280;
+    }
+  }
+
+  .offer-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+
+    .offer-badge {
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+    }
+  }
+
+  .offer-recommendation {
+    background: rgba(59, 130, 246, 0.05);
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 3px solid #3b82f6;
+    margin-bottom: 20px;
+
+    strong {
+      color: #1e40af;
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    p {
+      color: #374151;
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  }
+
+  .offer-actions {
+    display: flex;
+    gap: 12px;
+
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: none;
+
+      &.btn-primary {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+      }
+
+      &.btn-outline {
+        background: transparent;
+        color: #10b981;
+        border: 2px solid #10b981;
+
+        &:hover {
+          background: #10b981;
+          color: white;
+        }
+      }
+    }
+  }
+}
+
+// Détails étendus d'une offre
+.offer-details-expanded {
+  margin-top: 20px;
+  padding: 24px;
+  background: rgba(249, 250, 251, 0.5);
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  animation: slideDown 0.3s ease;
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+  }
+
+  .detail-section {
+    h5 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .score-breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .score-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        > span:first-child {
+          font-size: 13px;
+          font-weight: 600;
+          color: #374151;
+          min-width: 100px;
+        }
+
+        .score-bar {
+          flex: 1;
+          height: 8px;
+          background: #e5e7eb;
+          border-radius: 4px;
+          overflow: hidden;
+
+          .fill {
+            height: 100%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 4px;
+            transition: width 0.6s ease;
+          }
+        }
+
+        > span:last-child {
+          font-size: 13px;
+          font-weight: 700;
+          color: #10b981;
+          min-width: 50px;
+          text-align: right;
+        }
+      }
+    }
+
+    .contact-info {
+      p {
+        margin: 8px 0;
+        font-size: 14px;
+        color: #374151;
+
+        strong {
+          color: #111827;
+        }
+      }
+    }
+
+    .advantages-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        padding: 8px 0 8px 24px;
+        font-size: 14px;
+        color: #374151;
+        position: relative;
+        line-height: 1.5;
+
+        &::before {
+          content: '✓';
+          position: absolute;
+          left: 0;
+          color: #10b981;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+}
+
+.insurer-logo-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 24px;
+  margin-right: 1rem;
+}
+
+.insurer-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: white;
+  padding: 8px;
+  margin-right: 1rem;
+  
+  &[src=""], &:not([src]) {
+    display: none;
+  }
+}
+
+
+
+// Autres offres classées
+.ranked-offers {
+  margin-top: 40px;
+
+  h4 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 24px;
+    padding-left: 12px;
+    border-left: 4px solid #10b981;
+  }
+
+  .offers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+
+    .offer-card.standard {
+      .offer-rank {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+      }
+    }
+  }
+}
+
+// Versions condensées pour les offres secondaires
+.offer-details-condensed {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(249, 250, 251, 0.7);
+  border-radius: 8px;
+  border-top: 2px solid #e5e7eb;
+
+  p {
+    font-size: 13px;
+    color: #374151;
+    margin-bottom: 12px;
+    line-height: 1.5;
+
+    strong {
+      color: #111827;
+    }
+  }
+
+  .quick-contact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+
+    span {
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .btn-link {
+      background: none;
+      border: none;
+      color: #3b82f6;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+
+      &:hover {
+        color: #2563eb;
+      }
+    }
+  }
+}
+
+// Boutons d'actions compacts
+.offer-actions-mini {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+
+  button {
+    flex: 1;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &.btn-primary-small {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+
+      &:hover {
+        transform: translateY(-2px);
+      }
+    }
+
+    &.btn-outline-small {
+      background: transparent;
+      color: #6b7280;
+      border: 2px solid #e5e7eb;
+
+      &:hover {
+        border-color: #10b981;
+        color: #10b981;
+      }
+    }
+  }
+}
+
+// Prix et score inline
+.price-score {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0;
+
+  .price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #10b981;
+  }
+
+  .score {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #6b7280;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 4px 12px;
+    border-radius: 16px;
+  }
+}
+
+// Mini badges
+.offer-mini-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+
+  .mini-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+  }
+}
+
+// Animation pour les offres
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .enhanced-results-section {
+    h3 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .top-recommendation {
+    .offer-card.premium {
+      padding: 20px 16px;
+    }
+  }
+
+  .offer-card {
+    padding: 20px 16px;
+
+    .offer-header {
+      flex-direction: column;
+
+      .score-display {
+        align-self: flex-end;
+        margin-top: -40px;
+
+        .score-circle {
+          width: 56px;
+          height: 56px;
+          font-size: 20px;
+        }
+      }
+    }
+
+    .offer-pricing {
+      .main-price {
+        font-size: 1.6rem;
+      }
+    }
+
+    .offer-actions {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+
+  .offer-details-expanded {
+    .details-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .ranked-offers {
+    .offers-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .offer-card {
+    .offer-rank {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+
+    .offer-badges {
+      .offer-badge {
+        font-size: 11px;
+        padding: 3px 10px;
+      }
+    }
+  }
+
+  .price-score {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+
+    .price {
+      font-size: 1.2rem;
+    }
+
+    .score {
+      font-size: 1rem;
+    }
+  }
+}

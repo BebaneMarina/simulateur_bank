@@ -691,19 +691,32 @@ interface AssetPaths {
                       [class.selected]="isInsurerSelected(company.id)"
                       (click)="toggleInsurer(company.id)">
                       
-                      <div class="insurer-header">
-                        <img 
-                          *ngIf="company.logo_url || getCompanyLogo(company.id)" 
-                          [src]="company.logo_url || getCompanyLogo(company.id)" 
-                          [alt]="company.name"
-                          class="insurer-logo">
-                        <div class="insurer-info">
-                          <h4>{{ company.name }}</h4>
-                          <p>{{ company.full_name }}</p>
-                        </div>
-                      </div>
-
-                      <div class="selection-indicator">
+                                 <div class="insurer-header">
+                                <!-- Logo avec gestion d'erreur améliorée -->
+                                <div class="insurer-logo-container">
+                                  <img 
+                                    *ngIf="company.logo_url" 
+                                    [src]="company.logo_url" 
+                                    [alt]="company.name"
+                                    class="insurer-logo"
+                                    (error)="onLogoError($event, company)"
+                                    loading="lazy">
+                                  
+                                  <!-- Placeholder avec initiales si pas de logo -->
+                                  <div 
+                                    *ngIf="!company.logo_url || hasLogoError(company.id)" 
+                                    class="insurer-logo-placeholder"
+                                    [style.background]="getCompanyColor(company.id)">
+                                    {{ getCompanyInitials(company.name) }}
+                                  </div>
+                                </div>
+                      
+                                <div class="insurer-info">
+                                  <h4>{{ company.name }}</h4>
+                                  <p *ngIf="company.full_name">{{ company.full_name }}</p>
+                                </div>
+                              </div>
+                        <div class="selection-indicator">
                         <span *ngIf="isInsurerSelected(company.id)" class="selected-text">✓ Sélectionné</span>
                         <span *ngIf="!isInsurerSelected(company.id)" class="select-text">Cliquer pour sélectionner</span>
                       </div>
@@ -944,6 +957,7 @@ interface AssetPaths {
                     <p>Chargement des assureurs...</p>
                   </div>
                   
+                  <!-- Dans la grille des assureurs -->
                   <div *ngIf="!isLoadingCompanies" class="insurers-grid">
                     <div 
                       *ngFor="let company of availableCompanies" 
@@ -952,16 +966,23 @@ interface AssetPaths {
                       (click)="toggleInsurer(company.id)">
                       
                       <div class="insurer-header">
+                        <!-- Logo depuis la base de données -->
                         <img 
-                          *ngIf="company.logo_url || getCompanyLogo(company.id)" 
-                          [src]="company.logo_url || getCompanyLogo(company.id)" 
+                          *ngIf="company.logo_url" 
+                          [src]="company.logo_url" 
                           [alt]="company.name"
                           class="insurer-logo"
-                          (error)="onImageError($event)"
+                          (error)="onImageError($event, company)"
                           loading="lazy">
+                        
+                        <!-- Fallback si pas de logo -->
+                        <div *ngIf="!company.logo_url" class="insurer-logo-placeholder">
+                          {{ company.name.substring(0, 2).toUpperCase() }}
+                        </div>
+                        
                         <div class="insurer-info">
                           <h4>{{ company.name }}</h4>
-                          <p>{{ company.full_name }}</p>
+                          <p *ngIf="company.full_name">{{ company.full_name }}</p>
                         </div>
                       </div>
 
@@ -977,231 +998,204 @@ interface AssetPaths {
           </ng-container>
         </div>
 
-        <!-- Results Section avec boutons PDF améliorés -->
-        <div *ngIf="simulationResults && !isLoading" class="results-section">
-          <h3>Résultats de votre comparaison</h3>
+      <!-- Section résultats mise à jour avec filtrage -->
+<div *ngIf="simulationResults && !isLoading" class="results-section">
+  <h3>Résultats de votre comparaison</h3>
+  
+  <!-- COMPOSANT DE FILTRAGE -->
+  <app-insurance-filter
+    [quotes]="getAllQuotes()"
+    [insurersList]="getInsurersList()"
+    (filtersChanged)="onFiltersChanged($event)"
+    (offerSelected)="onFilteredOfferSelected($event)">
+  </app-insurance-filter>
+
+  <!-- Affichage optimisé de la meilleure offre avec corrections -->
+  <div *ngIf="filteredResults" class="enhanced-results-section">
+    <h3>Offres recommandées selon vos critères</h3>
+    
+    <!-- Meilleure offre -->
+    <div class="top-recommendation">
+      <div class="recommendation-badge">RECOMMANDÉ POUR VOUS</div>
+      <div class="offer-card premium" 
+           [class.selected]="selectedOfferForDetails?.id === getOfferUniqueId(filteredResults.bestOffer)">
+        
+        <div class="offer-header">
+          <div class="company-info">
+            <h4>{{ filteredResults.bestOffer.product_name }}</h4>
+            <p>{{ filteredResults.bestOffer.company_name }}</p>
+          </div>
+        </div>
+        
+        <div class="offer-pricing">
+          <div class="main-price">
+            {{ formatCurrency(filteredResults.bestOffer.monthly_premium) }}
+            <span>/mois</span>
+          </div>
+          <div class="annual-info">
+            {{ formatCurrency(filteredResults.bestOffer.annual_premium || (filteredResults.bestOffer.monthly_premium * 12)) }} par an
+          </div>
+        </div>
+        
+        <div class="offer-badges">
+          <span *ngFor="let badge of filteredResults.bestOffer.badges" class="offer-badge">
+            {{ badge }}
+          </span>
+        </div>
+        
+        <div class="offer-recommendation">
+          <strong>Pourquoi c'est recommandé :</strong>
+          <p>{{ filteredResults.bestOffer.recommendation }}</p>
+        </div>
+        
+        <div class="offer-actions">
+          <button (click)="openApplicationModal(filteredResults.bestOffer)" class="btn-primary">
+            Souscrire maintenant
+          </button>
+          <button (click)="downloadQuote(filteredResults.bestOffer)" class="btn-outline">
+            📄 PDF
+          </button>
+          <button (click)="toggleOfferDetails(filteredResults.bestOffer)" class="btn-outline">
+            {{ selectedOfferForDetails?.id === getOfferUniqueId(filteredResults.bestOffer) ? 'Masquer' : 'Détails' }}
+          </button>
+        </div>
+      </div>
+      
+      <!-- Détails étendus -->
+      <div *ngIf="selectedOfferForDetails?.id === getOfferUniqueId(filteredResults.bestOffer)" 
+           class="offer-details-expanded">
+        <div class="details-grid">
+          <div class="detail-section">
+            <h5>Analyse du score</h5>
+            <div class="score-breakdown">
+              <div class="score-item">
+                <span>Prix</span>
+                <div class="score-bar">
+                  <div class="fill" [style.width.%]="filteredResults.bestOffer.scoreDetails.priceScore"></div>
+                </div>
+                <span>{{ filteredResults.bestOffer.scoreDetails.priceScore }}/100</span>
+              </div>
+              <div class="score-item">
+                <span>Couverture</span>
+                <div class="score-bar">
+                  <div class="fill" [style.width.%]="filteredResults.bestOffer.scoreDetails.coverageScore"></div>
+                </div>
+                <span>{{ filteredResults.bestOffer.scoreDetails.coverageScore }}/100</span>
+              </div>
+              <div class="score-item">
+                <span>Assureur</span>
+                <div class="score-bar">
+                  <div class="fill" [style.width.%]="filteredResults.bestOffer.scoreDetails.ratingScore"></div>
+                </div>
+                <span>{{ filteredResults.bestOffer.scoreDetails.ratingScore }}/100</span>
+              </div>
+            </div>
+          </div>
           
-          <!-- Main Quote avec boutons PDF -->
-          <div class="main-quote-card">
-            <div class="quote-header">
-              <div class="best-offer-badge">Meilleur tarif</div>
-            </div>
-
-          <!-- Alternative Quotes avec boutons PDF -->
-          <div *ngIf="simulationResults.quotes && simulationResults.quotes.length > 0" class="alternative-quotes">
-            <h4>offres trouvées</h4>
-            <div class="quotes-grid">
-              <div *ngFor="let quote of simulationResults.quotes" class="quote-card">
-                <div class="quote-header">
-                  <h5>{{ quote.product_name }}</h5>
-                  <div class="company-name">{{ quote.company_name }}</div>
-                </div>
-
-                <div class="quote-price">
-                  <div class="monthly">{{ formatCurrency(quote.monthly_premium) }}/mois</div>
-                  <div class="deductible">Franchise: {{ formatCurrency(quote.deductible) }}</div>
-                </div>
-
-                <div class="quote-advantages" *ngIf="quote.advantages && quote.advantages.length > 0">
-                  <ul>
-                    <li *ngFor="let advantage of quote.advantages.slice(0, 2)">{{ advantage }}</li>
-                  </ul>
-                </div>
-
-                <div class="quote-card-actions">
-                  <button 
-                    (click)="openApplicationModal(quote)" 
-                    class="btn-secondary btn-small">
-                    Souscrire
-                  </button>
-                  <button 
-                    (click)="downloadQuote(quote)" 
-                    class="btn-outline btn-small btn-pdf">
-                    📄 PDF
-                  </button>
-                </div>
-              </div>
+          <div class="detail-section">
+            <h5>Informations de contact</h5>
+            <div class="contact-info">
+              <p><strong>Téléphone :</strong> {{ getOfferContactPhone(filteredResults.bestOffer) }}</p>
+              <p><strong>Email :</strong> {{ getOfferContactEmail(filteredResults.bestOffer) }}</p>
             </div>
           </div>
+          
+          <div class="detail-section" *ngIf="getOfferAdvantages(filteredResults.bestOffer).length > 0">
+            <h5>Avantages inclus</h5>
+            <ul class="advantages-list">
+              <li *ngFor="let advantage of getOfferAdvantages(filteredResults.bestOffer)">
+                {{ advantage }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
 
-          <!-- Section résultats mise à jour avec corrections TypeScript -->
-          <div *ngIf="filteredResults" class="enhanced-results-section">
-            <h3>Offres recommandées selon vos critères</h3>
+    <!-- Autres offres classées -->
+    <div *ngIf="filteredResults.rankedOffers.length > 1" class="ranked-offers">
+      <h4>Autres offres intéressantes</h4>
+      <div class="offers-grid">
+        <div *ngFor="let offer of filteredResults.rankedOffers.slice(1, 4)" 
+             class="offer-card standard"
+             [class.selected]="selectedOfferForDetails?.id === getOfferUniqueId(offer)">
+          
+          <div class="offer-rank">{{ offer.rank }}</div>
+          
+          <div class="offer-content">
+            <h5>{{ offer.product_name }}</h5>
+            <p>{{ offer.company_name }}</p>
             
-            <!-- Affichage optimisé de la meilleure offre avec corrections -->
-            <div class="top-recommendation">
-              <div class="recommendation-badge">RECOMMANDÉ POUR VOUS</div>
-              <div class="offer-card premium" 
-                   [class.selected]="selectedOfferForDetails?.id === getOfferUniqueId(filteredResults.bestOffer)">
-                <div class="offer-header">
-                  <div class="company-info">
-                    <h4>{{ filteredResults.bestOffer.product_name }}</h4>
-                    <p>{{ filteredResults.bestOffer.company_name }}</p>
-                  </div>
-                  <div class="score-display">
-                    <div class="score-circle">{{ filteredResults.bestOffer.score }}</div>
-                    <small>Score/100</small>
-                  </div>
-                </div>
-                
-                <div class="offer-pricing">
-                  <div class="main-price">{{ formatCurrency(filteredResults.bestOffer.monthly_premium) }}<span>/mois</span></div>
-                  <div class="annual-info">{{ formatCurrency(filteredResults.bestOffer.annual_premium || (filteredResults.bestOffer.monthly_premium * 12)) }} par an</div>
-                </div>
-                
-                <div class="offer-badges">
-                  <span *ngFor="let badge of filteredResults.bestOffer.badges" class="offer-badge">{{ badge }}</span>
-                </div>
-                
-                <div class="offer-recommendation">
-                  <strong>Pourquoi c'est recommandé :</strong>
-                  <p>{{ filteredResults.bestOffer.recommendation }}</p>
-                </div>
-                
-                <div class="offer-actions">
-                  <button (click)="openApplicationModal(filteredResults.bestOffer)" class="btn-primary">
-                    Souscrire maintenant
-                  </button>
-                  <button (click)="downloadQuote(filteredResults.bestOffer)" class="btn-outline">
-                    PDF
-                  </button>
-                  <button (click)="toggleOfferDetails(filteredResults.bestOffer)" class="btn-outline">
-                    {{ selectedOfferForDetails?.id === getOfferUniqueId(filteredResults.bestOffer) ? 'Masquer' : 'Détails' }}
-                  </button>
-                </div>
-              </div>
-              
-              <!-- Détails étendus avec corrections -->
-              <div *ngIf="selectedOfferForDetails?.id === getOfferUniqueId(filteredResults.bestOffer)" class="offer-details-expanded">
-                <div class="details-grid">
-                  <div class="detail-section">
-                    <h5>Analyse du score</h5>
-                    <div class="score-breakdown">
-                      <div class="score-item">
-                        <span>Prix</span>
-                        <div class="score-bar">
-                          <div class="fill" [style.width.%]="filteredResults.bestOffer.scoreDetails.priceScore"></div>
-                        </div>
-                        <span>{{ filteredResults.bestOffer.scoreDetails.priceScore }}/100</span>
-                      </div>
-                      <div class="score-item">
-                        <span>Couverture</span>
-                        <div class="score-bar">
-                          <div class="fill" [style.width.%]="filteredResults.bestOffer.scoreDetails.coverageScore"></div>
-                        </div>
-                        <span>{{ filteredResults.bestOffer.scoreDetails.coverageScore }}/100</span>
-                      </div>
-                      <div class="score-item">
-                        <span>Assureur</span>
-                        <div class="score-bar">
-                          <div class="fill" [style.width.%]="filteredResults.bestOffer.scoreDetails.ratingScore"></div>
-                        </div>
-                        <span>{{ filteredResults.bestOffer.scoreDetails.ratingScore }}/100</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="detail-section">
-                    <h5>Informations de contact</h5>
-                    <div class="contact-info">
-                      <p><strong>Téléphone :</strong> {{ getOfferContactPhone(filteredResults.bestOffer) }}</p>
-                      <p><strong>Email :</strong> {{ getOfferContactEmail(filteredResults.bestOffer) }}</p>
-                    </div>
-                  </div>
-                  
-                  <div class="detail-section" *ngIf="getOfferAdvantages(filteredResults.bestOffer).length > 0">
-                    <h5>Avantages inclus</h5>
-                    <ul class="advantages-list">
-                      <li *ngFor="let advantage of getOfferAdvantages(filteredResults.bestOffer)">{{ advantage }}</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+            <div class="price-score">
+              <span class="price">{{ formatCurrency(offer.monthly_premium) }}/mois</span>
+              <span class="score">{{ offer.score }}/100</span>
             </div>
-
-            <!-- Autres offres classées avec corrections -->
-            <div *ngIf="filteredResults.rankedOffers.length > 1" class="ranked-offers">
-              <h4>Autres offres intéressantes</h4>
-              <div class="offers-grid">
-                <div *ngFor="let offer of filteredResults.rankedOffers.slice(1, 4)" 
-                     class="offer-card standard"
-                     [class.selected]="selectedOfferForDetails?.id === getOfferUniqueId(offer)">
-                  <div class="offer-rank">{{ offer.rank }}</div>
-                  
-                  <div class="offer-content">
-                    <h5>{{ offer.product_name }}</h5>
-                    <p>{{ offer.company_name }}</p>
-                    
-                    <div class="price-score">
-                      <span class="price">{{ formatCurrency(offer.monthly_premium) }}/mois</span>
-                      <span class="score">{{ offer.score }}/100</span>
-                    </div>
-                    
-                    <div class="offer-mini-badges">
-                      <span *ngFor="let badge of offer.badges.slice(0, 2)" class="mini-badge">{{ badge }}</span>
-                    </div>
-                    
-                    <div class="offer-actions-mini">
-                      <button (click)="openApplicationModal(offer)" class="btn-primary-small">Souscrire</button>
-                      <button (click)="toggleOfferDetails(offer)" class="btn-outline-small">
-                        {{ selectedOfferForDetails?.id === getOfferUniqueId(offer) ? 'Masquer' : 'Détails' }}
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <!-- Détails condensés avec corrections -->
-                  <div *ngIf="selectedOfferForDetails?.id === getOfferUniqueId(offer)" class="offer-details-condensed">
-                    <p><strong>Recommandation :</strong> {{ offer.recommendation }}</p>
-                    <div class="quick-contact">
-                      <span>{{ getOfferContactPhone(offer) }}</span>
-                      <button (click)="downloadQuote(offer)" class="btn-link">PDF</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            
+            <div class="offer-mini-badges">
+              <span *ngFor="let badge of offer.badges.slice(0, 2)" class="mini-badge">
+                {{ badge }}
+              </span>
+            </div>
+            
+            <div class="offer-actions-mini">
+              <button (click)="openApplicationModal(offer)" class="btn-primary-small">
+                Souscrire
+              </button>
+              <button (click)="toggleOfferDetails(offer)" class="btn-outline-small">
+                {{ selectedOfferForDetails?.id === getOfferUniqueId(offer) ? 'Masquer' : 'Détails' }}
+              </button>
             </div>
           </div>
-
-          <!-- Section de téléchargement groupé -->
-          <div class="download-section">
-            <h4>Téléchargements</h4>
-            <div class="download-options">
-              <button 
-                (click)="downloadMainQuote()" 
-                class="btn-outline btn-download">
-                📄 Devis principal (PDF)
-              </button>
-              <button 
-                *ngIf="simulationResults.quotes && simulationResults.quotes.length > 0"
-                (click)="downloadAllQuotes()" 
-                class="btn-outline btn-download">
-                📁 Toutes les offres (PDF)
-              </button>
-              <button 
-                (click)="downloadComparison()" 
-                class="btn-outline btn-download">
-                📊 Tableau comparatif (PDF)
-              </button>
-            </div>
-            <p class="download-info">
-              💡 Les PDF incluent tous les détails de votre simulation et sont valables 30 jours
-            </p>
-          </div>
-
-          <!-- Recommendations -->
-          <div *ngIf="simulationResults.recommendations && simulationResults.recommendations.length > 0" 
-               class="recommendations-section">
-            <h4>Conseils</h4>
-            <div class="recommendations-list">
-              <div *ngFor="let recommendation of simulationResults.recommendations.slice(0, 3)" 
-                   class="recommendation-item">
-                <span class="recommendation-icon">💡</span>
-                <p>{{ recommendation }}</p>
-              </div>
+          
+          <!-- Détails condensés -->
+          <div *ngIf="selectedOfferForDetails?.id === getOfferUniqueId(offer)" 
+               class="offer-details-condensed">
+            <p><strong>Recommandation :</strong> {{ offer.recommendation }}</p>
+            <div class="quick-contact">
+              <span>{{ getOfferContactPhone(offer) }}</span>
+              <button (click)="downloadQuote(offer)" class="btn-link">📄 PDF</button>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Section de téléchargement groupé -->
+  <div class="download-section">
+    <h4>Téléchargements</h4>
+    <div class="download-options">
+      <button (click)="downloadMainQuote()" class="btn-outline btn-download">
+         Devis principal (PDF)
+      </button>
+      <button 
+        *ngIf="simulationResults.quotes && simulationResults.quotes.length > 0"
+        (click)="downloadAllQuotes()" 
+        class="btn-outline btn-download">
+         Toutes les offres (PDF)
+      </button>
+      <button (click)="downloadComparison()" class="btn-outline btn-download">
+         Tableau comparatif (PDF)
+      </button>
+    </div>
+    <p class="download-info">
+       Les PDF incluent tous les détails de votre simulation et sont valables 30 jours
+    </p>
+  </div>
+
+  <!-- Recommendations -->
+  <div *ngIf="simulationResults.recommendations && simulationResults.recommendations.length > 0" 
+       class="recommendations-section">
+    <h4>Conseils</h4>
+    <div class="recommendations-list">
+      <div *ngFor="let recommendation of simulationResults.recommendations.slice(0, 3)" 
+           class="recommendation-item">
+        <span class="recommendation-icon">💡</span>
+        <p>{{ recommendation }}</p>
+      </div>
+    </div>
+  </div>
+</div>
 
       <!-- Navigation -->
       <div class="step-navigation">
@@ -1279,14 +1273,7 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
       checkCircle: '/assets/images/decorative/check-circle.png',
       stars: '/assets/images/decorative/stars-rating.png'
     },
-    logos: {
-      ogar: '/assets/images/logos/ogar-logo.png',
-      saham: '/assets/images/logos/saham-logo.png',
-      axa: '/assets/images/logos/axa-logo.png',
-      allianz: '/assets/images/logos/allianz-logo.png',
-      nsia: '/assets/images/logos/nsia-logo.png',
-      bambooassur: '/assets/images/logos/bamboo-assur'
-    }
+    logos: {}
   };
 
   // Types d'assurance disponibles avec images
@@ -1434,6 +1421,45 @@ export class InsuranceComparatorComponent implements OnInit, OnDestroy {
         return false;
     }
   }
+
+  // Tracker les erreurs de logo
+private logoErrors = new Set<string>();
+
+onLogoError(event: Event, company: any): void {
+  const img = event.target as HTMLImageElement;
+  console.warn('❌ Erreur de chargement logo pour:', company.name, img.src);
+  
+  // Marquer comme erreur
+  this.logoErrors.add(company.id);
+  
+  // Cacher l'image
+  img.style.display = 'none';
+}
+
+hasLogoError(companyId: string): boolean {
+  return this.logoErrors.has(companyId);
+}
+
+getCompanyInitials(companyName: string): string {
+  const words = companyName.split(' ').filter(w => w.length > 0);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return companyName.substring(0, 2).toUpperCase();
+}
+
+getCompanyColor(companyId: string): string {
+  const colors: { [key: string]: string } = {
+    'ogar': 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+    'nsia': 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+    'saham': 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
+    'axa': 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+    'colina': 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+    'bambooassur': 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
+    'bamboo_assur': 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)'
+  };
+  return colors[companyId] || 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+}
 
   // CORRECTION 3: Validation pour le flux standard (auto, habitation, transport)
   private canProceedStandardFlow(step: number): boolean {
@@ -1619,8 +1645,48 @@ private calculateCoverageAmount(): number {
       return 0;
   }
 }
+getAllQuotes(): any[] {
+    if (!this.simulationResults) return [];
+    
+    const allQuotes = [
+      {
+        ...this.simulationResults,
+        company_name: this.simulationResults.company_name,
+        product_name: this.simulationResults.product_name,
+        monthly_premium: this.simulationResults.monthly_premium,
+        annual_premium: this.simulationResults.annual_premium,
+        deductible: this.simulationResults.deductible,
+        rating: 4.5,
+        advantages: []
+      },
+      ...(this.simulationResults.quotes || [])
+    ];
+    
+    console.log('Toutes les offres pour filtrage:', allQuotes);
+    return allQuotes;
+  }
 
-/**
+  getInsurersList(): any[] {
+    const insurers = this.availableCompanies.map(company => ({
+      id: company.id,
+      name: company.name,
+      logo: company.logo_url || this.getCompanyLogo(company.id)
+    }));
+    
+    // Ajouter des assureurs par défaut si la liste est vide
+    if (insurers.length === 0) {
+      return [
+        { id: 'ogar', name: 'OGAR Assurances', logo: this.getCompanyLogo('ogar') },
+        { id: 'nsia', name: 'NSIA Assurances', logo: this.getCompanyLogo('nsia') },
+        { id: 'axa', name: 'AXA Gabon', logo: this.getCompanyLogo('axa') },
+        { id: 'colina', name: 'Colina Assurances', logo: this.getCompanyLogo('colina') }
+      ];
+    }
+    
+    return insurers;
+  }
+
+  /**
    * Gestionnaire des changements de filtres
    */
   onFiltersChanged(filterResult: FilterResult): void {
@@ -1653,23 +1719,23 @@ private calculateCoverageAmount(): number {
     });
   }
 
-  getOfferAdvantages(offer: ScoredQuote): string[] {
-    const extendedOffer = offer as ExtendedScoredQuote;
-    return extendedOffer.advantages || [];
+ getOfferContactPhone(offer: ScoredQuote): string {
+    return offer.contact_phone || this.getCompanyContact(offer.company_name).phone;
   }
 
-  getOfferContactPhone(offer: ScoredQuote): string {
-    const extendedOffer = offer as ExtendedScoredQuote;
-    return extendedOffer.contact_phone || this.getCompanyContact(offer.company_name).phone;
+ 
+
+   getOfferContactEmail(offer: ScoredQuote): string {
+    return offer.contact_email || this.getCompanyContact(offer.company_name).email;
   }
 
-  getOfferContactEmail(offer: ScoredQuote): string {
-    const extendedOffer = offer as ExtendedScoredQuote;
-    return extendedOffer.contact_email || this.getCompanyContact(offer.company_name).email;
-  }
-
+  /**
+   * Génère un ID unique pour une offre
+   */
   getOfferUniqueId(offer: ScoredQuote): string {
-    return `${offer.company_name}_${offer.product_name}_${offer.monthly_premium}`.replace(/\s+/g, '_').toLowerCase();
+    return `${offer.company_name}_${offer.product_name}_${offer.monthly_premium}`
+      .replace(/\s+/g, '_')
+      .toLowerCase();
   }
 
    toggleOfferDetails(offer: ScoredQuote): void {
@@ -1681,29 +1747,35 @@ private calculateCoverageAmount(): number {
       this.selectedOfferForDetails = { id: offerId };
     }
   }
-  
 
-  /**
-   * Génère la liste des assureurs pour le filtre
-   */
-  getInsurersList(): any[] {
-    const insurers = this.availableCompanies.map(company => ({
-      id: company.id,
-      name: company.name,
-      logo: company.logo_url || this.getCompanyLogo(company.id)
-    }));
+    private getCompanyContact(companyName: string): { phone: string, email: string } {
+    const contacts: { [key: string]: { phone: string, email: string } } = {
+      'OGAR Assurances': {
+        phone: '+241 01 76 20 20',
+        email: 'info@ogar.ga'
+      },
+      'NSIA Assurances Gabon': {
+        phone: '+241 01 44 26 26',
+        email: 'contact@nsia.ga'
+      },
+      'AXA Assurances Gabon': {
+        phone: '+241 01 44 63 63',
+        email: 'info@axa-gabon.ga'
+      },
+      'Colina Assurances': {
+        phone: '+241 01 74 25 25',
+        email: 'contact@colina.ga'
+      },
+      'Saham Assurance Gabon': {
+        phone: '+241 01 44 88 88',
+        email: 'info@saham.ga'
+      }
+    };
     
-    // Ajouter des assureurs par défaut si la liste est vide
-    if (insurers.length === 0) {
-      return [
-        { id: 'ogar', name: 'OGAR Assurances', logo: this.getCompanyLogo('ogar') },
-        { id: 'nsia', name: 'NSIA Assurances', logo: this.getCompanyLogo('nsia') },
-        { id: 'axa', name: 'AXA Gabon', logo: this.getCompanyLogo('axa') },
-        { id: 'colina', name: 'Colina Assurances', logo: this.getCompanyLogo('colina') }
-      ];
-    }
-    
-    return insurers;
+    return contacts[companyName] || {
+      phone: '+241 01 00 00 00',
+      email: 'contact@assurance.ga'
+    };
   }
 
 
@@ -2302,19 +2374,12 @@ private calculateCoverageAmount(): number {
     return this.assetPaths.icons[typeId] || '';
   }
 
-  getCompanyLogo(companyId: string): string {
-    return this.assetPaths.logos[companyId] || '';
-  }
+ 
 
   isPopularType(typeId: string): boolean {
     return this.popularTypes.includes(typeId);
   }
 
-  onImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.style.display = 'none';
-    console.warn('Image failed to load:', img.src);
-  }
 
   private preloadImages(): void {
     const criticalImages = [
@@ -2330,6 +2395,23 @@ private calculateCoverageAmount(): number {
       }
     });
   }
+
+  onImageError(event: Event, company?: any): void {
+  const img = event.target as HTMLImageElement;
+  
+  // Essayer un fallback
+  if (company) {
+    const fallbackUrl = this.assetPaths.logos[company.id];
+    if (fallbackUrl && img.src !== fallbackUrl) {
+      img.src = fallbackUrl;
+      return;
+    }
+  }
+  
+  // Cacher l'image si tous les fallbacks échouent
+  img.style.display = 'none';
+  console.warn('Logo non disponible:', img.src, company?.name);
+}
 
   // ==================== INITIALISATION ET CONFIGURATION ====================
 
@@ -2385,26 +2467,130 @@ private calculateCoverageAmount(): number {
   // ==================== CHARGEMENT DES DONNÉES ====================
 
   private loadInsuranceData(): void {
-    this.isLoadingCompanies = true;
-    
-    this.apiService.getInsuranceProducts({ 
-      insurance_type: this.selectedInsuranceType 
-    })
-    .pipe(takeUntil(this.destroy$))
-    .subscribe({
-      next: (products) => {
-        console.log('Produits reçus:', products);
-        this.availableProducts = products;
-        this.extractUniqueCompanies(products);
-        this.isLoadingCompanies = false;
-      },
-      error: (error) => {
-        console.error('Erreur chargement produits:', error);
-        this.isLoadingCompanies = false;
-        this.notificationService.showError('Impossible de charger les données d\'assurance');
-      }
-    });
+  console.log('🔄 Chargement des données pour:', this.selectedInsuranceType);
+  this.isLoadingCompanies = true;
+  
+  this.apiService.getInsuranceCompanies({
+    insurance_type: this.selectedInsuranceType,
+    is_active: true
+  })
+  .pipe(takeUntil(this.destroy$))
+  .subscribe({
+    next: (companies) => {
+      console.log('COMPAGNIES REÇUES DE L\'API:');
+      companies.forEach(company => {
+        console.log({
+          id: company.id,
+          name: company.name,
+          logo_url: company.logo_url,
+          logo_data: company.logo_data ? 'PRÉSENT (base64)' : 'ABSENT',
+          has_logo: !!(company.logo_url || company.logo_data)
+        });
+      });
+      
+      this.availableCompanies = companies.map(company => this.mapCompanyFromAPI(company));
+      
+      console.log(' COMPAGNIES MAPPÉES:');
+      this.availableCompanies.forEach(company => {
+        console.log({
+          id: company.id,
+          name: company.name,
+          final_logo_url: company.logo_url
+        });
+      });
+      
+      this.loadInsuranceProducts();
+    },
+    error: (error) => {
+      console.error('Erreur chargement compagnies:', error);
+      this.isLoadingCompanies = false;
+      this.generateFallbackCompanies();
+    }
+  });
+}
+
+private loadInsuranceProducts(): void {
+  this.apiService.getInsuranceProducts({ 
+    insurance_type: this.selectedInsuranceType,
+    limit: 50
+  })
+  .pipe(takeUntil(this.destroy$))
+  .subscribe({
+    next: (products) => {
+      console.log('Produits reçus depuis l\'API:', products);
+      this.availableProducts = products;
+      this.isLoadingCompanies = false;
+      
+      // Enrichir les compagnies avec les produits si nécessaire
+      this.enrichCompaniesWithProducts();
+    },
+    error: (error) => {
+      console.error('Erreur chargement produits:', error);
+      this.availableProducts = [];
+      this.isLoadingCompanies = false;
+      this.notificationService.showError('Impossible de charger les produits d\'assurance');
+    }
+  });
+}
+
+private mapCompanyFromAPI(apiCompany: any): InsuranceCompanyInfo {
+  // Construire l'URL du logo avec priorité
+  let logoUrl = '';
+  
+  // Priorité 1: logo_url (URL directe)
+  if (apiCompany.logo_url && apiCompany.logo_url.trim() !== '') {
+    logoUrl = apiCompany.logo_url;
   }
+  // Priorité 2: logo_data (base64 depuis la DB)
+  else if (apiCompany.logo_data && apiCompany.logo_data.trim() !== '') {
+    // Si logo_data ne commence pas par 'data:', l'ajouter
+    if (apiCompany.logo_data.startsWith('data:')) {
+      logoUrl = apiCompany.logo_data;
+    } else {
+      // Détecter le type MIME si possible
+      const contentType = apiCompany.logo_content_type || 'image/png';
+      logoUrl = `data:${contentType};base64,${apiCompany.logo_data}`;
+    }
+  }
+  // Priorité 3: Fallback vers assets locaux
+  else {
+    logoUrl = this.getCompanyLogo(apiCompany.id);
+  }
+
+  console.log(`Logo pour ${apiCompany.name}:`, logoUrl ? 'PRÉSENT' : 'ABSENT');
+
+  return {
+    id: apiCompany.id,
+    name: apiCompany.name,
+    full_name: apiCompany.full_name || apiCompany.name,
+    logo_url: logoUrl,
+    rating: apiCompany.rating || 4.0,
+    solvency_ratio: apiCompany.solvency_ratio,
+    contact_phone: apiCompany.contact_phone || this.getCompanyContact(apiCompany.name).phone,
+    contact_email: apiCompany.contact_email || this.getCompanyContact(apiCompany.name).email,
+    specialties: apiCompany.specialties || [this.selectedInsuranceType],
+    coverage_areas: apiCompany.coverage_areas || [],
+    is_active: apiCompany.is_active !== false
+  };
+}
+
+// Enrichir les compagnies avec les informations des produits
+private enrichCompaniesWithProducts(): void {
+  this.availableCompanies.forEach(company => {
+    const companyProducts = this.availableProducts.filter(
+      product => product.company?.id === company.id
+    );
+    
+    if (companyProducts.length > 0) {
+      // Utiliser le logo du premier produit si disponible
+      if (!company.logo_url && companyProducts[0].company?.logo_url) {
+        company.logo_url = companyProducts[0].company.logo_url;
+      }
+    }
+  });
+  
+  console.log('Compagnies enrichies:', this.availableCompanies);
+}
 
   private extractUniqueCompanies(products: InsuranceProductInfo[]): void {
     const companiesMap = new Map<string, InsuranceCompanyInfo>();
@@ -2586,6 +2772,25 @@ private calculateCoverageAmount(): number {
     
     return quotes;
   }
+
+  getCompanyLogo(companyId: string): string {
+  // Vérifier d'abord dans les compagnies disponibles
+  const company = this.availableCompanies.find(c => c.id === companyId);
+  if (company?.logo_url) {
+    return company.logo_url;
+  }
+  
+  // Chercher dans les produits disponibles
+  const product = this.availableProducts.find(
+    p => p.company?.id === companyId && p.company?.logo_url
+  );
+  if (product?.company?.logo_url) {
+    return product.company.logo_url;
+  }
+  
+  // Fallback vers les assets locaux si disponibles
+  return this.assetPaths.logos[companyId] || '';
+}
 
   private getCompanyAdvantages(companyName: string): string[] {
     const advantages = {
@@ -2999,6 +3204,7 @@ private calculateCoverageAmount(): number {
     }
   }
 
+  
   private buildComparisonDetails(): any {
     if (!this.simulationResults) return {};
 
@@ -3130,41 +3336,16 @@ private getCompanyIdFromName(companyName: string): string {
   return companyIds[companyName] || 'company_temp';
 }
 
-private getCompanyContact(companyName: string): { phone: string, email: string } {
-  const contacts: { [key: string]: { phone: string, email: string } } = {
-    'OGAR Assurances': {
-      phone: '+241 01 76 20 20',
-      email: 'info@ogar.ga'
-    },
-    'NSIA Assurances Gabon': {
-      phone: '+241 01 44 26 26',
-      email: 'contact@nsia.ga'
-    },
-    'AXA Assurances Gabon': {
-      phone: '+241 01 44 63 63',
-      email: 'info@axa-gabon.ga'
-    },
-    'Colina Assurances': {
-      phone: '+241 01 74 25 25',
-      email: 'contact@colina.ga'
-    },
-    'Saham Assurance Gabon': {
-      phone: '+241 01 44 88 88',
-      email: 'info@saham.ga'
-    }
-  };
-  
-  return contacts[companyName] || {
-    phone: '+241 01 00 00 00',
-    email: 'contact@assurance.ga'
-  };
-}
 
   closeApplicationModal(): void {
     this.showApplicationModal = false;
     this.selectedQuoteForApplication = null;
     this.selectedProductForApplication = null;
   }
+
+  getOfferAdvantages(offer: ScoredQuote): string[] {
+  return offer.advantages || [];
+}
 
   onApplicationSubmitted(notification: any): void {
     console.log('Demande d\'assurance soumise:', notification);

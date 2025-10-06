@@ -162,6 +162,7 @@ export interface InsuranceQuoteRequest {
 }
 
 export interface InsuranceCompany {
+  logo_data: any;
   id: string;
   name: string;
   full_name?: string;

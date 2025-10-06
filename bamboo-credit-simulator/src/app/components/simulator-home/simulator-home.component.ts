@@ -1,5 +1,5 @@
 // ========================================================================================
-// SIMULATOR-HOME.COMPONENT.TS - Version corrigée
+// SIMULATOR-HOME.COMPONENT.TS - Version avec carrousel PNG
 // ========================================================================================
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
@@ -62,14 +62,13 @@ interface ServiceCard {
     <div class="simulator-home-container">
       <!-- Hero Section -->
       <section class="hero">
-        <!-- Carrousel d'images en arrière-plan -->
+        <!-- Carrousel d'images PNG -->
         <div class="hero-carousel">
           <div class="carousel-track">
-            <div class="carousel-slide slide-1"></div>
-            <div class="carousel-slide slide-2"></div>
-            <div class="carousel-slide slide-3"></div>
-            <div class="carousel-slide slide-4"></div>
-            <div class="carousel-slide slide-5"></div>
+            <div *ngFor="let image of carouselImages" 
+                 class="carousel-slide"
+                 [style.background-image]="'url(' + image + ')'">
+            </div>
           </div>
         </div>
 
@@ -179,7 +178,6 @@ interface ServiceCard {
                 <span class="action-text">Comparer les taux</span>
               </button>
               
-              
               <button (click)="navigateToService('/guides')" class="action-card">
                 <div class="action-icon" [innerHTML]="quickActionsIcons['guides']"></div>
                 <span class="action-text">Guides & Conseils</span>
@@ -189,53 +187,59 @@ interface ServiceCard {
         </div>
       </section>
 
-      <!-- Bamboo Assur Section -->
-      <section class="bamboo-assur-section">
-        <div class="container">
-          <div class="assur-content">
-            <div class="assur-info">
-              <div class="assur-logo">
-                <div class="logo-svg" [innerHTML]="bambooAssurLogo"></div>
-                <h2>nos partenaire</h2>
-              </div>
-              <p class="assur-description">
-                Nos partenaire vous accompagne dans tous vos projets avec des solutions 
-               adaptées aux réalités gabonaises.
-              </p>
-              <div class="assur-products">
-                <div class="product-item">
-                  <div class="product-icon" [innerHTML]="assuranceProductsIcons['home']"></div>
-                  <span>Assurance</span>
-                </div>
-                <div class="product-item">
-                  <div class="product-icon" [innerHTML]="assuranceProductsIcons['life']"></div>
-                  <span>crédit</span>
-                </div>
-                <div class="product-item">
-                  <div class="product-icon" [innerHTML]="assuranceProductsIcons['health']"></div>
-                  <span>épargne</span>
-                </div>
-              </div>
-              <button (click)="navigateToService('/bamboo-assur')" class="btn-assur">
-                Découvrir partenaire
-              </button>
-            </div>
-            <div class="assur-visual">
-              <div class="assur-graphic">
-                <div class="protection-circle">
-                  <div class="shield-svg" [innerHTML]="shieldLargeIcon"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <!-- Section Bamboo Assur -->
+<section class="bamboo-assur-section">
+  <div class="container">
+    <div class="assur-header">
+      <div class="assur-logo">
+        <div class="logo-svg" [innerHTML]="bambooAssurLogo"></div>
+        <h2>nos partenaires</h2>
+      </div>
+      <p class="assur-description">
+        Nos partenaires vous accompagnent dans tous vos projets avec des solutions 
+        adaptées aux réalités gabonaises.
+      </p>
+      
+      <div class="assur-products">
+        <div class="product-item">
+          <div class="product-icon" [innerHTML]="assuranceProductsIcons['home']"></div>
+          <span>Assurance</span>
         </div>
-      </section>
+        <div class="product-item">
+          <div class="product-icon" [innerHTML]="assuranceProductsIcons['life']"></div>
+          <span>Crédit</span>
+        </div>
+        <div class="product-item">
+          <div class="product-icon" [innerHTML]="assuranceProductsIcons['health']"></div>
+          <span>Épargne</span>
+        </div>
+      </div>
+      
+      <button (click)="navigateToService('/bamboo-assur')" class="btn-assur">
+        Découvrir nos partenaires
+      </button>
+    </div>
+    
+    <!-- Carrousel pleine largeur -->
+    <div class="partners-carousel-full">
+      <div class="partners-track">
+        <div *ngFor="let logo of partnerLogos" class="partner-logo-slide">
+          <img [src]="logo" alt="Logo partenaire" class="partner-logo-img">
+        </div>
+        <!-- Duplication pour effet infini -->
+        <div *ngFor="let logo of partnerLogos" class="partner-logo-slide">
+          <img [src]="logo" alt="Logo partenaire" class="partner-logo-img">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       <!-- Avantages -->
       <section class="advantages-section">
         <div class="container">
           <div class="section-header">
-            <h2>Pourquoi choisir simbot gab ?</h2>
+            <h2>Pourquoi choisir SimBot Gab ?</h2>
           </div>
 
           <div class="advantages-grid">
@@ -249,7 +253,6 @@ interface ServiceCard {
           </div>
         </div>
       </section>
-
 
       <!-- CTA Section -->
       <section class="cta-section">
@@ -277,6 +280,27 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
   isQuickCalculating = false;
   activeCategory = 'all';
 
+  // Images du carrousel - IMPORTANT: Placez vos images PNG dans assets/carousel/
+  carouselImages: string[] = [
+    'assets/caroussel/finance-hero-1.png',
+    'assets/caroussel/finance-hero-2.png',
+    'assets/caroussel/finance-hero-3.png',
+    'assets/caroussel/finance-hero-4.png',
+    'assets/caroussel/finance-hero-5.png'
+  ];
+
+  // Logos des partenaires - ajoutez après carouselImages
+partnerLogos: string[] = [
+  'assets/partners/bgfi-bank.png',
+  'assets/partners/uba-bank.png',
+  'assets/partners/orabank.png',
+  'assets/partners/ecobank.png',
+  'assets/partners/bamboo-assur.png',
+  'assets/partners/nsia-logo.png',
+  'assets/partners/ogar-logo.png',
+  'assets/partners/axa-logo.png'
+];
+
   // Données de l'interface
   dailyRates: DailyRates = {
     consommation: 8.5,
@@ -293,7 +317,7 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
     averageResponse: '24h'
   };
 
-  // ICÔNES SVG sécurisés - INITIALISATION OBLIGATOIRE
+  // ICÔNES SVG sécurisés
   trendingIcon: SafeHtml = '';
   shieldLargeIcon: SafeHtml = '';
   bambooAssurLogo: SafeHtml = '';
@@ -338,7 +362,6 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private analyticsService: AnalyticsService
   ) {
-    // Initialisation immédiate des icônes dans le constructeur
     this.initializeSafeIcons();
   }
 
@@ -434,7 +457,6 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
 
     // Services
     this.services = [
-      
       {
         id: 'comparator',
         title: 'Comparateur multi-banques',
@@ -463,8 +485,7 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
         route: '/insurance-comparator',
         category: 'tool'
       },
-
-       {
+      {
         id: 'savings',
         title: 'Simulateur d\'épargne',
         description: 'Planifiez votre épargne et découvrez son potentiel',
@@ -586,11 +607,6 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
         </svg>
       `),
-      'insurance': this.sanitizer.bypassSecurityTrustHtml(`
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-        </svg>
-      `),
       'guides': this.sanitizer.bypassSecurityTrustHtml(`
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
@@ -600,11 +616,6 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
 
     // Assurance Products Icons
     this.assuranceProductsIcons = {
-      'auto': this.sanitizer.bypassSecurityTrustHtml(`
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-        </svg>
-      `),
       'home': this.sanitizer.bypassSecurityTrustHtml(`
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
@@ -670,21 +681,6 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
     return this.services.filter(service => service.category === this.activeCategory);
   }
 
-  // NEWSLETTER
-  subscribeNewsletter(): void {
-    if (this.newsletterForm.invalid) return;
-
-    const email = this.newsletterForm.get('email')?.value;
-    
-    // Simulation d'inscription
-    this.notificationService.showSuccess('Inscription à la newsletter réussie !');
-    this.newsletterForm.reset();
-    
-    this.analyticsService.trackEvent('newsletter_subscription', {
-      email_domain: email.split('@')[1]
-    });
-  }
-
   // MÉTHODES UTILITAIRES
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('fr-FR', {
@@ -721,10 +717,6 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
     return colors[color as keyof typeof colors] || colors.blue;
   }
 
-  getStars(rating: number): boolean[] {
-    return Array(5).fill(false).map((_, i) => i < Math.floor(rating));
-  }
-
   // GETTERS POUR LE TEMPLATE
   get dailyRatesList(): Array<{key: string, label: string, rate: number, color: string}> {
     return [
@@ -735,55 +727,10 @@ export class SimulatorHomeComponent implements OnInit, OnDestroy {
     ];
   }
 
-  get statisticsArray(): Array<{svgIcon: SafeHtml, value: string, label: string, color: string}> {
-    return [
-      { 
-        svgIcon: this.sanitizer.bypassSecurityTrustHtml(`
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-          </svg>
-        `),
-        value: `${this.formatNumber(this.statistics.satisfiedClients)}+`, 
-        label: 'Clients satisfaits', 
-        color: 'blue' 
-      },
-      { 
-        svgIcon: this.sanitizer.bypassSecurityTrustHtml(`
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-          </svg>
-        `),
-        value: this.statistics.financedCredits, 
-        label: 'Crédits financés', 
-        color: 'green' 
-      },
-      {        
-        svgIcon: this.sanitizer.bypassSecurityTrustHtml(`
-          <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2l3.09 6.26L22 9l-5 4.87L18.18 21 12 17.77 5.82 21 7 13.87 2 9l6.91-.74L12 2z"/>
-          </svg>
-        `),
-        value: `${this.statistics.clientRating}/5`, 
-        label: 'Note client', 
-        color: 'yellow' 
-      },
-      { 
-        svgIcon: this.sanitizer.bypassSecurityTrustHtml(`
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        `),
-        value: this.statistics.averageResponse, 
-        label: 'Réponse moyenne', 
-        color: 'purple' 
-      }
-    ];
-  }
-
   // MÉTHODES D'ANALYSE ET TRACKING
   private trackPageView(): void {
     this.analyticsService.trackPageView('simulator_home', {
-      page_title: 'Accueil - Bamboo Financial Services',
+      page_title: 'Accueil - SimBot Gab Financial Services',
       available_services: this.services.length
     });
   }

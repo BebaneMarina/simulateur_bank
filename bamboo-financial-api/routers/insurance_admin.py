@@ -23,11 +23,14 @@ router = APIRouter(prefix="/admin/insurance", tags=["insurance_admin"])
 
 # ==================== SCHEMAS PYDANTIC ====================
 
+# Ajouter les champs logo dans les schémas
 class InsuranceCompanyCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     full_name: Optional[str] = None
     description: Optional[str] = None
     logo_url: Optional[str] = None
+    logo_data: Optional[str] = None  # Base64
+    logo_content_type: Optional[str] = None  # image/png, image/jpeg, etc.
     website: Optional[str] = None
     contact_phone: Optional[str] = None
     contact_email: Optional[str] = None
@@ -275,12 +278,12 @@ def create_insurance_company(
 ):
     """Créer une nouvelle compagnie d'assurance"""
     try:
-        # Validation des données
+        # Validation
         errors = validate_company_data(company_data)
         if errors:
             raise HTTPException(status_code=400, detail={"errors": errors})
         
-        # Vérifier l'unicité du nom
+        # Vérifier l'unicité
         existing = db.query(InsuranceCompany).filter(
             InsuranceCompany.name == company_data.name.strip()
         ).first()
@@ -288,28 +291,18 @@ def create_insurance_company(
         if existing:
             raise HTTPException(status_code=400, detail="Une compagnie avec ce nom existe déjà")
         
-        # CORRECTION : Préparer les données JSON avec validation
+        # Préparer les données JSON
         specialties = company_data.specialties if company_data.specialties else []
         coverage_areas = company_data.coverage_areas if company_data.coverage_areas else []
         
-        # S'assurer que specialties et coverage_areas sont des listes
-        if isinstance(specialties, str):
-            try:
-                specialties = json.loads(specialties)
-            except (json.JSONDecodeError, TypeError):
-                specialties = []
+        # Gestion du logo
+        logo_data = company_data.logo_data
+        logo_content_type = company_data.logo_content_type
+        logo_url = company_data.logo_url
         
-        if isinstance(coverage_areas, str):
-            try:
-                coverage_areas = json.loads(coverage_areas)
-            except (json.JSONDecodeError, TypeError):
-                coverage_areas = []
-        
-        # S'assurer que ce sont bien des listes
-        if not isinstance(specialties, list):
-            specialties = []
-        if not isinstance(coverage_areas, list):
-            coverage_areas = []
+        # Si logo_data est fourni, on utilise celui-ci
+        if logo_data and not logo_url:
+            logo_url = logo_data  # Stocker le base64 dans logo_url pour compatibilité
         
         # Créer la compagnie
         company = InsuranceCompany(
@@ -317,7 +310,9 @@ def create_insurance_company(
             name=company_data.name.strip(),
             full_name=company_data.full_name.strip() if company_data.full_name else None,
             description=company_data.description.strip() if company_data.description else None,
-            logo_url=company_data.logo_url.strip() if company_data.logo_url else None,
+            logo_url=logo_url,
+            logo_data=logo_data,
+            logo_content_type=logo_content_type,
             website=company_data.website.strip() if company_data.website else None,
             contact_phone=company_data.contact_phone.strip() if company_data.contact_phone else None,
             contact_email=company_data.contact_email.strip() if company_data.contact_email else None,
@@ -326,8 +321,8 @@ def create_insurance_company(
             established_year=company_data.established_year,
             solvency_ratio=company_data.solvency_ratio,
             rating=company_data.rating.strip() if company_data.rating else None,
-            specialties=specialties,  # Maintenant garantit d'être une liste
-            coverage_areas=coverage_areas,  # Maintenant garantit d'être une liste
+            specialties=specialties,
+            coverage_areas=coverage_areas,
             is_active=True,
             created_at=datetime.now(),
             updated_at=datetime.now()
@@ -343,6 +338,7 @@ def create_insurance_company(
                 "id": company.id,
                 "name": company.name,
                 "full_name": company.full_name,
+                "logo_url": company.logo_url,
                 "is_active": company.is_active,
                 "created_at": company.created_at
             }
@@ -353,10 +349,11 @@ def create_insurance_company(
     except Exception as e:
         db.rollback()
         print(f"Erreur create_insurance_company: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la compagnie: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
 
-# BONUS : Vous pouvez aussi ajouter cette correction dans la fonction update_insurance_company
-# pour éviter le même problème lors de la mise à jour :
+
 
 @router.put("/companies/{company_id}")
 def update_insurance_company(
@@ -371,42 +368,32 @@ def update_insurance_company(
         if not company:
             raise HTTPException(status_code=404, detail="Compagnie non trouvée")
         
-        # Validation des données
+        # Validation
         errors = validate_company_data(company_data)
         if errors:
             raise HTTPException(status_code=400, detail={"errors": errors})
         
-        # Vérifier l'unicité du nom (sauf pour la compagnie actuelle)
-        if company_data.name and company_data.name.strip() != company.name:
-            existing = db.query(InsuranceCompany).filter(
-                InsuranceCompany.name == company_data.name.strip(),
-                InsuranceCompany.id != company_id
-            ).first()
-            
-            if existing:
-                raise HTTPException(status_code=400, detail="Une compagnie avec ce nom existe déjà")
-        
-        # CORRECTION : Mettre à jour les champs avec validation des types JSON
+        # Mise à jour
         update_data = company_data.dict(exclude_unset=True)
         
         for field, value in update_data.items():
             if field in ['specialties', 'coverage_areas'] and value is not None:
-                # Conversion des chaînes JSON en listes si nécessaire
                 if isinstance(value, str):
                     try:
                         value = json.loads(value)
-                    except (json.JSONDecodeError, TypeError):
+                    except:
                         value = []
-                # S'assurer que c'est une liste
                 if not isinstance(value, list):
                     value = []
-            elif field in ['name', 'full_name', 'description', 'logo_url', 'website', 'contact_phone', 'contact_email', 'address', 'license_number', 'rating'] and value is not None:
-                value = value.strip() if isinstance(value, str) else value
+            elif field in ['logo_data', 'logo_content_type']:
+                # Gérer les champs logo
+                pass
+            elif isinstance(value, str):
+                value = value.strip()
             
             setattr(company, field, value)
         
         company.updated_at = datetime.now()
-        
         db.commit()
         db.refresh(company)
         
@@ -415,8 +402,7 @@ def update_insurance_company(
             "company": {
                 "id": company.id,
                 "name": company.name,
-                "full_name": company.full_name,
-                "is_active": company.is_active,
+                "logo_url": company.logo_url,
                 "updated_at": company.updated_at
             }
         }
@@ -425,8 +411,8 @@ def update_insurance_company(
         raise
     except Exception as e:
         db.rollback()
-        print(f"Erreur update_insurance_company: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la mise à jour: {str(e)}")
+        print(f"Erreur: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur: {str(e)}")
 
 
 @router.delete("/companies/{company_id}")
