@@ -1053,7 +1053,7 @@ interface AssetPaths {
             Souscrire maintenant
           </button>
           <button (click)="downloadQuote(filteredResults.bestOffer)" class="btn-outline">
-            📄 PDF
+             PDF
           </button>
           <button (click)="toggleOfferDetails(filteredResults.bestOffer)" class="btn-outline">
             {{ selectedOfferForDetails?.id === getOfferUniqueId(filteredResults.bestOffer) ? 'Masquer' : 'Détails' }}
@@ -1128,7 +1128,6 @@ interface AssetPaths {
             
             <div class="price-score">
               <span class="price">{{ formatCurrency(offer.monthly_premium) }}/mois</span>
-              <span class="score">{{ offer.score }}/100</span>
             </div>
             
             <div class="offer-mini-badges">
@@ -1153,7 +1152,7 @@ interface AssetPaths {
             <p><strong>Recommandation :</strong> {{ offer.recommendation }}</p>
             <div class="quick-contact">
               <span>{{ getOfferContactPhone(offer) }}</span>
-              <button (click)="downloadQuote(offer)" class="btn-link">📄 PDF</button>
+              <button (click)="downloadQuote(offer)" class="btn-link">PDF</button>
             </div>
           </div>
         </div>
