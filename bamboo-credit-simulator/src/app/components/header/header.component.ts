@@ -1,4 +1,4 @@
-// src/app/components/header/header.component.ts - Version corrigée
+// src/app/components/header/header.component.ts - Version avec logo
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
@@ -25,6 +25,7 @@ interface User {
       <nav class="nav-container">
         <div class="nav-brand">
           <a routerLink="/simulator-home" class="brand-link">
+            <img src="assets/images/simbot-logo.png" alt="SimBot Gab" class="brand-logo">
             <span class="brand-text">SimBot Gab</span>
           </a>
         </div>
@@ -97,7 +98,10 @@ interface User {
       <div *ngIf="showMobileMenu" class="mobile-menu-overlay" (click)="closeMobileMenu()">
         <div class="mobile-menu">
           <div class="mobile-menu-header">
-            <span class="brand-text">SimBot Gab</span>
+            <div class="mobile-brand-container">
+              <img src="assets/images/simbot-logo.png" alt="SimBot Gab" class="mobile-brand-logo">
+              <span class="brand-text">SimBot Gab</span>
+            </div>
             <button (click)="closeMobileMenu()" class="close-button">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -171,6 +175,24 @@ interface User {
 
     .brand-link {
       text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      height: 65px;
+      width: auto;
+      transition: transform 0.3s ease;
+    }
+
+    .brand-logo:hover {
+      transform: scale(1.05);
+    }
+
+    .mobile-brand-logo {
+      height: 50px;
+      width: auto;
     }
 
     .brand-text {
@@ -181,6 +203,7 @@ interface User {
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      white-space: nowrap;
     }
 
     .nav-menu {
@@ -459,6 +482,16 @@ interface User {
       border-bottom: 1px solid #e5e7eb;
     }
 
+    .mobile-brand-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .mobile-brand-container .brand-text {
+      font-size: 1.25rem;
+    }
+
     .close-button {
       background: none;
       border: none;
@@ -565,6 +598,10 @@ interface User {
 
       .mobile-menu-overlay {
         display: block;
+      }
+
+      .brand-logo {
+        height: 55px;
       }
     }
   `]
